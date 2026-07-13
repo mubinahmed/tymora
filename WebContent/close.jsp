@@ -18,7 +18,7 @@
  * limitations under the License.
  * 
 --%>
-<html>
+<html lang="en">
 	<body bgcolor='white' onload="window.close();">
 		You can close this window now and submit again.
 	</body>

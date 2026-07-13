@@ -196,7 +196,7 @@
 						onClick="doReload('moveUp', '${stat.index}');">
 				</s:if>
 				<s:if test="#stat.index == 0">
-					<IMG border="0" src="images/blank.png" align='middle'>
+					<IMG border="0" src="images/blank.png" align='middle' alt="">
 				</s:if>
 				<s:if test="#stat.index < #request.listSize">
 					<IMG border="0" src="images/arrow_down.png" alt="${MSG.titleMoveDown()}" title="${MSG.titleMoveDown()}" align='middle'
@@ -204,7 +204,7 @@
 						onClick="javascript: doReload('moveDown', '${stat.index}');">
 				</s:if>
 				<s:if test="#stat.index == #request.listSize">
-					<IMG border="0" src="images/blank.png" align='middle'>
+					<IMG border="0" src="images/blank.png" align='middle' alt="">
 				</s:if>
 
 				<!-- Delete button -->

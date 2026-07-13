@@ -20,11 +20,11 @@
 --%>
 <%@ page language="java" pageEncoding="utf-8" contentType="text/html;charset=utf-8" errorPage="/error.jsp"%>
 <%@ page import="org.unitime.timetable.util.Constants"%>
-<html>
+<html lang="en">
 	<head>
 	    <meta charset="UTF-8"/>
 	    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-		<meta http-equiv="Refresh" content="1; url=login.action">	
+		<meta http-equiv="Refresh" content="1; url=login.action">
 		<link rel="stylesheet" type="text/css" href="styles/timetabling.css">
 		<link rel="shortcut icon" href="images/timetabling.ico" />
 		<title>UniTime <%=Constants.VERSION%>| University Timetabling Application</title>

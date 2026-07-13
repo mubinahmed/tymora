@@ -24,12 +24,12 @@
 <%@ taglib uri="http://www.unitime.org/tags-custom" prefix="tt" %>
 <%@ taglib uri="http://www.unitime.org/tags-localization" prefix="loc" %>
 <loc:bundle name="CourseMessages">
-<html>
+<html lang="<%=Localization.getFirstLocale()%>">
   <head>
     <meta name="gwt:property" content="locale=<%=Localization.getFirstLocale()%>">
     <meta charset="UTF-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link type="text/css" rel="stylesheet" href="unitime/gwt/standard/standard.css">
     <link type="text/css" rel="stylesheet" href="styles/unitime.css">
     <link type="text/css" rel="stylesheet" href="styles/unitime-mobile.css">
@@ -45,10 +45,11 @@
     <script type="text/javascript" src="scripts/rtt.js"></script>
   </head>
   <body class="unitime-Body">
+    <a href="#UniTimeGWT:Body" class="unitime-SkipLink">Skip to main content</a>
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex="-1" style="position:absolute;width:0;height:0;border:0"></iframe>
     <iframe src="javascript:''" id="__printingFrame" tabIndex="-1" style="position:absolute;width:0;height:0;border:0"></iframe>
-    
-    <span class='top-menu'>
+
+    <span class='top-menu' role="navigation" aria-label="Main menu">
     	<tt:notHasProperty name="unitime.menu.style" user="true">
 	    	<span id='UniTimeGWT:DynamicTopMenu' style="display: block; height: 23px;"></span>
     	</tt:notHasProperty>
@@ -76,7 +77,7 @@
 	<tt:offering-locks/>
   	
 	<span class="unitime-Page"><span class='row'>
-	<span class='sidebar' id="unitime-SideMenu">
+	<span class='sidebar' id="unitime-SideMenu" role="navigation" aria-label="Side menu">
     		<tt:propertyEquals name="unitime.menu.style" user="true" value="Stack On Side">
     			<span id='UniTimeGWT:SideStackMenu' style="display: block;" ></span>
 	    	</tt:propertyEquals>
@@ -114,7 +115,7 @@
     </script>
 	</span>
     <span class='main'><span class='body' id="unitime-Page">
-    	<span class="unitime-PageHeader" id="unitime-Header">
+    	<span class="unitime-PageHeader" id="unitime-Header" role="banner">
     		<span class="row">
     			<span class="mobile-menu-button" id='UniTimeGWT:MobileMenuButton'></span>
     			<a href='main.action' tabIndex="-1" class="logo"></a>
@@ -126,11 +127,11 @@
 			</span>
 		</span>
 		<span class="mobile-menu" id='UniTimeGWT:MobileMenuPanel'></span>
-		<span class="content"> 
+		<span class="content" role="main" aria-label="Main content">
 			<span id="UniTimeGWT:Loading" class="unitime-PageLoading"><loc:message name="messagePageLoading"/></span>
 	    	<span id='UniTimeGWT:Body'></span>
 	    </span>
-    </span><span class='footer' id="unitime-Footer">
+    </span><span class='footer' id="unitime-Footer" role="contentinfo">
 		<span class="unitime-Footer">
 			<span class="row">
 				<span class="cell left">

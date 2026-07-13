@@ -35,7 +35,7 @@
 <s:if test="#request.checkRole">
 	<%@ include file="/checkRole.jspf"%>
 </s:if>
-<html>
+<html lang="<%=Localization.getFirstLocale()%>">
 <head>
 	<meta http-equiv="pragma" content="no-cache">
 	<meta http-equiv="cache-control" content="no-cache">
@@ -62,6 +62,7 @@
 	<script type="text/javascript" src="unitime/unitime.nocache.js"></script>
 </head>
 <body class="unitime-Body">
+	<a href="#UniTimeGWT:Content" class="unitime-SkipLink">Skip to main content</a>
 	<loc:bundle name="org.unitime.timetable.gwt.resources.GwtMessages" id="GWTMSG">
 	<script type="text/javascript">
 		if (!String.prototype.trim) {
@@ -75,8 +76,8 @@
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex="-1" style="position:absolute;width:0;height:0;border:0"></iframe>
     <iframe src="javascript:''" id="__printingFrame" tabIndex="-1" style="position:absolute;width:0;height:0;border:0"></iframe>
     
-    <span class='top-menu'>
-    <s:if test="#request.showMenu"> 
+    <span class='top-menu' role="navigation" aria-label="Main menu">
+    <s:if test="#request.showMenu">
     	<tt:notHasProperty name="unitime.menu.style" user="true">
 	    	<span id='UniTimeGWT:DynamicTopMenu' style="display: block; height: 23px;"></span>
     	</tt:notHasProperty>
@@ -115,7 +116,7 @@
 	<tt:offering-locks/>
 		
 	<span class="unitime-Page"><span class='row'>
-	<span class='sidebar' id="unitime-SideMenu">
+	<span class='sidebar' id="unitime-SideMenu" role="navigation" aria-label="Side menu">
     	<s:if test="#request.showMenu">
     		<tt:propertyEquals name="unitime.menu.style" user="true" value="Stack On Side">
     			<span id='UniTimeGWT:SideStackMenu' style="display: block;" ></span>
@@ -155,7 +156,7 @@
     </script>
 	</span>
     <span class='main'><span class='body' id="unitime-Page">
-    	<span class="unitime-PageHeader" id="unitime-Header">
+    	<span class="unitime-PageHeader" id="unitime-Header" role="banner">
     		<span class="row">
     			<span class="mobile-menu-button" id='UniTimeGWT:MobileMenuButton'></span>
     			<a href='main.action' tabIndex="-1" class="logo"></a>
@@ -174,12 +175,12 @@
 			</span>
 		</span>
 		<span class="mobile-menu" id='UniTimeGWT:MobileMenuPanel'></span>
-		<span class='content unitime-Struts2'>
+		<span class='content unitime-Struts2' role="main" aria-label="Main content">
         	<span id='UniTimeGWT:Content'>
 	    		<tiles:insertAttribute name="body"/>
         	</span>
         </span>
-    </span><span class='footer' id="unitime-Footer">
+    </span><span class='footer' id="unitime-Footer" role="contentinfo">
 		<span class="unitime-Footer">
 			<span class="row">
 				<span class="cell left">

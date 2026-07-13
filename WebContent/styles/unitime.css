@@ -7981,3 +7981,162 @@ unitime-RoomSharingWidget .legend .blank {
 	font-family: inherit;
 	font-weight: inherit;
 }
+
+/* ==========================================================================
+ * UI/UX & Accessibility Enhancements
+ * --------------------------------------------------------------------------
+ * Appended intentionally at the end of the file so these rules load last and
+ * AUGMENT the styles above rather than replacing them. The block is purely
+ * additive and self-contained: it can be removed as a unit with no effect on
+ * the original stylesheet. Colours are taken from the existing UniTime
+ * palette (#0066CC link/accent blue, #9CB0CE structural border, #2952A3
+ * strong blue, #333333 text) so nothing looks off-brand.
+ * ========================================================================== */
+
+/* Design tokens — first custom properties in the project. Introduced here for
+ * reuse by the rules below and as a foundation for future consolidation of the
+ * many hard-coded colours in this file. Each var() carries a literal fallback
+ * so behaviour is unchanged on engines without custom-property support. */
+:root {
+	--unitime-focus-ring: #0066CC;
+	--unitime-accent: #2952A3;
+	--unitime-border: #9CB0CE;
+	--unitime-text: #333333;
+	--unitime-radius: 3px;
+	--unitime-touch-target: 40px;
+}
+
+/* Accessible keyboard focus.
+ * The legacy rules above disable focus outlines (outline: none) on many
+ * interactive widgets, leaving keyboard users with no visible focus location.
+ * We restore a clear, consistent focus ring for keyboard / assistive-tech
+ * users only, via :focus-visible, so mouse interaction looks unchanged.
+ * !important is required to override the pre-existing "outline: none" rules. */
+:focus-visible {
+	outline: 3px solid var(--unitime-focus-ring, #0066CC) !important;
+	outline-offset: 2px !important;
+}
+
+/* Skip link — lets keyboard and screen-reader users jump straight to the main
+ * content, bypassing the menu on every page. Hidden until focused. */
+.unitime-SkipLink {
+	position: absolute;
+	left: -9999px;
+	top: 0;
+	z-index: 10000000;
+	padding: 8px 16px;
+	background: #ffffff;
+	color: var(--unitime-accent, #2952A3);
+	border: 2px solid var(--unitime-focus-ring, #0066CC);
+	border-radius: var(--unitime-radius, 3px);
+	font-weight: bold;
+	text-decoration: none;
+}
+.unitime-SkipLink:focus {
+	left: 8px;
+	top: 8px;
+}
+
+/* Respect the user's reduced-motion preference. UniTime uses a small number of
+ * transitions/animations; this neutralises them for users who opt out, per
+ * WCAG 2.3.3, without removing any functionality. */
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* Comfortable touch targets on small screens. Scoped tightly to standard form
+ * buttons so dense toolbars and icon buttons are left untouched. Helps mobile
+ * and tablet usability (WCAG 2.5.5 target size). */
+@media all and (max-width: 800px) {
+	.gwt-Button,
+	button,
+	input[type="button"],
+	input[type="submit"],
+	input[type="reset"] {
+		min-height: var(--unitime-touch-target, 40px);
+	}
+}
+
+
+/* ==========================================================================
+ * Shared Visual Modernization (Phase A)
+ * --------------------------------------------------------------------------
+ * Modernizes the look shared by every page (typography + calm default form
+ * controls) without touching page markup. Two safety techniques are used:
+ *   1. `* { box-sizing: border-box }` is global, so added border/padding never
+ *      changes a control's footprint (no layout shift).
+ *   2. Default control styling is wrapped in :where() (zero specificity) so ANY
+ *      pre-existing rule wins. Special-cased controls (e.g. transparent-border
+ *      read-only suggest boxes) therefore keep their intended appearance.
+ * Additive and self-contained; removable as a unit.
+ * ========================================================================== */
+
+/* Modern, legible system font stack (previously "sans-serif, verdana, arial",
+ * which selected a generic default first). Typography is the single biggest
+ * safe visual uplift and applies app-wide via .unitime-Body. */
+.unitime-Body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	line-height: 1.4;
+	color: var(--unitime-text, #333333);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-rendering: optimizeLegibility;
+}
+
+/* Native form controls do not inherit font by default; make them match the page
+ * so forms look consistent and modern. Element selectors here (intentionally
+ * applied). */
+input, select, textarea, button, optgroup {
+	font-family: inherit;
+	font-size: inherit;
+	line-height: normal;
+}
+
+/* Calm default appearance for plain text-like inputs, selects and textareas.
+ * :where() => zero specificity => never overrides an existing per-control rule. */
+:where(
+	input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]),
+	select,
+	textarea
+) {
+	padding: 4px 6px;
+	border: 1px solid var(--unitime-border, #9CB0CE);
+	border-radius: var(--unitime-radius, 3px);
+	background-color: #ffffff;
+	color: var(--unitime-text, #333333);
+}
+:where(
+	input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]),
+	select,
+	textarea
+):hover {
+	border-color: #6991CE;
+}
+
+/* Classic buttons (bare <button> and Struts submit/button/reset inputs). The GWT
+ * theme's own .gwt-Button is excluded and, being class-based, already outranks
+ * these zero-specificity defaults regardless. */
+:where(button:not(.gwt-Button), input[type="submit"], input[type="button"], input[type="reset"]) {
+	padding: 5px 12px;
+	border: 1px solid var(--unitime-border, #9CB0CE);
+	border-radius: var(--unitime-radius, 3px);
+	background-color: #f2f6fc;
+	color: var(--unitime-text, #333333);
+	cursor: pointer;
+}
+:where(button:not(.gwt-Button), input[type="submit"], input[type="button"], input[type="reset"]):hover {
+	background-color: #e3ecf9;
+	border-color: #6991CE;
+}
+:where(button:not(.gwt-Button), input[type="submit"], input[type="button"], input[type="reset"]):active {
+	background-color: #d0e4f6;
+}
+:where(button:not(.gwt-Button), input[type="submit"], input[type="button"], input[type="reset"]):disabled {
+	opacity: 0.55;
+	cursor: default;
+}

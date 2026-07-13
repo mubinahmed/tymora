@@ -26,7 +26,7 @@
 <%@ taglib prefix="loc" uri="http://www.unitime.org/tags-localization" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jstl/core_rt" %>
 <loc:bundle name="CourseMessages">
-<html>
+<html lang="<%=Localization.getFirstLocale()%>">
 <head>
 	<meta http-equiv="pragma" content="no-cache">
 	<meta http-equiv="cache-control" content="no-cache">
@@ -75,7 +75,7 @@
 	<INPUT type="hidden" name="cs" value="login">
 	<s:hidden name="menu"/>
 	<s:hidden name="target"/>
-	<div class='unitime-Login'>
+	<div class='unitime-Login' role="main" aria-label="Login">
 		<span class="mobile-menu-button" id='UniTimeGWT:MobileMenuButton'></span>
 		<span class='logo'><img src="images/unitime.png" border="0" alt="UniTime"></span>
 		<span class='header'>
@@ -93,13 +93,13 @@
 					<span class="row">
 						<span class="left-cell"><loc:message name="propertyUsername"/></span>
 						<span class="right-cell">
-							<input type='text' name='username' value='<c:if test="${not empty SPRING_SECURITY_LAST_USERNAME}"><c:out value="${SPRING_SECURITY_LAST_USERNAME}"/></c:if>' aria-label='${MSG.ariaEnterUserName()}' id='username'/>
+							<input type='text' name='username' value='<c:if test="${not empty SPRING_SECURITY_LAST_USERNAME}"><c:out value="${SPRING_SECURITY_LAST_USERNAME}"/></c:if>' aria-label='${MSG.ariaEnterUserName()}' id='username' autocomplete='username'/>
 						</span>
 					</span>
 					<span class="row">
 						<span class="left-cell"><loc:message name="propertyPassword"/></span>
 						<span class="right-cell">
-							<input type='password' name='password' aria-label='${MSG.ariaEnterPassword()}'>
+							<input type='password' name='password' id='password' aria-label='${MSG.ariaEnterPassword()}' autocomplete='current-password'>
 						</span>
 					</span>
 				</span>

@@ -332,36 +332,36 @@ function checkNumberOfRooms(nbrRooms, id) {
 		<TD>&nbsp;</TD>
 		<TD align="center" valign="top" nowrap>
 			<s:if test="form.readOnlyClasses[#ctr] == 'false' && form.classCanMoveUp[#ctr] == true">
-				<IMG border="0" src="images/arrow_up.png" align='middle' title="${MSG.titleMoveClassUp()}"
+				<IMG border="0" src="images/arrow_up.png" align='middle' title="${MSG.titleMoveClassUp()}" alt="${MSG.titleMoveClassUp()}"
 					onmouseover="this.style.cursor='hand';this.style.cursor='pointer';"
 					onclick="doClick('moveUp', '${c}');">
 		</s:if></TD>
 		<TD align="center" valign="top" nowrap>
 			<s:if test="form.readOnlyClasses[#ctr] == 'false' && form.classCanMoveDown[#ctr] == true">
-				<IMG border="0" src="images/arrow_down.png" align='middle' title="${MSG.titleMoveClassDown()}"
+				<IMG border="0" src="images/arrow_down.png" align='middle' title="${MSG.titleMoveClassDown()}" alt="${MSG.titleMoveClassDown()}"
 					onmouseover="this.style.cursor='hand';this.style.cursor='pointer';"
 					onclick="doClick('moveDown', '${c}');">
 		</s:if></TD>
 		<TD align="center" valign="top" nowrap>
 			<s:if test="form.readOnlyClasses[#ctr] == 'false' && form.canDelete[#ctr] == true">
-				<IMG border="0" src="images/action_delete.png" align='middle' title="${MSG.titleRemoveClassFromIO()}"
+				<IMG border="0" src="images/action_delete.png" align='middle' title="${MSG.titleRemoveClassFromIO()}" alt="${MSG.titleRemoveClassFromIO()}"
 					onmouseover="this.style.cursor='hand';this.style.cursor='pointer';"
 					onclick="doClick('delete', '${c}');">
 		</s:if></TD>
 		<TD align="center" valign="top" nowrap>
 			<s:if test="form.isCancelled[#ctr] == false">
-				<IMG border="0" src="images/action_add.png" align='middle' title="${MSG.titleAddClassToIO()}"
+				<IMG border="0" src="images/action_add.png" align='middle' title="${MSG.titleAddClassToIO()}" alt="${MSG.titleAddClassToIO()}"
 					onmouseover="this.style.cursor='hand';this.style.cursor='pointer';"
 					onclick="doClick('add', '${c}');">
 		</s:if></TD>
 		<TD align="center" valign="top" nowrap>
 			<s:if test="form.canCancel[#ctr] == true">
 				<s:if test="form.isCancelled[#ctr] == true">
-					<IMG border="0" src="images/reopen.png" align='middle' title="${MSG.titleReopenClass()}"
+					<IMG border="0" src="images/reopen.png" align='middle' title="${MSG.titleReopenClass()}" alt="${MSG.titleReopenClass()}"
 						onmouseover="this.style.cursor='hand';this.style.cursor='pointer';"
 						onclick="doClick('reopen', '${c}');">
 			</s:if><s:else>
-					<IMG border="0" src="images/cancel.png" align='middle' title="${MSG.titleCancelClass()}"
+					<IMG border="0" src="images/cancel.png" align='middle' title="${MSG.titleCancelClass()}" alt="${MSG.titleCancelClass()}"
 						onmouseover="this.style.cursor='hand';this.style.cursor='pointer';"
 						onclick="doClick('cancel', '${c}');">
 		</s:else></s:if></TD>
