@@ -1,0 +1,78 @@
+<p-dialog
+  [header]="isEdit() ? 'Edit Attribute' : 'New Attribute'"
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  [modal]="true"
+  [style]="{ width: '50rem' }"
+  [draggable]="false"
+  [dismissableMask]="true"
+>
+  <form [formGroup]="form" class="building-form" (ngSubmit)="submit()">
+    <div class="field">
+      <label for="a-code">Code *</label>
+      <input pInputText id="a-code" formControlName="code" autocomplete="off" />
+      @if (form.controls.code.invalid && form.controls.code.touched) {
+        <p-message severity="error" text="Code is required" />
+      }
+    </div>
+
+    <div class="field">
+      <label for="a-name">Name *</label>
+      <input pInputText id="a-name" formControlName="name" autocomplete="off" />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <p-message severity="error" text="Name is required" />
+      }
+    </div>
+
+    <div class="field">
+      <label for="a-type">Type *</label>
+      <p-select
+        inputId="a-type"
+        formControlName="typeId"
+        [options]="types()"
+        optionLabel="label"
+        optionValue="id"
+        placeholder="Select type"
+        appendTo="body"
+      />
+      @if (form.controls.typeId.invalid && form.controls.typeId.touched) {
+        <p-message severity="error" text="Type is required" />
+      }
+    </div>
+  </form>
+
+  <div class="membership">
+    <label class="membership-label">Instructors</label>
+    @if (loadingInstructors()) {
+      <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+    } @else if (instructorsError()) {
+      <p-message severity="warn" [text]="'Could not load instructors: ' + instructorsError()" />
+    } @else {
+      <p-pickList
+        [source]="available()"
+        [target]="members()"
+        dataKey="id"
+        sourceHeader="Available"
+        targetHeader="Has this attribute"
+        [showSourceControls]="false"
+        [showTargetControls]="false"
+        [dragdrop]="true"
+        filterBy="formattedName,lastName,firstName"
+        sourceFilterPlaceholder="Search instructors"
+        targetFilterPlaceholder="Search instructors"
+        [responsive]="true"
+        breakpoint="1000px"
+        scrollHeight="14rem"
+      >
+        <ng-template let-i pTemplate="item">
+          <span>{{ instructorName(i) }}</span>
+        </ng-template>
+      </p-pickList>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" [disabled]="saving()" />
+    <p-button [label]="isEdit() ? 'Save' : 'Create'" icon="pi pi-check" (onClick)="submit()" [loading]="saving()" />
+  </ng-template>
+</p-dialog>

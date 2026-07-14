@@ -1,0 +1,82 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else {
+  <div class="offering-search">
+    <div class="search-bar">
+      <p-select
+        [options]="subjectAreas()"
+        optionValue="id"
+        [(ngModel)]="subjectAreaId"
+        (onChange)="loadRequests()"
+        placeholder="Select subject area"
+        [filter]="true"
+        filterBy="abbv,label"
+        appendTo="body"
+        styleClass="sa-select"
+      >
+        <ng-template let-sa pTemplate="selectedItem">{{ sa.abbv }} — {{ sa.label }}</ng-template>
+        <ng-template let-sa pTemplate="item">{{ sa.abbv }} — {{ sa.label }}</ng-template>
+      </p-select>
+    </div>
+
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" />
+    }
+
+    @if (loadingList()) {
+      <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+    } @else if (searched()) {
+      <p-table
+        #dt
+        [value]="requests()"
+        [paginator]="requests().length > 25"
+        [rows]="25"
+        [globalFilterFields]="['course.courseName']"
+        dataKey="requestId"
+        styleClass="p-datatable-sm p-datatable-striped"
+      >
+        <ng-template pTemplate="caption">
+          <div class="tbl-caption">
+            <span>{{ requests().length }} request(s)</span>
+            <span class="spacer"></span>
+            <input pInputText type="text" placeholder="Filter…"
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Course</th>
+            <th>Sections</th>
+            <th>Load</th>
+            <th>Instructors</th>
+            <th></th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-r>
+          <tr [class.conflict-row]="r.conflict">
+            <td>{{ r.course?.courseName }}</td>
+            <td>{{ sections(r) }}</td>
+            <td>{{ r.load }}</td>
+            <td>
+              <span [class.under]="(r.instructors?.length ?? 0) < (r.nrInstructors ?? 0)">
+                {{ r.instructors?.length ?? 0 }}/{{ r.nrInstructors ?? 0 }}
+              </span>
+              @if (r.instructors?.length) { — {{ instructorNames(r) }} }
+            </td>
+            <td>
+              @if (r.conflict) { <p-tag value="Conflict" severity="danger" /> }
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="5">No teaching requests in this subject area.</td></tr>
+        </ng-template>
+      </p-table>
+    } @else {
+      <p class="hint">Select a subject area to list its teaching requests.</p>
+    }
+  </div>
+}

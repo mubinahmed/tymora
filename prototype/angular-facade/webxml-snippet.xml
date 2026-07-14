@@ -1,0 +1,16 @@
+<!--
+  Add these to WebContent/WEB-INF/web.xml to activate the facade.
+  This is the ONLY change to an existing file; it edits no Java and no
+  business logic. The servlet lives at /api/rpc/* and is covered by the
+  existing springSecurityFilterChain (same session + CSRF as the rest of
+  the app), because that filter is mapped to /*.
+-->
+<servlet>
+    <servlet-name>restRpcServlet</servlet-name>
+    <servlet-class>org.unitime.timetable.rest.RestRpcServlet</servlet-class>
+    <load-on-startup>2</load-on-startup>
+</servlet>
+<servlet-mapping>
+    <servlet-name>restRpcServlet</servlet-name>
+    <url-pattern>/api/rpc/*</url-pattern>
+</servlet-mapping>

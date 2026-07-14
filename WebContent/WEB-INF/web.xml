@@ -111,7 +111,19 @@
     	<servlet-name>mapServlet</servlet-name>
     	<servlet-class>org.unitime.timetable.server.rooms.StaticMapServlet</servlet-class>
     </servlet>
-    
+
+    <servlet>
+    	<servlet-name>restRpcServlet</servlet-name>
+    	<servlet-class>org.unitime.timetable.rest.RestRpcServlet</servlet-class>
+    	<load-on-startup>2</load-on-startup>
+    </servlet>
+
+    <servlet>
+    	<servlet-name>restServiceServlet</servlet-name>
+    	<servlet-class>org.unitime.timetable.rest.RestServiceServlet</servlet-class>
+    	<load-on-startup>2</load-on-startup>
+    </servlet>
+
     <servlet-mapping>
         <servlet-name>gwt-dispatcher</servlet-name>
         <url-pattern>*.gwt</url-pattern>
@@ -157,6 +169,16 @@
       <url-pattern>/taskfile</url-pattern>
     </servlet-mapping>
     
+    <servlet-mapping>
+      <servlet-name>restRpcServlet</servlet-name>
+      <url-pattern>/api/rpc/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>restServiceServlet</servlet-name>
+      <url-pattern>/api/service/*</url-pattern>
+    </servlet-mapping>
+
     <servlet-mapping>
       <servlet-name>apiServlet</servlet-name>
       <url-pattern>/api/*</url-pattern>

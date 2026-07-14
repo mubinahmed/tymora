@@ -1,0 +1,117 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else if (data(); as d) {
+  <p-table
+    #dt
+    [value]="d.records ?? []"
+    [paginator]="(d.records?.length ?? 0) > 25"
+    [rows]="25"
+    [rowsPerPageOptions]="[25, 50, 100]"
+    dataKey="uniqueId"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ d.records?.length ?? 0 }} record(s)</span>
+        <span class="spacer"></span>
+        @if (addable() && editable()) {
+          <p-button label="New" icon="pi pi-plus" (onClick)="openCreate()" />
+        }
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        @for (col of columns(); track col.index) {
+          <th>{{ col.field.name }}</th>
+        }
+        @if (editable()) { <th class="col-actions"></th> }
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-record>
+      <tr>
+        @for (col of columns(); track col.index) {
+          <td>
+            @if (isToggle(col.field)) {
+              @if (isChecked(record, col)) { <i class="pi pi-check"></i> } @else { — }
+            } @else {
+              {{ display(record, col) }}
+            }
+          </td>
+        }
+        @if (editable()) {
+          <td class="row-actions">
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="openEdit(record)" />
+            @if (record.deletable !== false) {
+              <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(record)" />
+            }
+          </td>
+        }
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td [attr.colspan]="columns().length + 1">No records.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <!-- generic record editor, built from the field metadata -->
+  <p-dialog
+    [header]="edit()?.uniqueId ? 'Edit' : 'New'"
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [modal]="true"
+    [style]="{ width: '40rem' }"
+    [draggable]="false"
+    [dismissableMask]="true"
+  >
+    @if (edit(); as e) {
+      <div class="building-form">
+        @for (col of columns(); track col.index) {
+          <div class="field">
+            <label>{{ col.field.name }}@if (isRequired(col.field)) { * }</label>
+
+            @if (isReadonly(col.field)) {
+              <input pInputText [value]="e.values[col.index]" disabled />
+            } @else if (col.field.type === 'toggle') {
+              <p-checkbox
+                [binary]="true"
+                [ngModel]="e.values[col.index] === 'true'"
+                (ngModelChange)="setValue(col.index, $event ? 'true' : 'false')"
+              />
+            } @else if (col.field.type === 'list') {
+              <p-select
+                [options]="col.field.values ?? []"
+                optionLabel="text"
+                optionValue="value"
+                [showClear]="!isRequired(col.field)"
+                appendTo="body"
+                [ngModel]="e.values[col.index]"
+                (ngModelChange)="setValue(col.index, $event)"
+              />
+            } @else if (col.field.type === 'textarea') {
+              <textarea pTextarea rows="3"
+                [ngModel]="e.values[col.index]"
+                (ngModelChange)="setValue(col.index, $event)"></textarea>
+            } @else {
+              <input pInputText
+                [ngModel]="e.values[col.index]"
+                (ngModelChange)="setValue(col.index, $event)" />
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="dialogVisible.set(false)" [disabled]="saving()" />
+      <p-button [label]="edit()?.uniqueId ? 'Save' : 'Create'" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+    </ng-template>
+  </p-dialog>
+
+  <p-confirmDialog />
+}

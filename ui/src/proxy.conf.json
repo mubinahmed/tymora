@@ -1,0 +1,9 @@
+{
+  "//": "Dev proxy: forward facade + legacy backend calls to the running UniTime server. Adjust target/context-path to your deployment (e.g. http://localhost:8080/UniTime).",
+  "/api": { "target": "http://localhost:8080", "secure": false, "changeOrigin": true },
+  "/unitime": { "target": "http://localhost:8080", "secure": false, "changeOrigin": true },
+  "/login": { "target": "http://localhost:8080", "secure": false, "changeOrigin": true },
+  "/login.action": { "target": "http://localhost:8080", "secure": false, "changeOrigin": true },
+  "/logout.action": { "target": "http://localhost:8080", "secure": false, "changeOrigin": true },
+  "/gwt.jsp": { "target": "http://localhost:8080", "secure": false, "changeOrigin": true }
+}

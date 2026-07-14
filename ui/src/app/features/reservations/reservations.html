@@ -1,0 +1,66 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="reservations()"
+    [paginator]="true"
+    [rows]="20"
+    [rowsPerPageOptions]="[20, 50, 100]"
+    [globalFilterFields]="['offering.name']"
+    sortField="offering.name"
+    [sortOrder]="1"
+    dataKey="id"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ reservations().length }} reservation(s)</span>
+        <span class="spacer"></span>
+        <input pInputText type="text" placeholder="Search offering…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="offering.name">Offering <p-sortIcon field="offering.name" /></th>
+        <th pSortableColumn="limit">Limit <p-sortIcon field="limit" /></th>
+        <th pSortableColumn="enrollment">Enrolled <p-sortIcon field="enrollment" /></th>
+        <th>Expires</th>
+        <th>Status</th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-r>
+      <tr>
+        <td>{{ r.offering?.name }}</td>
+        <td>{{ r.limit }}</td>
+        <td>{{ r.enrollment }}</td>
+        <td>{{ r.expirationDate ?? '—' }}</td>
+        <td>
+          @if (r.expired) {
+            <p-tag value="Expired" severity="warn" />
+          } @else {
+            <p-tag value="Active" severity="success" />
+          }
+        </td>
+        <td class="row-actions">
+          @if (r.editable) {
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(r)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="6">No reservations found.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <p-confirmDialog />
+}

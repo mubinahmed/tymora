@@ -1,0 +1,91 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back" icon="pi pi-arrow-left" (onClick)="back()" /></div>
+} @else {
+  <p-card [header]="'Course Offering · ' + courseLabel()">
+    <form [formGroup]="form" class="building-form" (ngSubmit)="save()">
+      <div class="field-row">
+        <div class="field">
+          <label>Subject Area</label>
+          <input pInputText [value]="subjectArea()" disabled />
+        </div>
+        <div class="field">
+          <label for="co-nbr">Course Number *</label>
+          <input pInputText id="co-nbr" formControlName="courseNbr" autocomplete="off" />
+          @if (form.controls.courseNbr.invalid && form.controls.courseNbr.touched) {
+            <p-message severity="error" text="Course number is required" />
+          }
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="co-title">Title</label>
+        <input pInputText id="co-title" formControlName="title" autocomplete="off" />
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="co-type">Course Type</label>
+          <p-select
+            inputId="co-type"
+            formControlName="courseTypeId"
+            [options]="props()?.courseTypes ?? []"
+            optionLabel="label"
+            optionValue="id"
+            placeholder="(none)"
+            [showClear]="true"
+            appendTo="body"
+          />
+        </div>
+        <div class="field">
+          <label for="co-consent">Consent</label>
+          <p-select
+            inputId="co-consent"
+            formControlName="consent"
+            [options]="props()?.offeringConsentTypes ?? []"
+            optionLabel="label"
+            optionValue="id"
+            placeholder="(none)"
+            [showClear]="true"
+            appendTo="body"
+          />
+        </div>
+        <div class="field">
+          <label for="co-exp">Expected Students</label>
+          <p-inputNumber inputId="co-exp" formControlName="nbrExpectedStudents" [useGrouping]="false" [min]="0" />
+        </div>
+      </div>
+
+      <div class="field-check">
+        <p-checkbox inputId="co-resv" formControlName="byReservationOnly" [binary]="true" />
+        <label for="co-resv">By reservation only</label>
+      </div>
+
+      <div class="field">
+        <label for="co-sbn">Schedule Book Note</label>
+        <input pInputText id="co-sbn" formControlName="scheduleBookNote" autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <label for="co-notes">Notes</label>
+        <textarea pTextarea id="co-notes" formControlName="notes" rows="3"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Credit</label>
+        <input pInputText [value]="creditText() || '(none)'" disabled />
+        <small>Credit configuration, cross-listing, and coordinators are edited on the legacy screen.</small>
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <div class="tbl-caption">
+        <p-button label="Back" severity="secondary" [text]="true" icon="pi pi-arrow-left" (onClick)="back()" [disabled]="saving()" />
+        <span class="spacer"></span>
+        <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+      </div>
+    </ng-template>
+  </p-card>
+}

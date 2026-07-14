@@ -1,0 +1,75 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="departments()"
+    [paginator]="true"
+    [rows]="20"
+    [rowsPerPageOptions]="[20, 50, 100]"
+    [globalFilterFields]="['deptCode', 'abbreviation', 'name', 'externalId']"
+    sortField="deptCode"
+    [sortOrder]="1"
+    dataKey="uniqueId"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ departments().length }} department(s)</span>
+        <span class="spacer"></span>
+        <input pInputText type="text" placeholder="Search…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+        <p-button label="New" icon="pi pi-plus" [disabled]="!canAdd()" (onClick)="openCreate()" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="deptCode">Code <p-sortIcon field="deptCode" /></th>
+        <th pSortableColumn="abbreviation">Abbv <p-sortIcon field="abbreviation" /></th>
+        <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+        <th>Status</th>
+        <th>Manager</th>
+        <th pSortableColumn="subjectAreaCount">Subjects <p-sortIcon field="subjectAreaCount" /></th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-d>
+      <tr>
+        <td>{{ d.deptCode }}</td>
+        <td>{{ d.abbreviation }}</td>
+        <td>{{ d.name }}</td>
+        <td>{{ d.statusType }}</td>
+        <td>
+          @if (d.externalManager) {
+            <p-tag [value]="d.externalMgrLabel || d.externalMgrAbbv || 'External'" severity="info" />
+          } @else { — }
+        </td>
+        <td>{{ d.subjectAreaCount }}</td>
+        <td class="row-actions">
+          <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="openEdit(d)" />
+          <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(d)" />
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="7">No departments found.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <app-department-dialog
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [item]="editing()"
+    [statuses]="statuses()"
+    [fundingEnabled]="fundingEnabled()"
+    (saved)="onSaved()"
+  />
+
+  <p-confirmDialog />
+}

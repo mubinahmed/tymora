@@ -1,0 +1,26 @@
+<div class="login-page">
+  <p-card styleClass="login-card">
+    <div class="login-brand">
+      <i class="pi pi-calendar"></i>
+      <span>UniTime</span>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+      @if (failed()) {
+        <p-message severity="error" text="Invalid username or password." />
+      }
+
+      <div class="field">
+        <label for="l-user">Username</label>
+        <input pInputText id="l-user" formControlName="username" autocomplete="username" autofocus />
+      </div>
+
+      <div class="field">
+        <label for="l-pass">Password</label>
+        <input pInputText id="l-pass" type="password" formControlName="password" autocomplete="current-password" />
+      </div>
+
+      <p-button type="submit" label="Sign In" icon="pi pi-sign-in" [loading]="submitting()" styleClass="login-submit" />
+    </form>
+  </p-card>
+</div>

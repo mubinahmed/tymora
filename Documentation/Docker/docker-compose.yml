@@ -43,9 +43,21 @@ services:
             context: ..
             dockerfile: docker/tomcat.Dockerfile
         ports:
-            - 8888:8080 
+            - 8888:8080
         volumes:
             - "unitime-data:/usr/local/tomcat/data"
+
+    # Angular front-end: builds the SPA and serves it via nginx, reverse-proxying
+    # /api, /login, /logout.action, /gwt.jsp, /unitime to unitime-web (same origin).
+    unitime-ui:
+        container_name: unitime-ui
+        depends_on:
+            - unitime-web
+        build:
+            context: ../../ui
+            dockerfile: Dockerfile
+        ports:
+            - 4200:80
 
 volumes:
     unitime-data:

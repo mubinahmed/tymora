@@ -1,0 +1,51 @@
+<p-toast position="top-right" />
+
+@if (authenticated()) {
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div class="brand">
+        <i class="pi pi-calendar"></i>
+        <span class="brand-name">UniTime</span>
+        @if (page.title()) {
+          <span class="page-title">/ {{ page.title() }}</span>
+        }
+        @if (page.helpUrl()) {
+          <a class="help" [href]="page.helpUrl()" target="_blank" rel="noopener" title="Help">
+            <i class="pi pi-question-circle"></i>
+          </a>
+        }
+      </div>
+      <div class="topbar-right">
+        @if (session()?.session) {
+          <span class="session" title="Academic session">{{ session()!.session }}</span>
+        }
+        <span class="user">{{ userLabel() }}</span>
+        <p-button icon="pi pi-sign-out" [text]="true" severity="contrast" title="Sign out" (onClick)="logout()" />
+      </div>
+    </header>
+
+    <div class="app-body">
+      <nav class="app-sidebar">
+        @if (menuItems().length) {
+          <p-panelMenu [model]="menuItems()" styleClass="w-full" />
+        } @else {
+          <div class="menu-empty">Loading menu…</div>
+        }
+      </nav>
+
+      <main class="app-content">
+        <router-outlet />
+      </main>
+    </div>
+
+    <footer class="app-footer">
+      @if (version(); as v) {
+        <span>UniTime {{ v.version }} · build {{ v.buildNumber }} · {{ v.releaseDate }}</span>
+      } @else {
+        <span>UniTime</span>
+      }
+    </footer>
+  </div>
+} @else {
+  <router-outlet />
+}
