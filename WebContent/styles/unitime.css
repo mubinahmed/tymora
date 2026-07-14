@@ -8140,3 +8140,128 @@ input, select, textarea, button, optgroup {
 	opacity: 0.55;
 	cursor: default;
 }
+
+
+/* ==========================================================================
+ * Modern Menu (Bootstrap 5 / PrimeNG p-menubar style)
+ * --------------------------------------------------------------------------
+ * Restyles the GWT MenuBar top navigation (.unitime-Menu = .gwt-MenuBar) and
+ * its dropdown popups (.gwt-MenuBarPopup, a GWT DecoratedPopupPanel) into a
+ * clean light navbar with white card dropdowns. CSS-only: no markup or menu
+ * logic changes. The legacy GWT-theme gradient/corner images are neutralised
+ * with `background-image: none`; !important is used only where needed to beat
+ * the standard.css theme. To switch to a solid brand-colour navbar instead,
+ * change the .unitime-Menu background + item colours (noted inline).
+ * ========================================================================== */
+
+/* ---- Top horizontal navbar ---- */
+.unitime-Menu.gwt-MenuBar-horizontal,
+.unitime-Menu {
+	background: #f5f7fa !important;              /* colored navbar: set to #2952A3 */
+	background-image: none !important;
+	border: none !important;
+	border-bottom: 1px solid var(--unitime-border, #9CB0CE) !important;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+	padding: 0 6px;
+}
+
+/* top-level items */
+.unitime-Menu .gwt-MenuItem {
+	color: var(--unitime-text, #333333);         /* colored navbar: set to #fff */
+	background: transparent !important;
+	background-image: none !important;
+	border: none !important;
+	padding: 7px 14px;
+	font-weight: 500;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* top-level hover / open (GWT toggles -selected on mouseover) */
+.unitime-Menu .gwt-MenuItem-selected,
+.unitime-Menu .gwt-MenuItem:hover {
+	color: var(--unitime-accent, #2952A3);       /* colored navbar: set to #fff */
+	background: rgba(41, 82, 163, 0.10) !important;
+	background-image: none !important;
+}
+
+/* ---- Dropdown popups (card look) ---- */
+/* Neutralise the legacy 9-cell decorator images and collapse the edge cells. */
+.gwt-MenuBarPopup [class*="menuPopup"] {
+	background: none !important;
+	background-image: none !important;
+	border: none !important;
+}
+.gwt-MenuBarPopup .menuPopupTopLeft,
+.gwt-MenuBarPopup .menuPopupTopLeftInner,
+.gwt-MenuBarPopup .menuPopupTopCenter,
+.gwt-MenuBarPopup .menuPopupTopCenterInner,
+.gwt-MenuBarPopup .menuPopupTopRight,
+.gwt-MenuBarPopup .menuPopupTopRightInner,
+.gwt-MenuBarPopup .menuPopupBottomLeft,
+.gwt-MenuBarPopup .menuPopupBottomLeftInner,
+.gwt-MenuBarPopup .menuPopupBottomCenter,
+.gwt-MenuBarPopup .menuPopupBottomCenterInner,
+.gwt-MenuBarPopup .menuPopupBottomRight,
+.gwt-MenuBarPopup .menuPopupBottomRightInner,
+.gwt-MenuBarPopup .menuPopupMiddleLeft,
+.gwt-MenuBarPopup .menuPopupMiddleLeftInner,
+.gwt-MenuBarPopup .menuPopupMiddleRight,
+.gwt-MenuBarPopup .menuPopupMiddleRightInner {
+	width: 0;
+	height: 0;
+	padding: 0;
+	font-size: 0;
+	line-height: 0;
+}
+
+/* The card surface itself */
+.gwt-MenuBarPopup {
+	background: #ffffff !important;
+	background-image: none !important;
+	border: 1px solid rgba(0, 0, 0, 0.12);
+	border-radius: 6px;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+	margin-top: 2px;
+}
+.gwt-MenuBarPopup .menuPopupMiddleCenter,
+.gwt-MenuBarPopup .menuPopupMiddleCenterInner {
+	padding: 6px 0 !important;
+}
+
+/* dropdown menu bar + items */
+.gwt-MenuBarPopup .gwt-MenuBar-vertical {
+	background: transparent !important;
+	background-image: none !important;
+	border: none !important;
+}
+.gwt-MenuBarPopup .gwt-MenuItem {
+	color: var(--unitime-text, #333333);
+	background: transparent !important;
+	background-image: none !important;
+	border: none !important;
+	padding: 7px 20px;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background-color 0.12s ease, color 0.12s ease;
+}
+.gwt-MenuBarPopup .gwt-MenuItem-selected,
+.gwt-MenuBarPopup .gwt-MenuItem:hover {
+	color: var(--unitime-accent, #2952A3);
+	background: #eaf1fb !important;
+	background-image: none !important;
+}
+
+/* separators as thin dividers */
+.gwt-MenuItemSeparator,
+.gwt-MenuItemSeparator .menuSeparatorInner {
+	background: none !important;
+	background-image: none !important;
+	border: none !important;
+}
+.gwt-MenuItemSeparator .menuSeparatorInner {
+	height: 1px;
+	background: rgba(0, 0, 0, 0.10) !important;
+	margin: 5px 10px;
+}
