@@ -26,15 +26,17 @@ public class ChameleonSwitchBackend implements GwtRpcImplementation<ChameleonSwi
 
 	@Override
 	public GwtRpcResponseNull execute(ChameleonSwitchRequest request, SessionContext context) {
-		context.checkPermission(Right.Chameleon);
+		// A user who is already masquerading may switch/stop without holding the
+		// Chameleon right (matches ChameleonAction.execute); everyone else needs it.
+		UserContext user = context.getUser();
+		if (user instanceof UserContext.Chameleon)
+			user = ((UserContext.Chameleon) user).getOriginalUserContext();
+		else
+			context.checkPermission(Right.Chameleon);
 
 		// Clear per-session state carried over from the previous identity.
 		for (SessionAttribute a : SessionAttribute.values())
 			context.removeAttribute(a);
-
-		UserContext user = context.getUser();
-		if (user instanceof UserContext.Chameleon)
-			user = ((UserContext.Chameleon) user).getOriginalUserContext();
 
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication instanceof ChameleonAuthentication)

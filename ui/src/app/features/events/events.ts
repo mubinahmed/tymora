@@ -22,6 +22,7 @@ import {
   ResourceLookupRpcRequest,
   ResourceType,
   RoomFilterRpcRequest,
+  RPC_ROOM_FILTER,
 } from '../../core/models';
 
 interface PickerItem {
@@ -107,7 +108,7 @@ export class Events implements OnInit {
     this.loading.set(true);
     if (this.resourceType === 'ROOM') {
       const request: RoomFilterRpcRequest = { command: 'ENUMERATE', options: {} };
-      this.rpc.execute<FilterRpcResponse>('RoomFilterRpcRequest', request).subscribe({
+      this.rpc.execute<FilterRpcResponse>(RPC_ROOM_FILTER, request).subscribe({
         next: (res) => {
           this.picks.set((res.entities?.['results'] ?? []).map((e: Entity) => ({ id: e.uniqueId!, label: e.name ?? '' })));
           this.loading.set(false);

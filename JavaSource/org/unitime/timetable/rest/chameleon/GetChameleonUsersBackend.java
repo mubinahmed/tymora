@@ -20,11 +20,16 @@ public class GetChameleonUsersBackend implements GwtRpcImplementation<GetChamele
 
 	@Override
 	public GetChameleonUsersResponse execute(GetChameleonUsersRequest request, SessionContext context) {
-		context.checkPermission(Right.Chameleon);
-		GetChameleonUsersResponse response = new GetChameleonUsersResponse();
-
+		// A user who is already masquerading may open this screen (to stop or switch)
+		// even without the Chameleon right — matches UserInfoBackend/ChameleonAction,
+		// which treat "is a Chameleon" as sufficient. Otherwise the right is required.
 		UserContext user = context.getUser();
-		response.setMasquerading(user instanceof UserContext.Chameleon);
+		boolean masquerading = (user instanceof UserContext.Chameleon);
+		if (!masquerading)
+			context.checkPermission(Right.Chameleon);
+
+		GetChameleonUsersResponse response = new GetChameleonUsersResponse();
+		response.setMasquerading(masquerading);
 		if (user != null)
 			response.setCurrentName(user.getName());
 

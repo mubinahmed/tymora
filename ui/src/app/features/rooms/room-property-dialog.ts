@@ -24,6 +24,7 @@ import {
   RoomInterface_DepartmentInterface,
   UpdateRoomFeatureRequest,
   UpdateRoomGroupRequest,
+  RPC_ROOM_FILTER,
 } from '../../core/models';
 
 export type RoomPropertyKind = 'group' | 'feature';
@@ -127,7 +128,7 @@ export class RoomPropertyDialog {
     this.loadingRooms.set(true);
     this.roomsError.set(null);
     const request: RoomFilterRpcRequest = { command: 'ENUMERATE', options: {} };
-    this.rpc.execute<FilterRpcResponse>('RoomFilterRpcRequest', request).subscribe({
+    this.rpc.execute<FilterRpcResponse>(RPC_ROOM_FILTER, request).subscribe({
       next: (res) => {
         this.allRooms = res.entities?.['results'] ?? [];
         this.roomsLoaded = true;
