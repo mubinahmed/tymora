@@ -51,10 +51,13 @@ docker compose up --build
 - `http.interceptor.ts` — `withCredentials`, error normalization, 401 → in-app `/signin`.
 - `features/auth/login.ts` — **login screen** (`/signin`). Posts `username`/`password` to
   Spring Security's form-login URL (`/login`, CSRF disabled) via `AuthService.login`,
-  re-checks auth, and returns to the requested route. Shell chrome is hidden until
-  authenticated (login is full-page); the topbar has a sign-out button
-  (`AuthService.logout` → `/logout.action`). SSO deployments would swap the form for a
-  "Sign in with…" link — this covers the default/LDAP username-password configs.
+  re-checks auth, and returns to the requested route. **Multi-role accounts:** login then
+  GETs `selectPrimaryRole.action`, which auto-assigns a default authority (verified live:
+  `admin` → `/login` 302 → `/selectPrimaryRole.action` 302 → `/main.action` authenticated).
+  Accounts with several roles and no default get a link to the classic page to pick one.
+  Shell chrome is hidden until authenticated (login is full-page); the topbar has a
+  sign-out button (`AuthService.logout` → `/logout.action`). SSO deployments would swap
+  the form for a "Sign in with…" link — this covers the default/LDAP configs.
 - `app.config.ts` — zoneless CD, router, HttpClient + XSRF, PrimeNG/Aura.
 - `auth.service.ts` — user / academic-session / build-version signals.
 - `auth.guard.ts` — route guard (loads auth; enforcement hook for later waves).

@@ -7,7 +7,10 @@
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
       @if (failed()) {
-        <p-message severity="error" text="Invalid username or password." />
+        <p-message severity="error" text="Couldn't sign you in. Check your username and password." />
+        <a class="login-classic" href="login.action">
+          Multiple roles with no default? Sign in on the classic page →
+        </a>
       }
 
       <div class="field">

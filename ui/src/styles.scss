@@ -177,6 +177,8 @@ body {
     .field input { width: 100%; }
   }
   .login-submit { width: 100%; }
+  .login-classic { font-size: 0.78rem; color: var(--p-primary-color, #0b5fff); text-decoration: none; }
+  .login-classic:hover { text-decoration: underline; }
 }
 
 .building-form {

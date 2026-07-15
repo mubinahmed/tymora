@@ -51,10 +51,12 @@ export class AuthService {
   }
 
   /**
-   * POST credentials to Spring Security's form-login processing URL (/login,
-   * fields username/password, CSRF disabled) using a normal form POST. The
-   * server redirects on success/failure; we re-check auth to decide. No backend
-   * change — this is the same endpoint the legacy login page posts to.
+   * POST credentials to Spring Security's form-login URL (/login, fields
+   * username/password, CSRF disabled). Multi-role accounts are redirected to
+   * selectPrimaryRole.action after login; we GET it so the backend auto-assigns
+   * a default authority when the user has one (idempotent for single-role
+   * accounts). Accounts with several roles and no default still need a manual
+   * pick — the login screen offers the classic page for that. No backend change.
    */
   login(username: string, password: string): Observable<boolean> {
     const body = new HttpParams().set('username', username).set('password', password).toString();
@@ -65,6 +67,7 @@ export class AuthService {
       })
       .pipe(
         catchError(() => of('')),
+        switchMap(() => this.http.get('selectPrimaryRole.action', { responseType: 'text' }).pipe(catchError(() => of('')))),
         switchMap(() => this.refresh()),
         map(() => this.isAuthenticated()),
       );
