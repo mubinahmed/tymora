@@ -1,15 +1,22 @@
 import { inject } from '@angular/core';
-import { CanActivateFn } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
 /**
- * Ensures user/session info is loaded before a protected route renders. It
- * currently always allows navigation — data-level authorization is enforced by
- * the backend (the interceptor redirects to login on 401). When Angular owns
- * more screens, this is where route-level permission checks (from the loaded
- * user's rights) will gate access.
+ * Ensures the user is authenticated before a protected route renders. Loads
+ * user/session info once, then allows navigation if signed in, otherwise
+ * redirects to the in-app login (preserving the requested URL). This is what
+ * sends an unauthenticated visitor to /signin on first load.
  */
-export const authGuard: CanActivateFn = () => {
-  return inject(AuthService).ensureLoaded().pipe(map(() => true));
+export const authGuard: CanActivateFn = (_route, state) => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.ensureLoaded().pipe(
+    map(() =>
+      auth.isAuthenticated()
+        ? true
+        : router.createUrlTree(['/signin'], { queryParams: { returnUrl: state.url } }),
+    ),
+  );
 };
