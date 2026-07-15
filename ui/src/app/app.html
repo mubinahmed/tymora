@@ -19,7 +19,14 @@
         @if (session()?.session) {
           <span class="session" title="Academic session">{{ session()!.session }}</span>
         }
-        <span class="user">{{ userLabel() }}</span>
+        <button
+          type="button"
+          class="user-btn"
+          (click)="userAction()"
+          [title]="user()?.chameleon ? 'Masquerade as another user' : 'Change role'"
+        >
+          {{ userLabel() }}
+        </button>
         <p-button icon="pi pi-sign-out" [text]="true" severity="contrast" title="Sign out" (onClick)="logout()" />
       </div>
     </header>

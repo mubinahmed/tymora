@@ -42,4 +42,16 @@ export class App implements OnInit {
   logout(): void {
     this.auth.logout().subscribe(() => this.router.navigate(['/signin']));
   }
+
+  /**
+   * Clicking the username mirrors the GWT header: masquerade (chameleon) when the
+   * user may, otherwise switch role. Both are legacy backend pages (same tab).
+   */
+  userAction(): void {
+    if (this.user()?.chameleon) {
+      this.router.navigate(['/chameleon']); // modern in-app masquerade screen
+    } else {
+      window.location.assign('/selectPrimaryRole.action?list=Y'); // legacy role picker
+    }
+  }
 }

@@ -112,6 +112,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/sectioning/published-solutions').then((m) => m.PublishedSolutions),
   },
   {
+    path: 'chameleon',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/chameleon/chameleon').then((m) => m.Chameleon),
+  },
+  {
     // Reached from the offerings search (or the legacy detail during coexistence).
     path: 'course-offering/:id',
     canActivate: [authGuard],
