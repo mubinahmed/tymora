@@ -330,7 +330,10 @@ public class RestRpcServlet extends HttpServlet {
 		if (t instanceof IllegalArgumentException) {
 			code = HttpServletResponse.SC_BAD_REQUEST;
 			sLog.info(t.getMessage());
-		} else if (t instanceof PageAccessException || t instanceof AccessDeniedException) {
+		} else if (t instanceof PageAccessException || t instanceof AccessDeniedException
+				|| (t.getMessage() != null && t.getMessage().startsWith("Access denied"))) {
+			// GwtRpcServlet.execute wraps AccessDeniedException into GwtRpcException,
+			// so also treat an "Access denied" message as a permission failure.
 			SessionContext cx = getSessionContext();
 			boolean anon = !cx.isAuthenticated() || cx.getUser() instanceof AnonymousUserContext;
 			if (anon) { response.setHeader("WWW-Authenticate", "Basic"); code = HttpServletResponse.SC_UNAUTHORIZED; }

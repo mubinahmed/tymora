@@ -142,6 +142,13 @@ export class Solver implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Solver operations are SYNCHRONOUS: they return quickly (the solve itself runs
+   * on the server's own solver threads); the client then polls INIT while the
+   * server reports `working`. (Running these through the async facade fails —
+   * SolverPageBackend uses request-scoped state that isn't available off-thread,
+   * confirmed live — so they must not go through /api/rpc/async.)
+   */
   private runAsync(op: SolverOperation, label?: string): void {
     this.busy.set(true);
     this.error.set(null);
@@ -151,7 +158,7 @@ export class Solver implements OnInit, OnDestroy {
       ownerIds: this.ownerIds,
       configurationId: this.configurationId ?? undefined,
     };
-    this.rpc.executeAsync<SolverPageResponse>('SolverPageRequest', request, 2000).subscribe({
+    this.rpc.execute<SolverPageResponse>('SolverPageRequest', request).subscribe({
       next: (r) => {
         this.apply(r);
         this.busy.set(false);
