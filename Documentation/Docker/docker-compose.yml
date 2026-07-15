@@ -56,8 +56,9 @@ services:
         build:
             context: ../../ui
             dockerfile: Dockerfile
+        # host 8000 -> container nginx :80 (avoids the host :80 conflict)
         ports:
-            - 4200:80
+            - 8000:80
 
 volumes:
     unitime-data:

@@ -1,4 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, of, tap } from 'rxjs';
 import { MenuItem } from 'primeng/api';
 import { RpcService } from '../core/rpc.service';
@@ -15,6 +16,7 @@ import { MenuInterface } from '../core/models';
 @Injectable({ providedIn: 'root' })
 export class MenuService {
   private rpc = inject(RpcService);
+  private router = inject(Router);
 
   /** backend page key -> Angular route */
   private static readonly MIGRATED: Record<string, string> = {
@@ -61,22 +63,26 @@ export class MenuService {
       item.items = children;
       return item;
     }
-    // Admin simple-edit items all share page="admin"; the data type is a parameter.
-    if (m.page === 'admin') {
-      const type = m.parameters?.['type']?.[0];
-      if (type) {
-        item.routerLink = `/admin/${type}`;
-        return item;
-      }
-    }
-    const route = m.page ? MenuService.MIGRATED[m.page] : undefined;
+    // Use command (not routerLink/url) so PrimeNG renders no <a href/target> —
+    // that avoids items opening in a new tab and keeps navigation under our control.
+    const route = this.routeFor(m);
     if (route) {
-      item.routerLink = route;
+      item.command = () => this.router.navigateByUrl(route);
     } else if (m.page) {
-      // Coexistence: hand off to the existing backend page (full navigation).
-      item.url = this.legacyUrl(m);
+      // Coexistence: hand off to the existing backend page in the SAME tab.
+      const url = this.legacyUrl(m);
+      item.command = () => window.location.assign(url);
     }
     return item;
+  }
+
+  /** Angular route for a migrated menu entry, or undefined for legacy pages. */
+  private routeFor(m: MenuInterface): string | undefined {
+    if (m.page === 'admin') {
+      const type = m.parameters?.['type']?.[0];
+      return type ? `/admin/${type}` : undefined;
+    }
+    return m.page ? MenuService.MIGRATED[m.page] : undefined;
   }
 
   /** Best-effort reconstruction of the legacy/GWT URL from the menu entry. */

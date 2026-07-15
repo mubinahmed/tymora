@@ -13,5 +13,5 @@ RUN npm run build
 FROM nginx:1.27-alpine
 # Angular CLI outputs a browser/ subfolder under dist/<project>.
 COPY --from=build /app/dist/ui/browser /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.standalone.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80

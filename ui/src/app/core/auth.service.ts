@@ -73,11 +73,18 @@ export class AuthService {
       );
   }
 
-  /** Hit Spring Security's logout URL, then re-check (becomes unauthenticated). */
-  logout(): Observable<boolean> {
-    return this.http.get('logout.action', { responseType: 'text' }).pipe(
-      catchError(() => of('')),
-      switchMap(() => this.refresh()),
-    );
+  /**
+   * Log out: fire the server logout (clears the JSESSIONID cookie) and reset
+   * client state immediately. Fire-and-forget — we don't await/follow the
+   * server's redirect (Spring redirects to /login.action, which behind the
+   * proxy can resolve to the wrong port); the local reset is what the UI needs.
+   */
+  logout(): void {
+    this.http.get('logout.action', { responseType: 'text' }).subscribe({ next: () => {}, error: () => {} });
+    this.user.set(null);
+    this.session.set(null);
+    this.version.set(null);
+    this.loaded.set(false);
+    this.load$ = undefined;
   }
 }

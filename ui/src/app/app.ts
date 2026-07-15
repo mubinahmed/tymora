@@ -40,6 +40,7 @@ export class App implements OnInit {
   }
 
   logout(): void {
-    this.auth.logout().subscribe(() => this.router.navigate(['/signin']));
+    this.auth.logout();
+    this.router.navigate(['/signin']);
   }
 }
