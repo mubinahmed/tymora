@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, forkJoin, of } from 'rxjs';
+import { Observable, forkJoin, of, timeout } from 'rxjs';
 import { catchError, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { RpcService } from './rpc.service';
 import { SessionInfoInterface, UserInfoInterface, VersionInfoInterface } from './models';
@@ -74,17 +74,24 @@ export class AuthService {
   }
 
   /**
-   * Log out: fire the server logout (clears the JSESSIONID cookie) and reset
-   * client state immediately. Fire-and-forget — we don't await/follow the
-   * server's redirect (Spring redirects to /login.action, which behind the
-   * proxy can resolve to the wrong port); the local reset is what the UI needs.
+   * Log out: hit the server logout to clear the JSESSIONID cookie, then reset
+   * client state. We MUST await the server call before resetting/navigating —
+   * otherwise the login screen re-checks auth against a still-valid session and
+   * bounces straight back. The redirect target is ignored (catchError absorbs
+   * the cross-origin/timeout follow); clearing the cookie is what matters.
    */
-  logout(): void {
-    this.http.get('logout.action', { responseType: 'text' }).subscribe({ next: () => {}, error: () => {} });
-    this.user.set(null);
-    this.session.set(null);
-    this.version.set(null);
-    this.loaded.set(false);
-    this.load$ = undefined;
+  logout(): Observable<void> {
+    return this.http.get('logout.action', { responseType: 'text' }).pipe(
+      timeout(5000),
+      catchError(() => of('')),
+      tap(() => {
+        this.user.set(null);
+        this.session.set(null);
+        this.version.set(null);
+        this.loaded.set(false);
+        this.load$ = undefined;
+      }),
+      map(() => undefined),
+    );
   }
 }
