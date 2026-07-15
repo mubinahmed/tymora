@@ -1,7 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -26,9 +29,12 @@ const SERVICE = 'reservation.gwt';
 @Component({
   selector: 'app-reservations',
   imports: [
+    FormsModule,
     TableModule,
     ButtonModule,
     InputTextModule,
+    InputNumberModule,
+    DialogModule,
     TagModule,
     MessageModule,
     ProgressSpinnerModule,
@@ -47,6 +53,13 @@ export class Reservations implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly reservations = signal<ReservationInterface[]>([]);
 
+  // edit dialog (load-full / save-whole — enabled by the facade polymorphism adapter)
+  protected readonly dialogVisible = signal(false);
+  protected readonly saving = signal(false);
+  private editing: ReservationInterface | null = null;
+  protected editLimit: number | null = null;
+  protected editExpiration = '';
+
   ngOnInit(): void {
     this.page.set('Reservations');
     this.reload();
@@ -64,6 +77,42 @@ export class Reservations implements OnInit {
       error: (e: ApiError) => {
         this.error.set(e.message);
         this.loading.set(false);
+      },
+    });
+  }
+
+  openEdit(r: ReservationInterface): void {
+    // Load the full reservation (carries its @type discriminator) so save round-trips
+    // the concrete subtype and preserves type-specific fields (students/curricula/…).
+    this.rpc.service<ReservationInterface>(SERVICE, 'getReservation', [r.id]).subscribe({
+      next: (full) => {
+        this.editing = full;
+        this.editLimit = full.limit ?? null;
+        this.editExpiration = full.expirationDate ?? '';
+        this.dialogVisible.set(true);
+      },
+      error: (e: ApiError) => this.messages.add({ severity: 'error', summary: 'Load failed', detail: e.message }),
+    });
+  }
+
+  save(): void {
+    if (!this.editing) return;
+    const merged: ReservationInterface = {
+      ...this.editing,
+      limit: this.editLimit ?? undefined,
+      expirationDate: this.editExpiration || undefined,
+    };
+    this.saving.set(true);
+    this.rpc.service<number>(SERVICE, 'save', [merged]).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.dialogVisible.set(false);
+        this.messages.add({ severity: 'success', summary: 'Reservation saved' });
+        this.reload();
+      },
+      error: (e: ApiError) => {
+        this.saving.set(false);
+        this.messages.add({ severity: 'error', summary: 'Save failed', detail: e.message });
       },
     });
   }

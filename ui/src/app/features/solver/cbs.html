@@ -1,0 +1,29 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="load()" /></div>
+} @else {
+  <div class="offering-search">
+    <div class="search-bar">
+      <p-selectButton
+        [options]="orientations"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        [(ngModel)]="variableOriented"
+        (onChange)="load()"
+      />
+    </div>
+
+    @if (tree().length) {
+      <p-tree [value]="tree()" styleClass="cbs-tree">
+        <ng-template let-node pTemplate="default">
+          <span [innerHTML]="node.label"></span>
+        </ng-template>
+      </p-tree>
+    } @else {
+      <p-message severity="info" text="No conflict statistics (no solution loaded, or no unassigned conflicts)." />
+    }
+  </div>
+}

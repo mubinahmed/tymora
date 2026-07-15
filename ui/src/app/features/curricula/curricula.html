@@ -45,6 +45,7 @@
         <td>{{ c.dept?.deptCode }}</td>
         <td class="row-actions">
           @if (c.editable) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="openEdit(c)" />
             <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(c)" />
           }
         </td>
@@ -57,4 +58,23 @@
   </p-table>
 
   <p-confirmDialog />
+
+  <p-dialog header="Edit Curriculum" [visible]="dialogVisible()" (visibleChange)="dialogVisible.set($event)"
+    [modal]="true" [style]="{ width: '32rem' }" [draggable]="false" [dismissableMask]="true">
+    <div class="building-form">
+      <div class="field">
+        <label for="cu-abbv">Abbreviation</label>
+        <input pInputText id="cu-abbv" [(ngModel)]="editAbbv" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="cu-name">Name</label>
+        <input pInputText id="cu-name" [(ngModel)]="editName" autocomplete="off" />
+      </div>
+      <small>Academic area, classifications and courses are preserved as loaded; edit those on the legacy screen.</small>
+    </div>
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="dialogVisible.set(false)" [disabled]="saving()" />
+      <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+    </ng-template>
+  </p-dialog>
 }

@@ -31,6 +31,8 @@ export type MessageInterface_Level = 'INFO' | 'WARN' | 'ERROR';
 export type NoteType = 'Create' | 'AddMeetings' | 'Approve' | 'Reject' | 'Delete' | 'Edit' | 'Inquire' | 'Cancel' | 'Email';
 /** org.unitime.timetable.gwt.shared.ClassSetupInterface.Operation */
 export type Operation = 'LOAD' | 'SAVE';
+/** org.unitime.timetable.gwt.shared.ReservationInterface.OverrideType */
+export type OverrideType = 'AllowTimeConflict' | 'AllowOverLimit' | 'AllowOverLimitTimeConflict' | 'ClassificationOverride' | 'CoReqOverride' | 'CohortOverride' | 'CollegeRestrictionOverride' | 'DegreeOverride' | 'DepartmentPermission' | 'HonorsPermission' | 'InstructorPermission' | 'LevelOverride' | 'MajorOverride' | 'PreReqOverride' | 'Program' | 'Other' | 'AllowOverLimitLink' | 'AllowTimeConflictLink' | 'AllowOverLimitTimeConflictLink';
 /** org.unitime.timetable.gwt.shared.SolverInterface.PageMessageType */
 export type PageMessageType = 'INFO' | 'WARNING' | 'ERROR';
 /** org.unitime.timetable.gwt.shared.RoomInterface.PeriodPreferenceRequest.Operation */
@@ -192,6 +194,15 @@ export interface ApproveEventRpcRequest extends SaveOrApproveEventRpcRequest {
 
 /** org.unitime.timetable.gwt.shared.ReservationInterface.Area */
 export interface Area extends IdName {
+  classifications?: IdName[];
+  majors?: IdName[];
+  minors?: IdName[];
+  concentrations?: IdName[];
+}
+
+/** org.unitime.timetable.gwt.shared.ReservationInterface.Areas */
+export interface Areas {
+  areas?: IdName[];
   classifications?: IdName[];
   majors?: IdName[];
   minors?: IdName[];
@@ -1059,6 +1070,11 @@ export interface CourseRequirement extends Course {
   distHtml?: string;
 }
 
+/** org.unitime.timetable.gwt.shared.ReservationInterface.CourseReservation */
+export interface CourseReservation extends ReservationInterface {
+  course?: ReservationInterface_Course;
+}
+
 /** org.unitime.timetable.gwt.shared.CourseOfferingInterface.CourseTypeInterface */
 export interface CourseTypeInterface {
   id?: number;
@@ -1152,6 +1168,11 @@ export interface CurriculumInterface_DepartmentInterface {
   deptName?: string;
 }
 
+/** org.unitime.timetable.gwt.shared.ReservationInterface.CurriculumReservation */
+export interface CurriculumReservation extends ReservationInterface {
+  curriculum?: Areas;
+}
+
 /** org.unitime.timetable.gwt.client.instructor.survey.InstructorSurveyInterface.CustomField */
 export interface CustomField {
   id?: number;
@@ -1205,12 +1226,14 @@ export interface DegreeGroupInterface extends DegreeMultiSelectionInterface {
 
 /** org.unitime.timetable.gwt.shared.DegreePlanInterface.DegreeItemInterface */
 export interface DegreeItemInterface {
+  '@type'?: string;
   id?: string;
   selection?: string[];
 }
 
 /** org.unitime.timetable.gwt.shared.DegreePlanInterface.DegreeMultiSelectionInterface */
 export interface DegreeMultiSelectionInterface extends DegreeItemInterface {
+  '@type'?: string;
   selection?: string[];
 }
 
@@ -1560,6 +1583,7 @@ export interface EventRoomAvailabilityRpcResponse {
 
 /** org.unitime.timetable.gwt.shared.EventInterface.EventRpcRequest */
 export interface EventRpcRequest {
+  '@type'?: string;
   sessionId?: number;
 }
 
@@ -1681,6 +1705,7 @@ export interface FilterParameterInterface {
 
 /** org.unitime.timetable.gwt.shared.EventInterface.FilterRpcRequest */
 export interface FilterRpcRequest extends EventRpcRequest {
+  '@type'?: string;
   command?: Command;
   text?: string;
   options?: { [key: string]: string[] };
@@ -1860,6 +1885,11 @@ export interface GroupInterface extends RoomPropertyInterface {
   sessionName?: string;
 }
 
+/** org.unitime.timetable.gwt.shared.ReservationInterface.GroupReservation */
+export interface GroupReservation extends ReservationInterface {
+  group?: IdName;
+}
+
 /** org.unitime.timetable.gwt.command.client.GwtRpcResponseBoolean */
 export interface GwtRpcResponseBoolean {
   value?: boolean;
@@ -1936,6 +1966,21 @@ export interface IdName {
 export interface IdValue {
   value?: string;
   text?: string;
+}
+
+/** org.unitime.timetable.gwt.shared.TeachingRequestInterface.IncludeLine */
+export interface IncludeLine {
+  ownerId?: number;
+  assign?: boolean;
+  share?: number;
+  lead?: boolean;
+  canOverlap?: boolean;
+  common?: boolean;
+}
+
+/** org.unitime.timetable.gwt.shared.ReservationInterface.IndividualReservation */
+export interface IndividualReservation extends ReservationInterface {
+  students?: IdName[];
 }
 
 /** org.unitime.timetable.gwt.shared.MenuInterface.InfoInterface */
@@ -2203,6 +2248,12 @@ export interface JenrlInfo {
   curriculum2nrStudents?: CurriculumInfo[];
 }
 
+/** org.unitime.timetable.gwt.shared.ReservationInterface.LCReservation */
+export interface LCReservation extends ReservationInterface {
+  group?: IdName;
+  course?: ReservationInterface_Course;
+}
+
 /** org.unitime.timetable.gwt.shared.LastChangesInterface.LastChangesRequest */
 export interface LastChangesRequest {
   objectType?: string;
@@ -2387,6 +2438,12 @@ export interface MessageInterface {
   message?: string;
 }
 
+/** org.unitime.timetable.gwt.shared.TeachingRequestInterface.MultiRequest */
+export interface MultiRequest extends Request {
+  classes?: RequestedClass[];
+  subparts?: IncludeLine[];
+}
+
 /** org.unitime.timetable.gwt.shared.CourseTimetablingSolverInterface.NotAssignedClassesFilterRequest */
 export interface NotAssignedClassesFilterRequest {
 }
@@ -2445,6 +2502,12 @@ export interface Option {
   name?: string;
   values?: SavedHQLInterface_IdValue[];
   multiSelect?: boolean;
+}
+
+/** org.unitime.timetable.gwt.shared.ReservationInterface.OverrideReservation */
+export interface OverrideReservation extends IndividualReservation {
+  students?: IdName[];
+  type?: OverrideType;
 }
 
 /** org.unitime.timetable.gwt.shared.CourseOfferingInterface.OverrideTypeInterface */
@@ -2805,6 +2868,7 @@ export interface ReportTypeInterface {
 
 /** org.unitime.timetable.gwt.shared.TeachingRequestInterface.Request */
 export interface Request {
+  '@type'?: string;
   teachingLoad?: number;
   sameCoursePref?: number;
   sameCommonPref?: number;
@@ -2817,6 +2881,14 @@ export interface Request {
 
 /** org.unitime.timetable.gwt.shared.EventInterface.RequestSessionDetails */
 export interface RequestSessionDetails extends EventRpcRequest {
+}
+
+/** org.unitime.timetable.gwt.shared.TeachingRequestInterface.RequestedClass */
+export interface RequestedClass {
+  classId?: number;
+  requestId?: number;
+  instructorIds?: number[];
+  nbrInstructors?: number;
 }
 
 /** org.unitime.timetable.gwt.shared.CourseRequestInterface.RequestedCourse */
@@ -2857,6 +2929,7 @@ export interface ReservationFilterRpcRequest extends FilterRpcRequest {
 
 /** org.unitime.timetable.gwt.shared.ReservationInterface */
 export interface ReservationInterface {
+  '@type'?: string;
   id?: number;
   offering?: Offering;
   configs?: Config[];
@@ -3297,6 +3370,7 @@ export interface SaveFilterDefaultRpcRequest {
 
 /** org.unitime.timetable.gwt.shared.EventInterface.SaveOrApproveEventRpcRequest */
 export interface SaveOrApproveEventRpcRequest extends EventRpcRequest {
+  '@type'?: string;
   event?: EventInterface;
   message?: string;
   emailConfirmation?: boolean;
@@ -3630,11 +3704,21 @@ export interface SimpleEditInterface_SaveDataRpcRequest extends SimpleEditInterf
 
 /** org.unitime.timetable.gwt.shared.SimpleEditInterface.SimpleEditRpcRequest */
 export interface SimpleEditInterface_SimpleEditRpcRequest {
+  '@type'?: string;
   type?: string;
 }
 
 /** org.unitime.timetable.gwt.shared.AssignClassInstructorsInterface.SimpleEditRpcRequest */
 export interface SimpleEditRpcRequest {
+  '@type'?: string;
+}
+
+/** org.unitime.timetable.gwt.shared.TeachingRequestInterface.SingleRequest */
+export interface SingleRequest extends Request {
+  requestId?: number;
+  instructorIds?: number[];
+  classes?: IncludeLine[];
+  nbrInstructors?: number;
 }
 
 /** org.unitime.timetable.gwt.shared.CourseTimetablingSolverInterface.SolutionChangesFilterRequest */
@@ -4428,6 +4512,11 @@ export interface TravelTimeResponse {
 export interface TravelTimesRequest {
   command?: TravelTimesRequest_Command;
   rooms?: Room[];
+}
+
+/** org.unitime.timetable.gwt.shared.ReservationInterface.UniversalReservation */
+export interface UniversalReservation extends ReservationInterface {
+  filter?: string;
 }
 
 /** org.unitime.timetable.gwt.shared.RoomInterface.UpdateBuildingRequest */

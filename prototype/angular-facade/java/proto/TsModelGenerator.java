@@ -87,7 +87,9 @@ public class TsModelGenerator {
 	 * some request DTOs are declared as nested classes of client page widgets
 	 * (e.g. DepartmentsEdit.UpdateDepartmentRequest), not in gwt.shared.
 	 */
+	private Path iClassesRoot;
 	List<Class<?>> scanSeeds(Path classesRoot) throws IOException {
+		iClassesRoot = classesRoot;
 		List<Class<?>> seeds = new java.util.ArrayList<Class<?>>();
 		for (String pkg : new String[] { "org/unitime/timetable/gwt/shared", "org/unitime/timetable/gwt/client" }) {
 			Path dir = classesRoot.resolve(pkg);
@@ -188,6 +190,12 @@ public class TsModelGenerator {
 		}
 		sb.append(" {\n");
 
+		// Abstract polymorphic base -> the facade fills in an @type discriminator
+		// (subclass simple name). Declared on the base only; leaves inherit it, which
+		// avoids literal-override conflicts across multi-level hierarchies.
+		if (Modifier.isAbstract(c.getModifiers()) && !subtypesOf(c).isEmpty())
+			sb.append("  '@type'?: string;\n");
+
 		for (Field f : c.getDeclaredFields()) {
 			int m = f.getModifiers();
 			if (Modifier.isStatic(m) || Modifier.isTransient(m) || f.isSynthetic()) continue;
@@ -196,6 +204,37 @@ public class TsModelGenerator {
 		}
 		sb.append("}\n");
 		interfaces.put(name, sb.toString());
+
+		// Pull concrete subtypes of an abstract base into the output.
+		if (Modifier.isAbstract(c.getModifiers()))
+			for (Class<?> sub : subtypesOf(c)) enqueue(sub);
+	}
+
+	/** Concrete subclasses of a base, from the scanned shared/client packages. */
+	private List<Class<?>> subtypesOf(Class<?> base) {
+		List<Class<?>> out = new java.util.ArrayList<Class<?>>();
+		for (Class<?> c : allClasses())
+			if (c != base && base.isAssignableFrom(c) && !c.isInterface() && !Modifier.isAbstract(c.getModifiers()))
+				out.add(c);
+		return out;
+	}
+
+	private List<Class<?>> iAllClasses;
+	private List<Class<?>> allClasses() {
+		if (iAllClasses != null) return iAllClasses;
+		iAllClasses = new java.util.ArrayList<Class<?>>();
+		for (String pkg : new String[] { "org/unitime/timetable/gwt/shared", "org/unitime/timetable/gwt/client" }) {
+			Path dir = iClassesRoot.resolve(pkg);
+			if (!Files.isDirectory(dir)) continue;
+			try (Stream<Path> paths = Files.walk(dir)) {
+				paths.filter(p -> p.toString().endsWith(".class"))
+					.map(p -> iClassesRoot.relativize(p).toString().replace('\\', '/').replace('/', '.').replaceAll("\\.class$", ""))
+					.map(this::loadOrNull)
+					.filter(x -> x != null)
+					.forEach(iAllClasses::add);
+			} catch (IOException ignore) { }
+		}
+		return iAllClasses;
 	}
 
 	String jsonName(String field) {

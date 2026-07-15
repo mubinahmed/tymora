@@ -7,10 +7,13 @@ import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import {
   ApiError,
+  InstructorAssignmentRequest,
   InstructorInfo,
   InstructorInterface_SubjectAreaInterface,
   SectionInfo,
@@ -37,12 +40,16 @@ import {
     TagModule,
     MessageModule,
     ProgressSpinnerModule,
+    ConfirmDialogModule,
   ],
+  providers: [ConfirmationService],
   templateUrl: './teaching-requests.html',
 })
 export class TeachingRequests implements OnInit {
   private rpc = inject(RpcService);
   private page = inject(PageService);
+  private confirm = inject(ConfirmationService);
+  private messages = inject(MessageService);
 
   protected readonly loading = signal(true);
   protected readonly loadingList = signal(false);
@@ -97,5 +104,31 @@ export class TeachingRequests implements OnInit {
 
   instructorNames(r: TeachingRequestInfo): string {
     return (r.instructors ?? []).map((i: InstructorInfo) => i.name).filter(Boolean).join(', ') || '—';
+  }
+
+  /** Unassign the instructor at `index` of a request (InstructorAssignmentRequest,
+   *  instructor=null). The full request is sent so the backend knows the prior
+   *  assignment at that index. Assigning via suggestions is a separate build. */
+  unassign(r: TeachingRequestInfo, index: number): void {
+    const instr = r.instructors?.[index];
+    this.confirm.confirm({
+      header: 'Unassign instructor',
+      message: `Remove ${instr?.name ?? 'this instructor'} from ${r.course?.courseName ?? 'the request'}?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        const request: InstructorAssignmentRequest = {
+          assignments: [{ request: r, index, instructor: undefined }],
+          ignoreConflicts: true,
+        };
+        this.rpc.execute<unknown>('InstructorAssignmentRequest', request).subscribe({
+          next: () => {
+            this.messages.add({ severity: 'success', summary: 'Instructor unassigned' });
+            this.loadRequests();
+          },
+          error: (e: ApiError) => this.messages.add({ severity: 'error', summary: 'Unassign failed', detail: e.message }),
+        });
+      },
+    });
   }
 }

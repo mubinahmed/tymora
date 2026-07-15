@@ -25,6 +25,7 @@ javac -d out -cp "$CP" \
   "$REST_SRC/RestRpcServlet.java" \
   "$REST_SRC/AsyncRpcExecutor.java" \
   "$REST_SRC/RestServiceServlet.java" \
+  "$REST_SRC/PolymorphicTypeAdapterFactory.java" \
   java/proto/FacadeProto.java
 
 echo "== running proof =="

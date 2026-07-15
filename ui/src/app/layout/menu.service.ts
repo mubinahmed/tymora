@@ -27,6 +27,14 @@ export class MenuService {
     instructorattributes: '/instructorattributes',
     teachingRequests: '/teachingRequests',
     teachingAssignments: '/teachingAssignments',
+    events: '/events',
+    solver: '/solver',
+    assignedClasses: '/assignedClasses',
+    notAssignedClasses: '/notAssignedClasses',
+    solutionChanges: '/solutionChanges',
+    timetableGrid: '/timetableGrid',
+    cbs: '/cbs',
+    publishedSolutions: '/publishedSolutions',
     // legacy Struts search now handled by an Angular screen + additive command bean
     'instructionalOfferingSearch.action': '/offerings',
   };

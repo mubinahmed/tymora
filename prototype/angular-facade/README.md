@@ -22,6 +22,7 @@ POST /api/rpc/PageNameRpcRequest   {"name":"Rooms"}
 |------|------|
 | `JavaSource/org/unitime/timetable/rest/RestRpcServlet.java` | **Production facade** (now in the main source tree). Builds a request-class registry from the Spring context, deserializes JSON, dispatches via the unchanged `GwtRpcServlet.execute(...)`, serializes the response. Reuses the *exact* `iField→field` + ISO-date Gson contract from `GwtRpcServlet`. Also hosts the async submit/poll/cancel endpoints. |
 | `JavaSource/org/unitime/timetable/rest/AsyncRpcExecutor.java` | **Async execution manager** for long-running commands (solver). Runs work on background daemon threads with the same thread-local setup/teardown (locale, session id, Hibernate cleanup) as `GwtRpcServlet.Execution`; exposes non-blocking submit/poll/cancel. |
+| `JavaSource/org/unitime/timetable/rest/PolymorphicTypeAdapterFactory.java` | **Polymorphism support** for the facade Gson. Abstract DTO hierarchies (e.g. `ReservationInterface`) get an `@type` discriminator on write and are resolved to the concrete subclass on read — enabling polymorphic reads *and* writes. Discovers subtypes by classpath-scanning shared/client; skips subtypes Gson can't build (e.g. shadowed fields). |
 | `JavaSource/org/unitime/timetable/rest/RestServiceServlet.java` | **Classic RemoteService bridge** (`/api/service/{path}/{method}`). Reflectively invokes the 4 method-based GWT services (Curricula/Reservation/Sectioning/Snapshot) — resolves the Spring bean by its `@RemoteServiceRelativePath`, matches the method by name+arity, Gson-deserializes positional args to the declared param types, invokes, serializes. The bean's `@Autowired SessionContext` handles auth per-request. |
 | `WebContent/WEB-INF/web.xml` | **Patched** — `restRpcServlet` registered and mapped to `/api/rpc/*` (a longer prefix than the existing `/api/*`, so it wins for those routes without disturbing `ApiServlet`). |
 | `java/proto/FacadeProto.java` | **Runnable proof.** DB-free `main()` exercising the real compiled DTOs + the real `PageNameBackend`. |
@@ -78,7 +79,11 @@ Verified output (Java 25, gson 2.11.0, this repo's build):
   PASS  async cancel accepted
   PASS  async cancel -> poll reports CANCELLED
   PASS  async poll of unknown id -> null (404 at HTTP layer)
-ALL 13 CHECKS PASSED
+-- polymorphism --
+  PASS  serialize adds @type discriminator
+  PASS  deserialize into abstract base -> concrete IndividualReservation
+  PASS  round-trip preserves fields (id=42)
+ALL 16 CHECKS PASSED
 ```
 
 `RestRpcServlet.java` compiles clean against the full webapp classpath, and the

@@ -63,7 +63,14 @@
               <span [class.under]="(r.instructors?.length ?? 0) < (r.nrInstructors ?? 0)">
                 {{ r.instructors?.length ?? 0 }}/{{ r.nrInstructors ?? 0 }}
               </span>
-              @if (r.instructors?.length) { — {{ instructorNames(r) }} }
+              <span class="instr-chips">
+                @for (instr of r.instructors; track instr.instructorId; let i = $index) {
+                  <span class="instr-chip">
+                    {{ instr.name }}
+                    <button type="button" class="instr-x" title="Unassign" (click)="unassign(r, i)">×</button>
+                  </span>
+                }
+              </span>
             </td>
             <td>
               @if (r.conflict) { <p-tag value="Conflict" severity="danger" /> }
@@ -79,4 +86,6 @@
       <p class="hint">Select a subject area to list its teaching requests.</p>
     }
   </div>
+
+  <p-confirmDialog />
 }

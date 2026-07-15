@@ -89,7 +89,9 @@ docker compose up --build
   A single protocol (`SimpleEditInterface` `LoadData`/`SaveRecord`/`DeleteRecord`,
   keyed by a `type` string) drives them; the table columns and the record editor are
   built dynamically from the returned `Field[]` metadata (type → text / textarea /
-  number / toggle / list; `Flag` bits → hidden / read-only / required). Every menu
+  number / toggle / list; date/person/students/multi/parent still fall back to text —
+  they need format-specific pickers best added with a live server to verify formats;
+  `Flag` bits → hidden / read-only / required). Every menu
   item with `page="admin"` auto-routes here via its `type` parameter — so a large
   slice of the admin menu lights up from one component. These requests are addressed
   by **FQN** (their simple names collide across interfaces). *Specialized field types*
@@ -100,11 +102,15 @@ docker compose up --build
   pattern). Uses `RpcService.service('reservation.gwt', method, args)` →
   `findReservations` / `delete`. `ReservationInterface` is abstract/polymorphic; the
   facade emits runtime fields but no type discriminator, so the list shows common base
-  fields. The multi-step create/edit wizard (offering + type + students/curricula/groups)
-  is deferred.
+  fields, plus **edit** of limit + expiration (`getReservation` → save-whole via
+  `save`). Editing is enabled by the facade's **polymorphism adapter** — the loaded
+  reservation carries an `@type` discriminator, so `save` round-trips the concrete
+  subtype (Course/Group/Individual) and preserves its type-specific fields. *Deferred:*
+  create + the multi-step type/students/curricula wizard.
 - `curricula` — second classic-service screen (`curricula.gwt`): `findCurricula` /
-  `deleteCurriculum`. Table of abbreviation/name/academic-area/majors/department. The
-  full curriculum editor (classifications + course-projections grid) is deferred.
+  `deleteCurriculum` / **edit** (`loadCurriculum` → edit abbreviation/name →
+  `saveCurriculum`, load-full/save-whole so classifications & courses are preserved).
+  The full classifications + course-projections grid editor is deferred.
 
 **Screens — Wave 4 Course Offerings**
 - `course-offering/:id` — Edit Course Offering (command pattern). Reached by id from
@@ -137,11 +143,62 @@ docker compose up --build
   a subject area (`TeachingRequestsPagePropertiesRequest`), then list via
   `TeachingRequestsPageRequest` (filter option `subjectId`). Read-only table of
   course / sections / load / assigned instructors (`n/nrInstructors`), with conflict and
-  under-assigned cues. *Deferred:* the assignment editor (solver-adjacent).
+  under-assigned cues, and **unassign** (remove an assigned instructor via
+  `InstructorAssignmentRequest`, instructor=null, sending the full request as context).
+  *Deferred:* assign-via-suggestions (needs the `ComputeSuggestions` UI).
 - `teachingAssignments` — Teaching Assignments (command pattern), filter-driven by
   **department**: lists instructors with teaching preference, assigned/max load (over-load
   cue), request count, and assigned courses via `TeachingAssignmentsPageRequest`.
   *Deferred:* the interactive assign/unassign editor + solver suggestions.
+
+**Screens — Wave 6 Events**
+- `events` — Events browser (command pattern) with a **resource-type selector** covering
+  **all** resource types: Room, Subject Area, Department, Curriculum, Course, Group
+  present a picker (rooms via `RoomFilterRpcRequest`, the rest via
+  `ResourceLookupRpcRequest` list lookups); **Person** is a name search
+  (`ResourceLookupRpcRequest` PERSON → resolves an `externalId`). Events come from
+  `EventLookupRpcRequest`; read-only table of event / type / #meetings / date-span /
+  contact. A **List / Grid** toggle switches to a **weekly timetable grid**
+  (`event-grid`): each event's meetings are collapsed by (day-of-week, time) into
+  positioned, colour-coded (by event type) blocks — 5-min slots (`min = 5*slot`),
+  `dayOfWeek` 0=Mon..6=Sun, greedy lane-packing for overlaps. *Deferred:*
+  meeting/approval detail + editing, and week/date navigation (the grid is the
+  representative-week pattern, not a date-specific calendar).
+
+**Screens — Wave 7 Students & Sectioning**
+- `publishedSolutions` — Published Sectioning Solutions (command pattern), read-only
+  browse via `PublishedSectioningSolutionsRequest {operation:'LIST'}`: timestamp / owner /
+  configuration / note / status. Opens the previously-unstarted Wave 7. *Deferred:* the
+  consequential operations (load/select/publish/remove) and the real-time scheduling
+  assistant/dashboards.
+
+**Screens — Wave 8 Solver**
+- `solver` — Solver dashboard (command pattern) and the **first screen to drive the
+  async facade trio**. Solver type selector + problem (owner) / configuration pickers;
+  long operations (**Start**, **Reload**) go through `rpc.executeAsync` (submit → poll
+  `/api/rpc/async` → result), while quick ones (`INIT` status read, **Stop**) are sync.
+  While the server reports `working`, status is **auto-polled** every 2.5s for live
+  progress; shows current/best solution metrics and a tailed, level-coloured log.
+  **Solution operations** — Save, Save as New, Save &amp; Commit (confirmed), Restore Best,
+  Unload (confirmed) — run the corresponding `SolverOperation` through the async facade.
+  *Deferred:* configuration parameter editing.
+- `assignedClasses` / `notAssignedClasses` / `solutionChanges` — solver reporting. Their
+  responses extend the backend's generic **`TableInterface`** (header + positional cell
+  rows), so a single reusable renderer (`shared/rpc-table`) and one generic screen
+  (`solver-report`) drive all three — each is **just a route** carrying `data: { rpc,
+  title }` (plus optional `req` for a non-default request body). Surfaces the response's
+  `errorMessage` (e.g. "no solution loaded"); cell markup renders via sanitized
+  `[innerHTML]`. (`ListSolutions` also extends `TableInterface` but needs an
+  `operation` and is a management screen, not a pure report — not wired here.)
+- `timetableGrid` — Solver Timetable Grid. Loads the grid filter defaults
+  (`TimetableGridFilterRequest`) then the grid (`TimetableGridRequest`); the response is
+  one `TimetableGridModel` per resource, each rendered by `solver-grid-view` as a weekly
+  grid (cells positioned by day/slot/length — same 5-min convention as the GWT grid —
+  coloured by the cell's preference `background`). A selector picks which resource grid
+  to show. *Deferred:* the full filter UI (resource mode, weeks, times, resolution).
+- `cbs` — Conflict-Based Statistics. The backend returns a recursive `CBSNode` tree;
+  mapped to a PrimeNG `p-tree` (node HTML labels rendered via sanitized `[innerHTML]`)
+  with a constraint/variable-oriented toggle (`ConflictBasedStatisticsRequest`).
 
 ## Generated models
 
@@ -149,8 +206,10 @@ docker compose up --build
 by reflecting over the compiled `org.unitime.timetable.gwt.shared` **and** `gwt.client`
 classes (some request DTOs are nested in client page widgets, e.g.
 `DepartmentsEdit.UpdateDepartmentRequest`), so the TS shapes match the facade's Gson output exactly (`iField→field`, enums→string unions,
-`List→[]`, `Map→{ [key: string]: V }`, inheritance→`extends`). `core/models.ts`
-re-exports it; **don't hand-edit the generated file.**
+`List→[]`, `Map→{ [key: string]: V }`, inheritance→`extends`). Abstract polymorphic bases (e.g.
+`ReservationInterface`) carry an `'@type'?: string` discriminator that the facade's
+`PolymorphicTypeAdapterFactory` reads/writes; concrete subtypes are emitted and inherit
+it. `core/models.ts` re-exports it; **don't hand-edit the generated file.**
 
 Regenerate (from `prototype/angular-facade/`, needs the built webapp at
 `target/unitime-4.8/WEB-INF`):

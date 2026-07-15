@@ -68,6 +68,49 @@ export const routes: Routes = [
     loadComponent: () => import('./features/instructors/teaching-assignments').then((m) => m.TeachingAssignments),
   },
   {
+    path: 'events',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/events/events').then((m) => m.Events),
+  },
+  {
+    path: 'solver',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/solver/solver').then((m) => m.Solver),
+  },
+  {
+    path: 'assignedClasses',
+    canActivate: [authGuard],
+    data: { rpc: 'AssignedClassesRequest', title: 'Assigned Classes' },
+    loadComponent: () => import('./features/solver/solver-report').then((m) => m.SolverReport),
+  },
+  {
+    path: 'notAssignedClasses',
+    canActivate: [authGuard],
+    data: { rpc: 'NotAssignedClassesRequest', title: 'Not-assigned Classes' },
+    loadComponent: () => import('./features/solver/solver-report').then((m) => m.SolverReport),
+  },
+  {
+    path: 'solutionChanges',
+    canActivate: [authGuard],
+    data: { rpc: 'SolutionChangesRequest', title: 'Solution Changes' },
+    loadComponent: () => import('./features/solver/solver-report').then((m) => m.SolverReport),
+  },
+  {
+    path: 'timetableGrid',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/solver/timetable-grid').then((m) => m.TimetableGrid),
+  },
+  {
+    path: 'cbs',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/solver/cbs').then((m) => m.Cbs),
+  },
+  {
+    path: 'publishedSolutions',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/sectioning/published-solutions').then((m) => m.PublishedSolutions),
+  },
+  {
     // Reached from the offerings search (or the legacy detail during coexistence).
     path: 'course-offering/:id',
     canActivate: [authGuard],

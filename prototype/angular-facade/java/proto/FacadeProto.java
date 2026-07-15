@@ -116,6 +116,27 @@ public class FacadeProto {
 		// 5d. unknown id
 		check("async poll of unknown id -> null (404 at HTTP layer)", async.poll(999_999L) == null);
 
+		// ---- 6. Polymorphic round-trip (abstract ReservationInterface) -------------
+		System.out.println();
+		System.out.println("-- polymorphism --");
+		try {
+			Class<?> indiv = Class.forName("org.unitime.timetable.gwt.shared.ReservationInterface$IndividualReservation");
+			Object reservation = indiv.getDeclaredConstructor().newInstance();
+			indiv.getMethod("setId", Long.class).invoke(reservation, 42L);
+
+			String json = gson.toJson(reservation, Class.forName("org.unitime.timetable.gwt.shared.ReservationInterface"));
+			System.out.println("  JSON  " + (json.length() > 90 ? json.substring(0, 90) + "…" : json));
+			check("serialize adds @type discriminator", json.contains("\"@type\":\"IndividualReservation\""));
+
+			Object back = gson.fromJson(json, Class.forName("org.unitime.timetable.gwt.shared.ReservationInterface"));
+			check("deserialize into abstract base -> concrete IndividualReservation",
+				back != null && back.getClass().getSimpleName().equals("IndividualReservation"));
+			Object id = back.getClass().getMethod("getId").invoke(back);
+			check("round-trip preserves fields (id=42)", Long.valueOf(42L).equals(id));
+		} catch (Throwable t) {
+			check("polymorphism round-trip (" + t.getClass().getSimpleName() + ": " + t.getMessage() + ")", false);
+		}
+
 		System.out.println();
 		System.out.println(failures == 0
 			? ("ALL " + checks + " CHECKS PASSED")

@@ -1,0 +1,41 @@
+@if (layout().empty) {
+  <p class="hint">No placements to plot for {{ model().name }}.</p>
+} @else {
+  <div class="tt-grid">
+    <div class="tt-header">
+      <div class="tt-gutter"></div>
+      @for (d of layout().days; track d.index) {
+        <div class="tt-dayhead">{{ d.name }}</div>
+      }
+    </div>
+
+    <div class="tt-body" [style.height.px]="layout().height">
+      <div class="tt-gutter">
+        @for (h of layout().hours; track h.top) {
+          <div class="tt-hour" [style.top.px]="h.top">{{ h.label }}</div>
+        }
+      </div>
+
+      @for (d of layout().days; track d.index) {
+        <div class="tt-col">
+          @for (h of layout().hours; track h.top) {
+            <div class="tt-hline" [style.top.px]="h.top"></div>
+          }
+          @for (b of d.blocks; track b.key) {
+            <div
+              class="tt-block tt-block-plain"
+              [style.top.px]="b.top"
+              [style.height.px]="b.height"
+              [style.left.%]="b.leftPct"
+              [style.width.%]="b.widthPct"
+              [style.background]="b.bg"
+              [title]="b.title"
+            >
+              <span class="tt-block-name">{{ b.label }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

@@ -126,6 +126,10 @@ public class RestRpcServlet extends HttpServlet {
 					return m.matches() ? m.group(1).toLowerCase() + m.group(2) : f.getName();
 				}
 			})
+			// Abstract DTO hierarchies (e.g. ReservationInterface) get an "@type"
+			// discriminator so they serialize/deserialize polymorphically.
+			.registerTypeAdapterFactory(new PolymorphicTypeAdapterFactory(
+					"org.unitime.timetable.gwt.shared", "org.unitime.timetable.gwt.client"))
 			.create();
 	}
 
