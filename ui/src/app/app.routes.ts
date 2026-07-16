@@ -282,5 +282,63 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/events/event-detail').then((m) => m.EventDetail),
   },
+  // ---- Wave 4: generic read-only admin listings (new SimpleListBackend bean) ----
+  {
+    path: 'list/:page',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/admin-list').then((m) => m.AdminList),
+  },
+  // ---- Wave 5: search pages + create/edit (new command beans) ----
+  {
+    path: 'classes',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/classes-search').then((m) => m.ClassesSearch),
+  },
+  {
+    path: 'examinations-list',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exams-list').then((m) => m.ExamsList),
+  },
+  {
+    path: 'status-types-edit',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/status-types-edit').then((m) => m.StatusTypesEdit),
+  },
+  {
+    path: 'managers-edit',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/managers-edit').then((m) => m.ManagersEdit),
+  },
+  {
+    path: 'solver-groups-edit',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/solver-groups-edit').then((m) => m.SolverGroupsEdit),
+  },
+  {
+    path: 'sessions-edit/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/sessions-edit').then((m) => m.SessionsEdit),
+  },
+  // ---- Wave 6: examination reports (read-only, persisted assignments) ----
+  {
+    path: 'assigned-exams',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/assigned-exams').then((m) => m.AssignedExams),
+  },
+  {
+    path: 'unassigned-exams',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/unassigned-exams').then((m) => m.UnassignedExams),
+  },
+  {
+    path: 'exam-assignment-report',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-assignment-report').then((m) => m.ExamAssignmentReport),
+  },
+  {
+    path: 'exam-grid',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-grid').then((m) => m.ExamGrid),
+  },
   { path: '**', redirectTo: 'home' },
 ];

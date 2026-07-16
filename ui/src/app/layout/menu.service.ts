@@ -67,6 +67,26 @@ export class MenuService {
     publishedSolutions: '/publishedSolutions',
     // legacy Struts search now handled by an Angular screen + additive command bean
     'instructionalOfferingSearch.action': '/offerings',
+    // Read-only admin listings via the new SimpleListBackend command bean.
+    'sessionList.action': '/list/sessions',
+    'itypeDescList.action': '/list/instructionalTypes',
+    'distributionTypeList.action': '/list/distributionTypes',
+    'datePatternEdit.action': '/list/datePatterns',
+    'timePatternEdit.action': '/list/timePatterns',
+    'instructorSearch.action': '/list/instructors',
+    // Wave 5: search + create/edit screens (supersede the read-only listings where they exist)
+    'classSearch.action': '/classes',
+    'examList.action': '/examinations-list',
+    'assignedExams.action': '/assigned-exams',
+    'unassignedExams.action': '/unassigned-exams',
+    'examAssignmentReport.action': '/exam-assignment-report',
+    'examGrid.action': '/exam-grid',
+    'deptStatusTypeEdit.action': '/status-types-edit',
+    'timetableManagerList.action': '/managers-edit',
+    'solverGroupEdit.action': '/solver-groups-edit',
+    // Struts pages that already have an equivalent migrated Angular editor.
+    'subjectList.action': '/admin/subjectArea',
+    'departmentList.action': '/departments',
   };
 
   readonly items = signal<MenuItem[]>([]);

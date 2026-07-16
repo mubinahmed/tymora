@@ -1,0 +1,107 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="records()"
+    [paginator]="records().length > 20"
+    [rows]="20"
+    [rowsPerPageOptions]="[20, 50, 100]"
+    dataKey="id"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ records().length }} status type(s)</span>
+        <span class="spacer"></span>
+        <input
+          pInputText
+          type="text"
+          placeholder="Search…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+        />
+        <p-button label="Add Status Type" icon="pi pi-plus" [disabled]="!addable()" (onClick)="add()" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="reference">Reference <p-sortIcon field="reference" /></th>
+        <th pSortableColumn="label">Label <p-sortIcon field="label" /></th>
+        <th>Apply</th>
+        <th>Rights</th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-r>
+      <tr class="clickable" (click)="editable() && edit(r)">
+        <td>{{ r.reference }}</td>
+        <td>{{ r.label }}</td>
+        <td>{{ applySummary(r) }}</td>
+        <td>{{ rightsSummary(r) }}</td>
+        <td class="row-actions" (click)="$event.stopPropagation()">
+          @if (editable()) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="edit(r)" />
+          }
+          @if (deletable()) {
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(r)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="5">No status types found.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <p-confirmDialog />
+
+  <p-dialog
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [modal]="true"
+    [style]="{ width: '46rem' }"
+    [header]="editing.id != null ? 'Edit Status Type' : 'Add Status Type'"
+  >
+    <div class="form-grid">
+      <label for="st-ref">Reference</label>
+      <input id="st-ref" pInputText [(ngModel)]="editing.reference" maxlength="20" />
+
+      <label for="st-label">Label</label>
+      <input id="st-label" pInputText [(ngModel)]="editing.label" maxlength="60" />
+
+      <label for="st-ord">Order</label>
+      <p-inputNumber inputId="st-ord" [(ngModel)]="editing.ord" [showButtons]="true" [min]="0" />
+    </div>
+
+    <h4>Apply To</h4>
+    <div class="flag-grid">
+      @for (f of applyFlags; track f.key) {
+        <div class="flag">
+          <p-checkbox [inputId]="f.key" [(ngModel)]="editing.bits[f.key]" [binary]="true" />
+          <label [for]="f.key">{{ f.label }}</label>
+        </div>
+      }
+    </div>
+
+    <h4>Rights</h4>
+    <div class="flag-grid">
+      @for (f of statusFlags; track f.key) {
+        <div class="flag">
+          <p-checkbox [inputId]="f.key" [(ngModel)]="editing.bits[f.key]" [binary]="true" />
+          <label [for]="f.key">{{ f.label }}</label>
+        </div>
+      }
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" />
+      <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="submit()" />
+    </ng-template>
+  </p-dialog>
+}

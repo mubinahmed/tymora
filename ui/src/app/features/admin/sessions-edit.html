@@ -1,0 +1,89 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt">
+    <p-button label="Back to Academic Sessions" icon="pi pi-arrow-left" severity="secondary" (onClick)="back()" />
+  </div>
+} @else {
+  <p-card [header]="label() || 'Edit Academic Session'">
+    <div class="building-form">
+      <div class="field">
+        <label>Academic Initiative *</label>
+        <input pInputText [disabled]="!canEdit()"
+          [ngModel]="model().academicInitiative"
+          (ngModelChange)="set('academicInitiative', $event)" />
+      </div>
+
+      <div class="field">
+        <label>Academic Year *</label>
+        <input pInputText [disabled]="!canEdit()"
+          [ngModel]="model().academicYear"
+          (ngModelChange)="set('academicYear', $event)" />
+      </div>
+
+      <div class="field">
+        <label>Academic Term *</label>
+        <input pInputText [disabled]="!canEdit()"
+          [ngModel]="model().academicTerm"
+          (ngModelChange)="set('academicTerm', $event)" />
+      </div>
+
+      <div class="field">
+        <label>Session Start Date *</label>
+        <input pInputText [disabled]="!canEdit()"
+          [placeholder]="dateFormat()"
+          [ngModel]="model().sessionBeginDateTime"
+          (ngModelChange)="set('sessionBeginDateTime', $event)" />
+      </div>
+
+      <div class="field">
+        <label>Classes End Date *</label>
+        <input pInputText [disabled]="!canEdit()"
+          [placeholder]="dateFormat()"
+          [ngModel]="model().classesEndDateTime"
+          (ngModelChange)="set('classesEndDateTime', $event)" />
+      </div>
+
+      <div class="field">
+        <label>Session End Date *</label>
+        <input pInputText [disabled]="!canEdit()"
+          [placeholder]="dateFormat()"
+          [ngModel]="model().sessionEndDateTime"
+          (ngModelChange)="set('sessionEndDateTime', $event)" />
+      </div>
+
+      <div class="field">
+        <label>Academic Session Status *</label>
+        <p-select
+          [options]="statuses()"
+          optionLabel="label"
+          optionValue="id"
+          [disabled]="!canEdit()"
+          appendTo="body"
+          placeholder="Select a status"
+          [ngModel]="model().statusTypeId"
+          (ngModelChange)="set('statusTypeId', $event)"
+        />
+      </div>
+    </div>
+
+    <p-message severity="info"
+      text="Only the descriptive fields above are edited here. Exam and event periods, holidays, date and time patterns, roll-forward and enrollment week boundaries are managed on the legacy page and are left unchanged." />
+
+    <ng-template pTemplate="footer">
+      <div class="tbl-caption">
+        <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [text]="true" (onClick)="back()" [disabled]="saving()" />
+        <span class="spacer"></span>
+        @if (canDelete()) {
+          <p-button label="Delete" icon="pi pi-trash" severity="danger" (onClick)="confirmDelete()" [disabled]="saving()" />
+        }
+        @if (canEdit()) {
+          <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+        }
+      </div>
+    </ng-template>
+  </p-card>
+
+  <p-confirmDialog />
+}

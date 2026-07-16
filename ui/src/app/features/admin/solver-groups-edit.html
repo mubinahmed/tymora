@@ -1,0 +1,104 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="groups()"
+    [paginator]="groups().length > 15"
+    [rows]="15"
+    [rowsPerPageOptions]="[15, 30, 50]"
+    sortField="abbv"
+    [sortOrder]="1"
+    dataKey="uniqueId"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ groups().length }} solver group(s)</span>
+        <span class="spacer"></span>
+        <input
+          pInputText
+          type="text"
+          placeholder="Search…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+        />
+        <p-button label="Add Solver Group" icon="pi pi-plus" [disabled]="!canAdd()" (onClick)="add()" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="abbv">Abbreviation <p-sortIcon field="abbv" /></th>
+        <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+        <th>Departments</th>
+        <th>Committed</th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-g>
+      <tr class="clickable" (click)="edit(g)">
+        <td>{{ g.abbv }}</td>
+        <td>{{ g.name }}</td>
+        <td>{{ g.departments || '—' }}</td>
+        <td>{{ g.committed ? 'Yes' : '—' }}</td>
+        <td class="row-actions" (click)="$event.stopPropagation()">
+          @if (g.canEdit) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="edit(g)" />
+          }
+          @if (g.canDelete) {
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(g)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="5">No solver groups found for this session.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <p-confirmDialog />
+
+  <p-dialog
+    [header]="isEdit() ? 'Edit Solver Group' : 'New Solver Group'"
+    [modal]="true"
+    [style]="{ width: '32rem' }"
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+  >
+    <form [formGroup]="form" class="form-grid">
+      <div class="field">
+        <label for="sg-abbv">Abbreviation</label>
+        <input id="sg-abbv" pInputText formControlName="abbv" maxlength="50" autocomplete="off" />
+        @if (form.controls.abbv.invalid && form.controls.abbv.touched) {
+          <small class="err">Abbreviation is required (max 50 characters).</small>
+        }
+      </div>
+      <div class="field">
+        <label for="sg-name">Name</label>
+        <input id="sg-name" pInputText formControlName="name" maxlength="50" autocomplete="off" />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <small class="err">Name is required (max 50 characters).</small>
+        }
+      </div>
+      <p-message
+        severity="info"
+        text="Department membership, managers and solutions are managed on the legacy Solver Groups page and are not changed here."
+      />
+    </form>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" [disabled]="saving()" />
+      <p-button
+        [label]="isEdit() ? 'Save' : 'Create'"
+        icon="pi pi-check"
+        (onClick)="submit()"
+        [loading]="saving()"
+      />
+    </ng-template>
+  </p-dialog>
+}

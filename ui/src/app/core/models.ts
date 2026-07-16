@@ -11,6 +11,24 @@ export interface ApiError {
 }
 
 /**
+ * SimpleListInterface DTOs — generic read-only tabular listing (SimpleListBackend,
+ * page key -> permission-gated entity list). Hand-declared here (not in the
+ * generated file) because the bean was added as part of the Angular migration.
+ */
+export interface SimpleListRow {
+  id?: number;
+  cells?: string[];
+}
+export interface SimpleListResponse {
+  title?: string;
+  columns?: string[];
+  rows?: SimpleListRow[];
+}
+export interface SimpleListRequest {
+  page?: string;
+}
+
+/**
  * `RoomFilterRpcRequest` is an AMBIGUOUS simple name — two command beans register
  * it with different classes (EventInterface.RoomFilterRpcRequest -> RoomFilterBackend,
  * and RoomInterface.RoomFilterRpcRequest -> RoomDetailsBackend). The facade drops
