@@ -1,0 +1,85 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="ngOnInit()" /></div>
+} @else {
+  @if (!editable()) {
+    <p-message severity="info" text="You have read-only access to application configuration." styleClass="mb" />
+  }
+  <p-table
+    [value]="rows()"
+    [paginator]="rows().length > 25"
+    [rows]="25"
+    [rowsPerPageOptions]="[25, 50, 100]"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ rows().length }} setting(s)</span>
+        <span class="spacer"></span>
+        <input pInputText type="text" placeholder="Filter…" [value]="filter()" (input)="filter.set($any($event.target).value)" />
+        <p-button label="CSV" icon="pi pi-download" severity="secondary" [text]="true" (onClick)="exportCsv()" [disabled]="!rows().length" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 24rem">Key</th>
+        <th>Value</th>
+        <th>Description</th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-c>
+      <tr>
+        <td><code>{{ c.key }}</code></td>
+        <td class="acfg-value">{{ c.value }}</td>
+        <td>{{ c.description }}</td>
+        <td class="row-actions">
+          @if (editable()) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="openEdit(c)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="4">No configuration settings found.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <p-dialog
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [modal]="true"
+    [style]="{ width: '40rem' }"
+    header="Edit Setting"
+  >
+    @if (edit(); as e) {
+      <div class="building-form">
+        <div class="field">
+          <label>Key</label>
+          <input pInputText [value]="e.key" disabled />
+        </div>
+        <div class="field">
+          <label for="acfg-val">Value</label>
+          <textarea pTextarea id="acfg-val" rows="3" [ngModel]="e.value" (ngModelChange)="setValue($event)"></textarea>
+        </div>
+        <div class="field">
+          <label for="acfg-desc">Description</label>
+          <input pInputText id="acfg-desc" [ngModel]="e.description" (ngModelChange)="setDescription($event)" />
+        </div>
+        <p-message
+          severity="warn"
+          text="This changes application-wide configuration. It may require a configuration refresh or server restart to take effect."
+        />
+      </div>
+    }
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="dialogVisible.set(false)" [disabled]="saving()" />
+      <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+    </ng-template>
+  </p-dialog>
+}
