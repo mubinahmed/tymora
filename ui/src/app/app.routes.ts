@@ -271,5 +271,16 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/sectioning/advisor-recommendations').then((m) => m.AdvisorRecommendations),
   },
+  // ---- Wave 3: Events add / detail ----
+  {
+    path: 'event-add',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/events/event-add').then((m) => m.EventAdd),
+  },
+  {
+    path: 'event/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/events/event-detail').then((m) => m.EventDetail),
+  },
   { path: '**', redirectTo: 'home' },
 ];

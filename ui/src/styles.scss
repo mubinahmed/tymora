@@ -33,6 +33,9 @@ body {
 }
 
 .row-actions { text-align: right; white-space: nowrap; }
+tr.clickable { cursor: pointer; }
+a.link { color: var(--p-primary-color, #0b5fff); text-decoration: none; cursor: pointer; }
+a.link:hover { text-decoration: underline; }
 
 .home {
   display: grid;

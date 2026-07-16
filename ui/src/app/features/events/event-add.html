@@ -1,0 +1,215 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back" icon="pi pi-arrow-left" (onClick)="back()" /></div>
+} @else {
+  <p-card [header]="isEdit() ? 'Edit Event' : 'Add Event'">
+    <form [formGroup]="form" class="building-form" (ngSubmit)="save()">
+      <div class="field-row">
+        <div class="field">
+          <label for="ev-name">Event Name *</label>
+          <input pInputText id="ev-name" formControlName="eventName" autocomplete="off" />
+          @if (form.controls.eventName.invalid && form.controls.eventName.touched) {
+            <p-message severity="error" text="Event name is required" />
+          }
+        </div>
+        <div class="field">
+          <label for="ev-type">Event Type *</label>
+          <p-select
+            inputId="ev-type"
+            formControlName="eventType"
+            [options]="typeOptions()"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+          />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="ev-sponsor">Sponsoring Organization</label>
+          <p-select
+            inputId="ev-sponsor"
+            formControlName="sponsorId"
+            [options]="sponsorOptions()"
+            optionLabel="name"
+            optionValue="uniqueId"
+            placeholder="(none)"
+            [showClear]="true"
+            appendTo="body"
+          />
+        </div>
+        <div class="field">
+          <label for="ev-cap">Expected Attendance</label>
+          <p-inputNumber inputId="ev-cap" formControlName="maxCapacity" [useGrouping]="false" [min]="0" />
+        </div>
+        <div class="field">
+          <label for="ev-exp">Expiration Date</label>
+          <input pInputText id="ev-exp" type="date" formControlName="expirationDate" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="ev-emails">Additional Emails</label>
+        <textarea pTextarea id="ev-emails" formControlName="eventEmail" rows="2"></textarea>
+      </div>
+
+      <fieldset class="section">
+        <legend>Main Contact</legend>
+        <div class="field-row">
+          <div class="field">
+            <label for="ev-fn">First Name</label>
+            <input pInputText id="ev-fn" formControlName="firstName" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="ev-mn">Middle Name</label>
+            <input pInputText id="ev-mn" formControlName="middleName" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="ev-ln">Last Name</label>
+            <input pInputText id="ev-ln" formControlName="lastName" autocomplete="off" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="ev-at">Academic Title</label>
+            <input pInputText id="ev-at" formControlName="academicTitle" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="ev-em">Email</label>
+            <input pInputText id="ev-em" formControlName="email" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="ev-ph">Phone</label>
+            <input pInputText id="ev-ph" formControlName="phone" autocomplete="off" />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="section">
+        <legend>Meetings</legend>
+        <div class="field-row meeting-add">
+          <div class="field">
+            <label for="ev-room">Room</label>
+            @if (loadingRooms()) {
+              <p-progressSpinner strokeWidth="4" styleClass="inline-spin" />
+            } @else {
+              <p-select
+                inputId="ev-room"
+                [options]="rooms()"
+                optionLabel="label"
+                optionValue="id"
+                [(ngModel)]="newRoomId"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Select room"
+                [filter]="true"
+                filterBy="label"
+                appendTo="body"
+              />
+            }
+          </div>
+          <div class="field">
+            <label for="ev-md">Date</label>
+            <input pInputText id="ev-md" type="date" [(ngModel)]="newDate" [ngModelOptions]="{ standalone: true }" />
+          </div>
+          <div class="field">
+            <label for="ev-st">Start</label>
+            <p-select
+              inputId="ev-st"
+              [options]="timeOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="newStartSlot"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Start"
+              appendTo="body"
+            />
+          </div>
+          <div class="field">
+            <label for="ev-en">End</label>
+            <p-select
+              inputId="ev-en"
+              [options]="timeOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="newEndSlot"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="End"
+              appendTo="body"
+            />
+          </div>
+          <div class="field field-btn">
+            <p-button label="Add" icon="pi pi-plus" (onClick)="addMeeting()" />
+          </div>
+        </div>
+
+        @if (meetings().length) {
+          <p-table [value]="meetings()" styleClass="p-datatable-sm p-datatable-striped">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Date</th>
+                <th>Room</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-m>
+              <tr>
+                <td>{{ meetingDay(m) }}</td>
+                <td>{{ m.location?.resourceName }}</td>
+                <td>{{ slotLabel(m.startSlot) }}–{{ slotLabel(m.endSlot) }}</td>
+                <td><p-tag [value]="m.approvalStatus ?? 'Pending'" severity="info" /></td>
+                <td>
+                  <p-button icon="pi pi-trash" severity="danger" [text]="true" (onClick)="removeMeeting(m)" />
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+
+          <app-event-grid [events]="gridEvents()" />
+        } @else {
+          <p class="hint">No meetings yet. Add a room, date and time above.</p>
+        }
+      </fieldset>
+
+      <fieldset class="section">
+        <legend>Additional Information</legend>
+        @if (standardNotes().length) {
+          <div class="field-row meeting-add">
+            <div class="field">
+              <label for="ev-sn">Standard Note</label>
+              <p-select
+                inputId="ev-sn"
+                [options]="standardNotes()"
+                optionLabel="reference"
+                optionValue="note"
+                [(ngModel)]="standardNoteRef"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="(insert a standard note)"
+                appendTo="body"
+              />
+            </div>
+            <div class="field field-btn">
+              <p-button label="Insert" icon="pi pi-arrow-down" severity="secondary" (onClick)="appendStandardNote()" [disabled]="!standardNoteRef" />
+            </div>
+          </div>
+        }
+        <div class="field">
+          <label for="ev-notes">Notes</label>
+          <textarea pTextarea id="ev-notes" formControlName="notes" rows="4"></textarea>
+        </div>
+      </fieldset>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <div class="tbl-caption">
+        <p-button label="Back" severity="secondary" [text]="true" icon="pi pi-arrow-left" (onClick)="back()" [disabled]="saving()" />
+        <span class="spacer"></span>
+        <p-button [label]="isEdit() ? 'Update Event' : 'Create Event'" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+      </div>
+    </ng-template>
+  </p-card>
+}

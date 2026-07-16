@@ -51,6 +51,9 @@
         (ngModelChange)="view.set($event)"
       />
     }
+
+    <span class="spacer"></span>
+    <p-button label="Add Event" icon="pi pi-plus" (onClick)="addEvent()" />
   </div>
 
   @if (error()) {
@@ -93,8 +96,8 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-e>
-        <tr>
-          <td>{{ e.eventName }}</td>
+        <tr class="clickable" (click)="openEvent(e)">
+          <td><a class="link">{{ e.eventName }}</a></td>
           <td><p-tag [value]="e.eventType" severity="info" /></td>
           <td>{{ e.meetings?.length ?? 0 }}</td>
           <td>{{ meetingSpan(e) }}</td>

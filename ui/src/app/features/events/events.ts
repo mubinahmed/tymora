@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -57,6 +58,7 @@ interface PickerItem {
 export class Events implements OnInit {
   private rpc = inject(RpcService);
   private page = inject(PageService);
+  private router = inject(Router);
 
   protected readonly resourceTypes = [
     { label: 'Room', value: 'ROOM' as ResourceType },
@@ -232,5 +234,16 @@ export class Events implements OnInit {
 
   contactName(c?: ContactInterface): string {
     return c?.formattedName || [c?.firstName, c?.lastName].filter(Boolean).join(' ') || '';
+  }
+
+  /** Open the full event detail (carrying the selected session). */
+  openEvent(e: EventInterface): void {
+    if (e.eventId == null) return;
+    this.router.navigate(['/event', e.eventId], { queryParams: { term: this.sessionId } });
+  }
+
+  /** Start a new event in the Add Event screen. */
+  addEvent(): void {
+    this.router.navigate(['/event-add'], { queryParams: { term: this.sessionId } });
   }
 }
