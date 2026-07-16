@@ -90,59 +90,20 @@
 
       <fieldset class="section">
         <legend>Meetings</legend>
-        <div class="field-row meeting-add">
-          <div class="field">
-            <label for="ev-room">Room</label>
-            @if (loadingRooms()) {
-              <p-progressSpinner strokeWidth="4" styleClass="inline-spin" />
-            } @else {
-              <p-select
-                inputId="ev-room"
-                [options]="rooms()"
-                optionLabel="label"
-                optionValue="id"
-                [(ngModel)]="newRoomId"
-                [ngModelOptions]="{ standalone: true }"
-                placeholder="Select room"
-                [filter]="true"
-                filterBy="label"
-                appendTo="body"
-              />
-            }
-          </div>
-          <div class="field">
-            <label for="ev-md">Date</label>
-            <input pInputText id="ev-md" type="date" [(ngModel)]="newDate" [ngModelOptions]="{ standalone: true }" />
-          </div>
-          <div class="field">
-            <label for="ev-st">Start</label>
-            <p-select
-              inputId="ev-st"
-              [options]="timeOptions"
-              optionLabel="label"
-              optionValue="value"
-              [(ngModel)]="newStartSlot"
-              [ngModelOptions]="{ standalone: true }"
-              placeholder="Start"
-              appendTo="body"
-            />
-          </div>
-          <div class="field">
-            <label for="ev-en">End</label>
-            <p-select
-              inputId="ev-en"
-              [options]="timeOptions"
-              optionLabel="label"
-              optionValue="value"
-              [(ngModel)]="newEndSlot"
-              [ngModelOptions]="{ standalone: true }"
-              placeholder="End"
-              appendTo="body"
-            />
-          </div>
-          <div class="field field-btn">
-            <p-button label="Add" icon="pi pi-plus" (onClick)="addMeeting()" />
-          </div>
+        <div class="mb-toolbar">
+          <p-button
+            label="Add Meetings…"
+            icon="pi pi-calendar-plus"
+            (onClick)="openBuilder()"
+            [disabled]="loadingRooms()"
+          />
+          @if (loadingRooms()) {
+            <p-progressSpinner strokeWidth="4" styleClass="inline-spin" />
+          }
+          <span class="spacer"></span>
+          @if (meetings().length) {
+            <p-tag [value]="meetings().length + ' meeting(s)'" severity="info" />
+          }
         </div>
 
         @if (meetings().length) {
@@ -152,6 +113,7 @@
                 <th>Date</th>
                 <th>Room</th>
                 <th>Time</th>
+                <th>Conflicts</th>
                 <th>Status</th>
                 <th></th>
               </tr>
@@ -161,6 +123,13 @@
                 <td>{{ meetingDay(m) }}</td>
                 <td>{{ m.location?.resourceName }}</td>
                 <td>{{ slotLabel(m.startSlot) }}–{{ slotLabel(m.endSlot) }}</td>
+                <td>
+                  @if (meetingConflictCount(m)) {
+                    <p-tag [value]="meetingConflictCount(m) + ''" severity="warn" />
+                  } @else {
+                    <span class="hint">—</span>
+                  }
+                </td>
                 <td><p-tag [value]="m.approvalStatus ?? 'Pending'" severity="info" /></td>
                 <td>
                   <p-button icon="pi pi-trash" severity="danger" [text]="true" (onClick)="removeMeeting(m)" />
@@ -171,9 +140,167 @@
 
           <app-event-grid [events]="gridEvents()" />
         } @else {
-          <p class="hint">No meetings yet. Add a room, date and time above.</p>
+          <p class="hint">No meetings yet. Use “Add Meetings…” to pick dates, a time and rooms.</p>
         }
       </fieldset>
+
+      <p-dialog
+        [visible]="builderVisible()"
+        (visibleChange)="builderVisible.set($event)"
+        [modal]="true"
+        [style]="{ width: 'auto', maxWidth: '95vw' }"
+        header="Add Meetings"
+      >
+        @if (builderStep() === 'dates') {
+          <div class="mb-step">
+            @if (loadingDates()) {
+              <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+            } @else {
+              <div class="field">
+                <label>Dates</label>
+                <p-multiSelect
+                  [options]="selectableDates()"
+                  optionLabel="label"
+                  optionValue="dayOfYear"
+                  [(ngModel)]="selDateDoys"
+                  [ngModelOptions]="{ standalone: true }"
+                  [filter]="true"
+                  filterBy="label"
+                  display="chip"
+                  placeholder="Select dates"
+                  appendTo="body"
+                  [style]="{ width: '100%' }"
+                />
+                @if (!selectableDates().length) {
+                  <p class="mb-hint">No selectable dates found for this session.</p>
+                }
+              </div>
+
+              <div class="field">
+                <p-checkbox
+                  inputId="mb-past"
+                  [binary]="true"
+                  [ngModel]="allowPast()"
+                  (ngModelChange)="allowPast.set($event); onAllowPastChange()"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <label for="mb-past" style="margin-left: 0.5rem">Include past dates</label>
+              </div>
+
+              <div class="field-row">
+                <div class="field">
+                  <label>Start Time</label>
+                  <p-select
+                    [options]="timeOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    [(ngModel)]="startSlot"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="Start"
+                    appendTo="body"
+                  />
+                </div>
+                <div class="field">
+                  <label>End Time</label>
+                  <p-select
+                    [options]="timeOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    [(ngModel)]="endSlot"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="End"
+                    appendTo="body"
+                  />
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Rooms</label>
+                <p-multiSelect
+                  [options]="rooms()"
+                  optionLabel="label"
+                  optionValue="id"
+                  [(ngModel)]="selRoomIds"
+                  [ngModelOptions]="{ standalone: true }"
+                  [filter]="true"
+                  filterBy="label"
+                  display="chip"
+                  placeholder="Select rooms"
+                  appendTo="body"
+                  [style]="{ width: '100%' }"
+                />
+                @if (!rooms().length) {
+                  <p class="mb-hint">No event rooms available in this session.</p>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="mb-step">
+            <div class="mb-legend">
+              <span><span class="sw free"></span>Available</span>
+              <span><span class="sw conflict"></span>Conflict</span>
+              <span><span class="sw sel"></span>Selected</span>
+              <span class="mb-hint">Click a cell to toggle; click a date/room header to toggle its whole line.</span>
+            </div>
+            <div class="mb-matrix-wrap">
+              <table class="mb-matrix">
+                <thead>
+                  <tr>
+                    <th class="corner">{{ slotLabel(startSlot ?? 0) }}–{{ slotLabel(endSlot ?? 0) }}</th>
+                    @for (r of gridRooms(); track r.id) {
+                      <th class="room-h" (click)="toggleRoomCol(r.id)" [pTooltip]="r.roomType ?? ''">
+                        {{ r.label }}
+                        @if (r.capacity != null) {
+                          <small>cap {{ r.capacity }}</small>
+                        }
+                      </th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (d of gridDates(); track d.dayOfYear) {
+                    <tr>
+                      <th class="date-h" (click)="toggleDateRow(d.dayOfYear)">{{ d.label }}</th>
+                      @for (r of gridRooms(); track r.id) {
+                        <td
+                          class="cell"
+                          [class.free]="cellConflictCount(d.dayOfYear, r) === 0"
+                          [class.conflict]="cellConflictCount(d.dayOfYear, r) > 0"
+                          [class.selected]="isCellSelected(d.dayOfYear, r.id)"
+                          [pTooltip]="cellTooltip(d.dayOfYear, r)"
+                          tooltipPosition="top"
+                          (click)="toggleCell(d.dayOfYear, r.id)"
+                        >
+                          <div class="inner">
+                            @if (cellConflictCount(d.dayOfYear, r) > 0) {
+                              <span class="conf-badge">{{ cellConflictCount(d.dayOfYear, r) }}</span>
+                            } @else if (isCellSelected(d.dayOfYear, r.id)) {
+                              <i class="pi pi-check"></i>
+                            }
+                          </div>
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="mb-hint">{{ selectedCellCount() }} cell(s) selected.</p>
+          </div>
+        }
+
+        <ng-template pTemplate="footer">
+          @if (builderStep() === 'dates') {
+            <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="builderVisible.set(false)" />
+            <p-button label="Check Availability" icon="pi pi-search" (onClick)="checkAvailability()" [loading]="checking()" />
+          } @else {
+            <p-button label="Back" severity="secondary" [text]="true" icon="pi pi-arrow-left" (onClick)="backToDates()" />
+            <span class="spacer"></span>
+            <p-button label="Add Meetings" icon="pi pi-check" (onClick)="addMeetingsFromGrid()" [disabled]="selectedCellCount() === 0" />
+          }
+        </ng-template>
+      </p-dialog>
 
       <fieldset class="section">
         <legend>Additional Information</legend>
