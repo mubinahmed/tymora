@@ -20,6 +20,7 @@ export class MenuService {
 
   /** backend page key -> Angular route */
   private static readonly MIGRATED: Record<string, string> = {
+    rooms: '/rooms',
     buildings: '/buildings',
     roomgroups: '/roomgroups',
     roomfeatures: '/roomfeatures',
@@ -30,6 +31,33 @@ export class MenuService {
     teachingRequests: '/teachingRequests',
     teachingAssignments: '/teachingAssignments',
     events: '/events',
+    availability: '/room-availability',
+    // Wave 1 GWT-backed screens
+    traveltimes: '/travel-times',
+    password: '/change-password',
+    scripts: '/scripts',
+    tasks: '/task-scheduler',
+    hql: '/hql-reports',
+    pointInTimeDataReports: '/point-in-time-data-reports',
+    limitAndProjectionSnapshot: '/limit-and-projection-snapshot',
+    assignmentHistory: '/assignment-history',
+    solutionReports: '/solution-reports',
+    solverlog: '/solver-log',
+    listSolutions: '/saved-timetables',
+    teachingAssignmentChanges: '/teaching-assignment-changes',
+    exams: '/examinations',
+    // Wave 2 larger GWT screens
+    personal: '/personal-timetable',
+    classes: '/lookup-classes',
+    timetable: '/resource-timetable',
+    sctreport: '/batch-sectioning-reports',
+    onlinereport: '/online-sectioning-reports',
+    batchsctdash: '/batch-sectioning-dashboard',
+    onlinesctdash: '/online-sectioning-dashboard',
+    instructorSurvey: '/instructor-survey',
+    sectioning: '/scheduling-assistant',
+    requests: '/course-requests',
+    acrf: '/advisor-recommendations',
     solver: '/solver',
     assignedClasses: '/assignedClasses',
     notAssignedClasses: '/notAssignedClasses',
@@ -59,21 +87,33 @@ export class MenuService {
   private toItem(m: MenuInterface): MenuItem {
     const children = (m.subMenus ?? []).map((s) => this.toItem(s));
     const item: MenuItem = { label: m.title || m.name };
+    const nav = this.navFor(m);
     if (children.length) {
+      // Dual-purpose node (own page + children, e.g. "Rooms"): PanelMenu parents
+      // only toggle their submenu, so surface the node's own page as a leaf child
+      // — otherwise that page (the Rooms list) would be unreachable from the menu.
+      if (nav) children.unshift({ label: m.title || m.name, command: nav });
       item.items = children;
       return item;
     }
-    // Use command (not routerLink/url) so PrimeNG renders no <a href/target> —
-    // that avoids items opening in a new tab and keeps navigation under our control.
-    const route = this.routeFor(m);
-    if (route) {
-      item.command = () => this.router.navigateByUrl(route);
-    } else if (m.page) {
-      // Coexistence: hand off to the existing backend page in the SAME tab.
-      const url = this.legacyUrl(m);
-      item.command = () => window.location.assign(url);
-    }
+    if (nav) item.command = nav;
     return item;
+  }
+
+  /**
+   * Navigation command for a menu node's own page: an in-app route when the page
+   * is migrated, otherwise a same-tab hand-off to the legacy backend page.
+   * Uses command (not routerLink/url) so PrimeNG renders no <a href/target>,
+   * which avoids items opening in a new tab and keeps navigation under our control.
+   */
+  private navFor(m: MenuInterface): (() => void) | undefined {
+    const route = this.routeFor(m);
+    if (route) return () => this.router.navigateByUrl(route);
+    if (m.page) {
+      const url = this.legacyUrl(m);
+      return () => window.location.assign(url);
+    }
+    return undefined;
   }
 
   /** Angular route for a migrated menu entry, or undefined for legacy pages. */

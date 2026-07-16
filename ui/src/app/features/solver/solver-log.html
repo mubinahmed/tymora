@@ -1,0 +1,68 @@
+<div class="solver-log">
+  <div class="toolbar">
+    <p-select
+      [options]="types"
+      optionLabel="label"
+      optionValue="value"
+      [(ngModel)]="type"
+      (onChange)="refresh()"
+      styleClass="sl-select"
+    />
+
+    <p-select
+      [options]="levels"
+      optionLabel="label"
+      optionValue="value"
+      [(ngModel)]="level"
+      (onChange)="refresh()"
+      styleClass="sl-select"
+    />
+
+    <p-button label="Refresh" icon="pi pi-refresh" (onClick)="refresh()" [loading]="loading()" />
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+
+  @if (loading()) {
+    <div class="center">
+      <p-progressSpinner strokeWidth="4" />
+    </div>
+  } @else if (loaded() && !error()) {
+    @if (isEmpty()) {
+      <p-message severity="info" text="No log messages for the selected solver." />
+    } @else {
+      @for (section of sections(); track $index) {
+        <p-card>
+          @if (section.owner) {
+            <ng-template pTemplate="header">
+              <div class="section-owner">{{ section.owner }}</div>
+            </ng-template>
+          }
+          <p-table [value]="section.messages" [scrollable]="true" scrollHeight="480px" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width: 11rem">Time</th>
+                <th style="width: 7rem">Level</th>
+                <th>Message</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-m>
+              <tr>
+                <td class="mono">{{ m.date }}</td>
+                <td><p-tag [value]="m.level" [severity]="severity(m.level)" /></td>
+                <td>
+                  <div>{{ m.message }}</div>
+                  @if (m.stackTrace?.length) {
+                    <pre class="trace">{{ (m.stackTrace || []).join('\n') }}</pre>
+                  }
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-card>
+      }
+    }
+  }
+</div>

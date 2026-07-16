@@ -1,0 +1,127 @@
+<div class="course-requests">
+  <div class="search-bar">
+    @if (sessions().length > 1) {
+      <p-select
+        [options]="sessions()"
+        optionLabel="name"
+        optionValue="uniqueId"
+        [(ngModel)]="sessionId"
+        (onChange)="onSessionChange()"
+        styleClass="rt-select"
+      />
+    }
+    @if (loading()) {
+      <p-progressSpinner strokeWidth="4" styleClass="inline-spin" />
+    }
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+
+  @if (loadingList()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (searched()) {
+    @if (info()) {
+      <p-message severity="info" [text]="info()!" />
+    } @else {
+      @if (request()?.maxCredit != null) {
+        <p class="hint">Maximum credit: {{ request()!.maxCredit }}</p>
+      }
+
+      <h3>Course Requests</h3>
+      <p-table
+        [value]="courseRows()"
+        styleClass="p-datatable-sm p-datatable-striped"
+        dataKey="priority"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 6rem">Priority</th>
+            <th>Course</th>
+            <th>Alternatives</th>
+            <th style="width: 8rem">Credit</th>
+            <th style="width: 10rem">Wait-List</th>
+            <th style="width: 12rem">Status</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-r>
+          <tr>
+            <td>{{ r.priority }}</td>
+            <td>{{ r.course || '—' }}</td>
+            <td>
+              @if (r.alternatives.length) {
+                {{ r.alternatives.join(', ') }}
+              } @else {
+                —
+              }
+            </td>
+            <td>{{ r.credit || '—' }}</td>
+            <td>
+              @if (r.waitList) {
+                <p-tag value="Wait-List" severity="warn" />
+              } @else if (r.noSub) {
+                <p-tag value="No Substitute" severity="info" />
+              } @else {
+                —
+              }
+            </td>
+            <td>
+              @if (r.status) {
+                <p-tag [value]="r.status" severity="info" />
+              } @else {
+                —
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="6">No course requests.</td></tr>
+        </ng-template>
+      </p-table>
+
+      <h3>Alternate Course Requests</h3>
+      <p-table
+        [value]="alternateRows()"
+        styleClass="p-datatable-sm p-datatable-striped"
+        dataKey="priority"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 6rem">Priority</th>
+            <th>Course</th>
+            <th>Alternatives</th>
+            <th style="width: 8rem">Credit</th>
+            <th style="width: 12rem">Status</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-r>
+          <tr>
+            <td>{{ r.priority }}</td>
+            <td>{{ r.course || '—' }}</td>
+            <td>
+              @if (r.alternatives.length) {
+                {{ r.alternatives.join(', ') }}
+              } @else {
+                —
+              }
+            </td>
+            <td>{{ r.credit || '—' }}</td>
+            <td>
+              @if (r.status) {
+                <p-tag [value]="r.status" severity="info" />
+              } @else {
+                —
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="5">No alternate course requests.</td></tr>
+        </ng-template>
+      </p-table>
+    }
+  } @else {
+    <p class="hint">Loading course requests…</p>
+  }
+</div>

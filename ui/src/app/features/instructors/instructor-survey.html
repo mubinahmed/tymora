@@ -1,0 +1,142 @@
+<div class="is-page">
+  @if (loading()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (survey(); as s) {
+    <div class="is-toolbar">
+      <span class="is-title">{{ s.formattedName || s.externalId }}</span>
+      <span class="spacer"></span>
+      @if (editable()) {
+        <p-button label="Save" icon="pi pi-save" (onClick)="save()" [loading]="saving()" />
+        <p-button label="Submit" icon="pi pi-check" severity="success" (onClick)="submit()" [loading]="saving()" />
+      }
+      @if (canUnsubmit) {
+        <p-button label="Unsubmit" icon="pi pi-undo" severity="secondary" (onClick)="unsubmit()" [loading]="saving()" />
+      }
+    </div>
+
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" />
+    }
+    @if (info()) {
+      <p-message severity="success" [text]="info()!" />
+    }
+    @if (!editable()) {
+      <p-message severity="info"
+        [text]="s.submitted ? ('This survey was submitted on ' + s.submitted + ' and is read-only.') : 'This survey is not editable.'" />
+    }
+
+    <!-- Identity -->
+    <div class="is-field"><label>External Id</label><span>{{ s.externalId }}</span></div>
+
+    @if (sessions.length > 1) {
+      <div class="is-field">
+        <label>Academic Session</label>
+        <p-select [options]="sessions" optionLabel="name" optionValue="sessionId"
+          [(ngModel)]="sessionId" (onChange)="onSessionChange()" appendTo="body" />
+      </div>
+    }
+
+    <div class="is-field">
+      <label>Email</label>
+      @if (editable()) {
+        <input pInputText type="text" class="full" [(ngModel)]="email" />
+      } @else {
+        <span>{{ email }}</span>
+      }
+    </div>
+
+    @if (s.submitted) {
+      <div class="is-field"><label>Submitted</label><span>{{ s.submitted }}</span></div>
+    }
+
+    @if (departmentLabels.length) {
+      <div class="is-field">
+        <label>Department</label>
+        <span>{{ departmentLabels.join(', ') }}</span>
+      </div>
+    }
+
+    <!-- General preferences -->
+    <div class="is-section">General Preferences</div>
+
+    @if (s.timePrefs) {
+      <p class="hint">Time preferences are shown in the legacy weekly grid (not yet ported); existing values are preserved on save.</p>
+    }
+
+    @for (g of prefGroups(); track g.id) {
+      <div class="is-field"><label>{{ g.type }}</label></div>
+      @for (row of g.rows; track $index) {
+        <div class="is-pref-line">
+          <p-select [options]="g.items" optionLabel="label" optionValue="value"
+            [(ngModel)]="row.item" placeholder="Select…" appendTo="body" [disabled]="!editable()" />
+          <p-select [options]="prefLevelOptions()" optionLabel="label" optionValue="value"
+            [(ngModel)]="row.level" placeholder="Preference" appendTo="body" [disabled]="!editable()" />
+          <input pInputText type="text" class="note" placeholder="Reason / note" [(ngModel)]="row.note"
+            [disabled]="!editable()" />
+          @if (editable()) {
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" (onClick)="removePrefRow(g, $index)" />
+          }
+        </div>
+      }
+      @if (editable()) {
+        <p-button label="Add" icon="pi pi-plus" [text]="true" size="small" (onClick)="addPrefRow(g)" />
+      }
+    }
+
+    <div class="is-field" style="margin-top:0.75rem">
+      <label>Other Preferences</label>
+    </div>
+    @if (editable()) {
+      <textarea pTextarea rows="3" class="full" [(ngModel)]="note"></textarea>
+    } @else if (note) {
+      <p>{{ note }}</p>
+    }
+
+    <!-- Course preferences -->
+    <div class="is-section">Course Preferences</div>
+    @if (customFields.length) {
+      <table class="is-courses">
+        <thead>
+          <tr>
+            <th>Course</th>
+            @for (cf of customFields; track cf.id) {
+              <th>{{ cf.name }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of courseRows(); track $index) {
+            <tr>
+              <td>
+                @if (editable()) {
+                  <input pInputText type="text" [(ngModel)]="row.courseName" placeholder="Course" />
+                } @else {
+                  {{ row.courseName }}
+                }
+              </td>
+              @for (cf of customFields; track cf.id) {
+                <td>
+                  @if (editable()) {
+                    <input pInputText type="text" class="full"
+                      [ngModel]="customValue(row, cf.id!)"
+                      (ngModelChange)="setCustomValue(row, cf.id!, $event)" />
+                  } @else {
+                    {{ customValue(row, cf.id!) }}
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (editable()) {
+        <p-button label="Add course" icon="pi pi-plus" [text]="true" size="small" (onClick)="addCourseRow()" />
+      }
+      <p class="hint">Course lookup/validation and offering detail popups are not yet ported; enter the course name manually.</p>
+    } @else {
+      <p class="hint">No course custom fields are configured for this session.</p>
+    }
+  } @else if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+</div>

@@ -1,0 +1,23 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error() && !model()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back" icon="pi pi-arrow-left" (onClick)="back()" /></div>
+} @else {
+  <p-card [header]="title()">
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" styleClass="mb" />
+    }
+    @if (model(); as m) {
+      <app-room-sharing-matrix [model]="m" [editable]="true" [includeNote]="!eventAvailability()" />
+    }
+
+    <ng-template pTemplate="footer">
+      <div class="tbl-caption">
+        <p-button label="Back" severity="secondary" [text]="true" icon="pi pi-arrow-left" (onClick)="back()" [disabled]="saving()" />
+        <span class="spacer"></span>
+        <p-button label="Update" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+      </div>
+    </ng-template>
+  </p-card>
+}

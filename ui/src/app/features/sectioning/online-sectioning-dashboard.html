@@ -1,0 +1,127 @@
+@if (loading()) {
+  <div class="osd-center"><p-progressSpinner strokeWidth="4" /></div>
+} @else {
+  <p-card>
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" />
+    }
+
+    @if (properties(); as p) {
+      <div class="osd-status">
+        @if (p.admin) { <p-tag value="Administrator" severity="info" /> }
+        @if (p.advisor) { <p-tag value="Advisor" severity="info" /> }
+        @if (p.email) { <p-tag value="Email" /> }
+        @if (p.changeStatus) { <p-tag value="Change Status" /> }
+        @if (p.massCancel) { <p-tag value="Mass Cancel" /> }
+        @if (p.changeLog) { <p-tag value="Change Log" /> }
+        <span class="osd-muted">{{ states().length }} student status(es) defined</span>
+      </div>
+    }
+
+    <div class="osd-filter">
+      <input
+        type="text"
+        pInputText
+        [(ngModel)]="query"
+        (keyup.enter)="search()"
+        placeholder="Filter (e.g. subject, course, area, status)"
+        [style]="{ 'min-width': '28rem' }"
+      />
+      <p-selectButton
+        [options]="viewOptions"
+        [(ngModel)]="view"
+        optionLabel="label"
+        optionValue="value"
+        (ngModelChange)="onViewChange()"
+      />
+      <p-button
+        label="Search"
+        icon="pi pi-search"
+        [loading]="searching()"
+        (onClick)="search()"
+      />
+    </div>
+  </p-card>
+
+  @if (searching()) {
+    <div class="osd-center osd-mt"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (searched()) {
+    @if (view === 'courses') {
+      @if (courseRows().length) {
+        <p-card class="osd-mt" header="Course Enrollments">
+          <div class="osd-muted osd-mb">{{ courseRows().length }} course(s)</div>
+          <p-table [value]="courseRows()" [scrollable]="true" scrollHeight="60vh" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Subject</th>
+                <th>Course</th>
+                <th>Title</th>
+                <th>Consent</th>
+                <th class="osd-num">Limit</th>
+                <th class="osd-num">Enrolled</th>
+                <th class="osd-num">Wait-Listed</th>
+                <th class="osd-num">Reserved</th>
+                <th class="osd-num">Available</th>
+                <th class="osd-num">Not Assigned</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-c>
+              <tr>
+                <td>{{ c.subject }}</td>
+                <td>{{ c.courseNbr }}{{ c.clazz ? ' / ' + c.clazz : (c.subpart ? ' / ' + c.subpart : '') }}</td>
+                <td>{{ c.title }}</td>
+                <td>{{ c.consent }}</td>
+                <td class="osd-num">{{ c.limit }}</td>
+                <td class="osd-num">{{ c.enrollment }}</td>
+                <td class="osd-num">{{ c.waitlist }}</td>
+                <td class="osd-num">{{ c.reservation }}</td>
+                <td class="osd-num">{{ c.available }}</td>
+                <td class="osd-num">{{ c.unassigned }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-card>
+      } @else {
+        <div class="osd-mt"><p-message severity="info" text="No matching courses found." /></div>
+      }
+    } @else {
+      @if (studentRows().length) {
+        <p-card class="osd-mt" header="Students">
+          <div class="osd-muted osd-mb">{{ studentRows().length }} student(s)</div>
+          <p-table [value]="studentRows()" [scrollable]="true" scrollHeight="60vh" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Student</th>
+                <th>External Id</th>
+                <th>Area</th>
+                <th>Classification</th>
+                <th>Major</th>
+                <th>Status</th>
+                <th class="osd-num">Credit</th>
+                <th class="osd-num">Enrolled</th>
+                <th class="osd-num">Wait-Listed</th>
+                <th class="osd-num">Not Assigned</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-s>
+              <tr>
+                <td>{{ studentName(s.student) }}</td>
+                <td>{{ s.student?.externalId }}</td>
+                <td>{{ codes(s.student?.area) }}</td>
+                <td>{{ codes(s.student?.classification) }}</td>
+                <td>{{ codes(s.student?.major) }}</td>
+                <td>{{ s.status }}</td>
+                <td class="osd-num">{{ s.credit }}</td>
+                <td class="osd-num">{{ s.enrollment }}</td>
+                <td class="osd-num">{{ s.waitlist }}</td>
+                <td class="osd-num">{{ s.unassigned }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-card>
+      } @else {
+        <div class="osd-mt"><p-message severity="info" text="No matching students found." /></div>
+      }
+    }
+  }
+}

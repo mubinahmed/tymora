@@ -1,0 +1,92 @@
+<div class="travel-times">
+  <div class="search-bar">
+    <label class="tt-filter-label">Rooms</label>
+    @if (loadingRooms()) {
+      <p-progressSpinner strokeWidth="4" styleClass="inline-spin" />
+    } @else {
+      <p-multiSelect
+        [options]="roomOptions()"
+        optionValue="id"
+        optionLabel="label"
+        [(ngModel)]="selectedRoomIds"
+        [filter]="true"
+        filterBy="label"
+        display="chip"
+        appendTo="body"
+        placeholder="Select rooms"
+        styleClass="tt-rooms-select"
+      />
+    }
+    <p-button
+      label="Show"
+      icon="pi pi-table"
+      (onClick)="show()"
+      [disabled]="!canShow() || loadingMatrix()"
+      [loading]="loadingMatrix()"
+    />
+    @if (sessionName()) {
+      <span class="tt-session">{{ sessionName() }}</span>
+    }
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+
+  @if (shown() && !loadingMatrix()) {
+    <div class="tt-toolbar">
+      <span class="tt-title">Travel Times (in minutes)</span>
+      <span class="tt-actions">
+        @if (editable()) {
+          <p-button label="Save" icon="pi pi-save" (onClick)="save()" [loading]="saving()" size="small" />
+          <p-button label="Back" icon="pi pi-times" severity="secondary" (onClick)="back()" [disabled]="saving()" size="small" />
+        } @else {
+          <p-button label="Edit" icon="pi pi-pencil" (onClick)="edit()" size="small" />
+        }
+      </span>
+    </div>
+
+    @if (rooms().length) {
+      <div class="tt-matrix-scroll">
+        <table class="tt-matrix">
+          <thead>
+            <tr>
+              <th class="tt-corner"></th>
+              @for (col of rooms(); track col.id) {
+                <th class="tt-col-head">{{ col.name }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rooms(); track row.id) {
+              <tr>
+                <th class="tt-row-head">{{ row.name }}</th>
+                @for (col of rooms(); track col.id) {
+                  <td class="tt-cell" [class.tt-diagonal]="isDiagonal(row, col)">
+                    @if (isDiagonal(row, col)) {
+                      <span class="tt-dash">&mdash;</span>
+                    } @else {
+                      <input
+                        pInputText
+                        type="text"
+                        maxlength="3"
+                        class="tt-input"
+                        [class.tt-default]="!cellValue(row, col) && cellDefault(row, col)"
+                        [readonly]="!editable()"
+                        [ngModel]="cellValue(row, col)"
+                        [placeholder]="cellDefault(row, col)"
+                        (ngModelChange)="onCellInput(row, col, $event)"
+                      />
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p-message severity="info" text="No rooms to display for the current selection." />
+    }
+  }
+</div>

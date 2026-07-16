@@ -1,0 +1,206 @@
+<div class="list-solutions">
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" styleClass="ls-msg" />
+  }
+
+  @if (response()?.pageMessages?.length) {
+    @for (pm of response()!.pageMessages!; track $index) {
+      <p-message
+        [severity]="pm.type === 'ERROR' ? 'error' : pm.type === 'WARNING' ? 'warn' : 'info'"
+        [text]="pm.message || ''"
+        styleClass="ls-msg"
+      />
+    }
+  }
+
+  @if (loading()) {
+    <div class="ls-loading">
+      <p-progressSpinner strokeWidth="4" />
+    </div>
+  }
+
+  <!-- Currently loaded solution -->
+  @if (currentSolution(); as cur) {
+    <p-card styleClass="ls-card">
+      <ng-template pTemplate="title">Current Solution</ng-template>
+      <div class="ls-props">
+        @if (response()?.solverStatus) {
+          <div class="ls-prop"><span class="k">Solver Status</span><span class="v">{{ response()!.solverStatus }}</span></div>
+        }
+        @if (response()?.solverProgress) {
+          <div class="ls-prop"><span class="k">Progress</span><span class="v">{{ response()!.solverProgress }}</span></div>
+        }
+        @if (cur.created) {
+          <div class="ls-prop"><span class="k">Created</span><span class="v">{{ cur.created }}</span></div>
+        }
+        @if (cur.owner) {
+          <div class="ls-prop"><span class="k">Owner</span><span class="v" [innerHTML]="cur.owner"></span></div>
+        }
+        @if (cur.committed) {
+          <div class="ls-prop"><span class="k">Committed</span><span class="v">{{ cur.committed }}</span></div>
+        }
+        @for (p of pairs(cur); track $index) {
+          <div class="ls-prop"><span class="k" [innerHTML]="p.name"></span><span class="v" [innerHTML]="p.value"></span></div>
+        }
+      </div>
+
+      @if (canExecute(-1, 'UPDATE_NOTE')) {
+        <label class="ls-note-label">Note</label>
+        <textarea pTextarea rows="4" [(ngModel)]="notes['-1']" class="ls-note"></textarea>
+      } @else if (currentSolution()?.note) {
+        <div class="ls-prop"><span class="k">Note</span><span class="v" [innerHTML]="currentSolution()!.note"></span></div>
+      }
+
+      <ng-template pTemplate="footer">
+        <div class="ls-actions">
+          @if (canExecute(-1, 'SAVE')) {
+            <p-button label="Save" icon="pi pi-save" size="small" (onClick)="execute('SAVE')" />
+          }
+          @if (canExecute(-1, 'SAVE_AS_NEW')) {
+            <p-button label="Save As New" icon="pi pi-copy" size="small" severity="secondary" (onClick)="execute('SAVE_AS_NEW')" />
+          }
+          @if (canExecute(-1, 'SAVE_COMMIT')) {
+            <p-button label="Save & Commit" icon="pi pi-check" size="small" (onClick)="execute('SAVE_COMMIT')" />
+          }
+          @if (canExecute(-1, 'SAVE_AS_NEW_COMMIT')) {
+            <p-button label="Save As New & Commit" icon="pi pi-check-circle" size="small" severity="secondary" (onClick)="execute('SAVE_AS_NEW_COMMIT')" />
+          }
+          @if (canExecute(-1, 'RELOAD')) {
+            <p-button label="Reload" icon="pi pi-refresh" size="small" severity="secondary" (onClick)="execute('RELOAD')" />
+          }
+          @if (canExecute(-1, 'UNLOAD')) {
+            <p-button label="Unload" icon="pi pi-times" size="small" severity="danger" (onClick)="execute('UNLOAD')" />
+          }
+          @if (canExecute(-1, 'CHECK')) {
+            <p-button label="Refresh" icon="pi pi-sync" size="small" severity="secondary" (onClick)="execute('CHECK')" />
+          }
+        </div>
+      </ng-template>
+    </p-card>
+  }
+
+  <!-- Selected saved solutions -->
+  @for (sel of selectedSolutions(); track sel.id) {
+    <p-card styleClass="ls-card">
+      <ng-template pTemplate="title">Selected Solution: {{ sel.name }}</ng-template>
+      <div class="ls-props">
+        @if (sel.created) {
+          <div class="ls-prop"><span class="k">Created</span><span class="v">{{ sel.created }}</span></div>
+        }
+        @if (sel.owner) {
+          <div class="ls-prop"><span class="k">Owner</span><span class="v" [innerHTML]="sel.owner"></span></div>
+        }
+        @if (sel.committed) {
+          <div class="ls-prop"><span class="k">Committed</span><span class="v">{{ sel.committed }}</span></div>
+        }
+        @for (p of pairs(sel); track $index) {
+          <div class="ls-prop"><span class="k" [innerHTML]="p.name"></span><span class="v" [innerHTML]="p.value"></span></div>
+        }
+      </div>
+
+      @if (canExecute(sel.id ?? -1, 'UPDATE_NOTE')) {
+        <label class="ls-note-label">Note</label>
+        <textarea pTextarea rows="4" [(ngModel)]="notes[noteKey(sel.id)]" class="ls-note"></textarea>
+      } @else if (sel.note) {
+        <div class="ls-prop"><span class="k">Note</span><span class="v" [innerHTML]="sel.note"></span></div>
+      }
+
+      <ng-template pTemplate="footer">
+        <div class="ls-actions">
+          <p-button label="Deselect" icon="pi pi-minus" size="small" severity="secondary" (onClick)="execute('DESELECT', { solutionId: sel.id })" />
+          @if (canExecute(sel.id ?? -1, 'UPDATE_NOTE')) {
+            <p-button label="Update Note" icon="pi pi-pencil" size="small" severity="secondary" (onClick)="execute('UPDATE_NOTE', { solutionId: sel.id })" />
+          }
+          @if (canExecute(sel.id ?? -1, 'COMMIT')) {
+            <p-button label="Commit" icon="pi pi-check" size="small" (onClick)="execute('COMMIT', { solutionId: sel.id })" />
+          }
+          @if (canExecute(sel.id ?? -1, 'UNCOMMIT')) {
+            <p-button label="Uncommit" icon="pi pi-undo" size="small" severity="secondary" (onClick)="execute('UNCOMMIT', { solutionId: sel.id })" />
+          }
+          @if (canExecute(sel.id ?? -1, 'EXPORT')) {
+            <p-button label="Export CSV" icon="pi pi-download" size="small" severity="secondary" (onClick)="execute('EXPORT', { solutionId: sel.id })" />
+          }
+          @if (canExecute(sel.id ?? -1, 'DELETE')) {
+            <p-button label="Delete" icon="pi pi-trash" size="small" severity="danger" (onClick)="execute('DELETE', { solutionId: sel.id })" />
+          }
+        </div>
+      </ng-template>
+    </p-card>
+  }
+
+  <!-- Load selected solution(s) into the interactive solver -->
+  @if (canLoadSelected()) {
+    <p-card styleClass="ls-card">
+      <ng-template pTemplate="title">Load into Interactive Solver</ng-template>
+      <div class="ls-load">
+        <label>Configuration</label>
+        <p-select [options]="configurations()" optionLabel="name" optionValue="id" [(ngModel)]="configurationId" appendTo="body" />
+        @if (hosts().length) {
+          <label>Host</label>
+          <p-select [options]="hosts()" [(ngModel)]="host" appendTo="body" />
+        }
+        <p-button label="Load" icon="pi pi-play" size="small" (onClick)="execute('LOAD')" />
+      </div>
+    </p-card>
+  }
+
+  <!-- Saved solutions table -->
+  <p-card styleClass="ls-card">
+    <ng-template pTemplate="title">Saved Solutions</ng-template>
+    @if (response()?.message && !rows().length) {
+      <p-message severity="info" [text]="response()!.message!" styleClass="ls-msg" />
+    } @else if (!rows().length) {
+      <p-message severity="info" text="No saved solutions." styleClass="ls-msg" />
+    } @else {
+      @if (response()?.message) {
+        <p-message severity="info" [text]="response()!.message!" styleClass="ls-msg" />
+      }
+      <p-table
+        [value]="rows()"
+        [paginator]="rows().length > 50"
+        [rows]="50"
+        [rowsPerPageOptions]="[50, 100, 200]"
+        styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            @for (c of cols(); track c.index) {
+              <th [style.text-align]="c.align">{{ c.name }}</th>
+            }
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr class="ls-row" [class.ls-row-selected]="isRowSelected(row)" (click)="onRowClick(row)">
+            @for (c of cols(); track c.index) {
+              <td
+                [style.text-align]="c.align"
+                [style.color]="row.cells?.[c.index]?.color"
+                [title]="row.cells?.[c.index]?.title || ''"
+                [innerHTML]="row.cells?.[c.index]?.formattedValue"
+              ></td>
+            }
+          </tr>
+        </ng-template>
+      </p-table>
+      <small class="ls-hint">Click a row to select or deselect a solution.</small>
+    }
+  </p-card>
+
+  <!-- Load an empty solution -->
+  @if (showLoadEmpty()) {
+    <p-card styleClass="ls-card">
+      <ng-template pTemplate="title">Load Empty Solution</ng-template>
+      <div class="ls-load">
+        <label>Owner</label>
+        <p-select [options]="owners()" optionLabel="name" optionValue="id" [(ngModel)]="ownerId" appendTo="body" />
+        <label>Configuration</label>
+        <p-select [options]="configurations()" optionLabel="name" optionValue="id" [(ngModel)]="configurationId" appendTo="body" />
+        @if (hosts().length) {
+          <label>Host</label>
+          <p-select [options]="hosts()" [(ngModel)]="host" appendTo="body" />
+        }
+        <p-button label="Load Empty" icon="pi pi-plus" size="small" (onClick)="execute('LOAD_EMPTY')" />
+      </div>
+    </p-card>
+  }
+</div>

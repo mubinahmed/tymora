@@ -1,0 +1,40 @@
+<div class="offering-search">
+  <p-card>
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" />
+    }
+
+    @if (loading()) {
+      <div style="display:flex;justify-content:center;padding:2rem;">
+        <p-progressSpinner strokeWidth="4" />
+      </div>
+    } @else {
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;justify-content:space-between;">
+        <div>
+          <div style="font-weight:600;">Current Snapshot Date</div>
+          <div style="margin-top:.25rem;">
+            @if (snapshotDate()) {
+              {{ snapshotDate() | date: 'medium' }}
+            } @else {
+              <span style="opacity:.7;">No snapshot has been taken.</span>
+            }
+          </div>
+        </div>
+
+        <p-button
+          label="Take New Snapshot"
+          icon="pi pi-camera"
+          (onClick)="takeSnapshot()"
+          [disabled]="!canTake()"
+          [loading]="taking()"
+        />
+      </div>
+
+      @if (!canTake()) {
+        <div style="margin-top:1rem;">
+          <p-message severity="info" text="You do not have permission to take a new snapshot." />
+        </div>
+      }
+    }
+  </p-card>
+</div>

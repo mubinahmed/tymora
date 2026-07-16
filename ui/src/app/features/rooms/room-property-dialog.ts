@@ -65,6 +65,8 @@ export class RoomPropertyDialog {
   readonly featureTypes = input<FeatureTypeInterface[]>([]);
   readonly departments = input<RoomInterface_DepartmentInterface[]>([]);
   readonly futureSessions = input<RoomInterface_AcademicSessionInterface[]>([]);
+  /** Current academic session — the events RoomFilter denies access without it. */
+  readonly sessionId = input<number | null>(null);
   readonly saved = output<void>();
 
   protected readonly saving = signal(false);
@@ -127,7 +129,7 @@ export class RoomPropertyDialog {
     if (this.roomsLoaded || this.loadingRooms()) return;
     this.loadingRooms.set(true);
     this.roomsError.set(null);
-    const request: RoomFilterRpcRequest = { command: 'ENUMERATE', options: {} };
+    const request: RoomFilterRpcRequest = { command: 'ENUMERATE', options: {}, sessionId: this.sessionId() ?? undefined };
     this.rpc.execute<FilterRpcResponse>(RPC_ROOM_FILTER, request).subscribe({
       next: (res) => {
         this.allRooms = res.entities?.['results'] ?? [];

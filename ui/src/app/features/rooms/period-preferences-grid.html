@@ -1,0 +1,68 @@
+@if (grid(); as g) {
+  <div class="rs-toolbar">
+    <span class="spacer"></span>
+    <label class="rs-horiz">
+      <p-checkbox [binary]="true" [ngModel]="horizontal()" (ngModelChange)="toggleHorizontal($event)" [ngModelOptions]="{ standalone: true }" />
+      Dates horizontally
+    </label>
+  </div>
+
+  <div class="rs-scroll">
+    <table class="rs-grid">
+      <thead>
+        <tr>
+          <th class="rs-corner" [class.rs-click]="editable()" (click)="paintAll()">Date \ Time</th>
+          @for (c of g.cols; track c.key) {
+            <th class="rs-head" [class.rs-click]="editable()" (click)="g.horizontal ? paintSlot(c.key) : paintDay(c.key)">
+              {{ c.label }}
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of g.rows; track r.key) {
+          <tr>
+            <th class="rs-rowhead" [class.rs-click]="editable()" (click)="g.horizontal ? paintDay(r.key) : paintSlot(r.key)">
+              {{ r.label }}
+            </th>
+            @for (c of g.cols; track c.key) {
+              @if (g.horizontal) {
+                <td
+                  class="rs-cell"
+                  [class.rs-click]="editableCell(r.key, c.key)"
+                  [class.rs-disabled]="!hasPeriod(r.key, c.key)"
+                  [style.background-color]="cellColor(r.key, c.key)"
+                  [title]="cellTitle(r.key, c.key)"
+                  (click)="paint(r.key, c.key)"
+                ></td>
+              } @else {
+                <td
+                  class="rs-cell"
+                  [class.rs-click]="editableCell(c.key, r.key)"
+                  [class.rs-disabled]="!hasPeriod(c.key, r.key)"
+                  [style.background-color]="cellColor(c.key, r.key)"
+                  [title]="cellTitle(c.key, r.key)"
+                  (click)="paint(c.key, r.key)"
+                ></td>
+              }
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rs-legend">
+    @for (p of preferences(); track p.id) {
+      <div class="rs-opt" [class.rs-opt-sel]="p.id === selectedId()">
+        <span
+          class="rs-swatch"
+          [class.rs-click]="editable() && p.editable"
+          [style.background-color]="p.color || 'transparent'"
+          (click)="selectPref(p.id)"
+        ></span>
+        <span class="rs-opt-name" [class.rs-click]="editable() && p.editable" (click)="selectPref(p.id)">{{ p.name }}</span>
+      </div>
+    }
+  </div>
+}

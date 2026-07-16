@@ -18,3 +18,11 @@ export interface ApiError {
  * Events one (room enumeration -> FilterRpcResponse). `$` = Java nested-class separator.
  */
 export const RPC_ROOM_FILTER = 'org.unitime.timetable.gwt.shared.EventInterface$RoomFilterRpcRequest';
+
+/**
+ * The OTHER RoomFilterRpcRequest — RoomInterface.RoomFilterRpcRequest -> RoomDetailsBackend
+ * (gated by Right.Rooms). Its ENUMERATE returns full RoomDetailInterface rows (building,
+ * type, capacity, coordinates, departments, features, groups), so it backs the Rooms
+ * list AND per-room edit load. Same simple-name collision -> must use the FQN.
+ */
+export const RPC_ROOM_DETAILS_FILTER = 'org.unitime.timetable.gwt.shared.RoomInterface$RoomFilterRpcRequest';

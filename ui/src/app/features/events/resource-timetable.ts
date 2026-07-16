@@ -32,14 +32,17 @@ interface PickerItem {
 }
 
 /**
- * Events browser (command pattern). Supports resource types Room, Subject, and
- * Person: Room/Subject present a picker (rooms via RoomFilterRpcRequest, subjects
- * via ResourceLookupRpcRequest), Person is a name search (ResourceLookup PERSON
- * → resolves an externalId). Events come from EventLookupRpcRequest. Read-only
- * summary; the full calendar/timetable + meeting detail is deferred.
+ * Timetable — the "timetable" GWT page (EventResourceTimetable with
+ * PageType.Timetable). This is the generic resource-type timetable viewer: no
+ * fixed resource type (default "room"), title "Timetable", and the weekly
+ * timetable grid is the primary view (tab 0) rather than the event list. Pick a
+ * resource type + resource (or a person by name), then view its meetings as a
+ * representative-week grid or as a list. Read-only; meeting-level detail,
+ * iCalendar/print export, week/date navigation and the room-filter picker are
+ * deferred (shared behaviour with the Events screen).
  */
 @Component({
-  selector: 'app-events',
+  selector: 'app-resource-timetable',
   imports: [
     FormsModule,
     TableModule,
@@ -52,9 +55,9 @@ interface PickerItem {
     ProgressSpinnerModule,
     EventGrid,
   ],
-  templateUrl: './events.html',
+  templateUrl: './resource-timetable.html',
 })
-export class Events implements OnInit {
+export class ResourceTimetable implements OnInit {
   private rpc = inject(RpcService);
   private page = inject(PageService);
 
@@ -84,21 +87,22 @@ export class Events implements OnInit {
   protected personName = '';
 
   /**
-   * Events are academic-session scoped: the EventAction permission gate matches
-   * Right.Events against a Session qualifier, so every request MUST carry the
-   * session id or the backend denies access ("no matching role / academic session").
+   * Session scoped: the EventAction permission gate matches Right.Events against
+   * a Session qualifier, so every request MUST carry the session id or the
+   * backend denies access.
    */
   protected readonly sessions = signal<AcademicSession[]>([]);
   protected sessionId: number | null = null;
 
-  protected readonly view = signal<'list' | 'grid'>('list');
+  /** Timetable defaults to the weekly grid (PageType.Timetable tab 0). */
+  protected readonly view = signal<'grid' | 'list'>('grid');
   protected readonly viewOptions = [
-    { label: 'List', value: 'list', icon: 'pi pi-list' },
     { label: 'Grid', value: 'grid', icon: 'pi pi-calendar' },
+    { label: 'List', value: 'list', icon: 'pi pi-list' },
   ];
 
   ngOnInit(): void {
-    this.page.set('Events');
+    this.page.set('Timetable');
     this.loadSessions();
   }
 
@@ -161,7 +165,7 @@ export class Events implements OnInit {
     }
   }
 
-  /** Room/Subject: look up events for the selected resource by id. */
+  /** Room/Subject/etc: look up meetings for the selected resource by id. */
   loadEvents(): void {
     if (this.resourceId == null) return;
     this.runLookup({
@@ -172,7 +176,7 @@ export class Events implements OnInit {
     });
   }
 
-  /** Person: resolve the name to a resource, then look up that person's events. */
+  /** Person: resolve the name to a resource, then look up that person's timetable. */
   searchPerson(): void {
     if (!this.personName.trim()) return;
     this.loadingList.set(true);

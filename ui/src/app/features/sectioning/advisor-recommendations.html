@@ -1,0 +1,112 @@
+<div class="offering-search">
+  <div class="search-bar">
+    <input
+      pInputText
+      type="text"
+      placeholder="Student external id"
+      [(ngModel)]="studentId"
+      (keyup.enter)="lookup()"
+    />
+    <p-button label="Look Up" icon="pi pi-search" (onClick)="lookup()"
+      [disabled]="!studentId.trim() || loading()" [loading]="loading()" />
+
+    @if (sessions().length) {
+      <p-select
+        [options]="sessionOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="sessionId"
+        (onChange)="onSessionChange()"
+        [filter]="sessions().length > 8"
+        filterBy="label"
+        appendTo="body"
+        placeholder="Select academic session"
+        styleClass="sa-select"
+      />
+    }
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+
+  @if (loadingData()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (searched() && details(); as d) {
+    <p-card styleClass="sa-card">
+      <div class="student-info">
+        <div><span class="lbl">Student</span> {{ d.studentName || '—' }}</div>
+        <div><span class="lbl">External Id</span> {{ d.studentExternalId || '—' }}</div>
+        <div><span class="lbl">Email</span> {{ d.studentEmail || '—' }}</div>
+        <div><span class="lbl">Session</span> {{ d.sessionName || '—' }}</div>
+        <div><span class="lbl">Advisor Email</span> {{ d.advisorEmail || '—' }}</div>
+        <div><span class="lbl">Status</span> {{ d.currentStatus?.label || '—' }}</div>
+      </div>
+    </p-card>
+
+    <p-card header="Advisor Recommendations" styleClass="sa-card">
+      <p-table [value]="advisorRows()" styleClass="p-datatable-sm p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 6rem">Priority</th>
+            <th>Course(s)</th>
+            <th style="width: 7rem">Credit</th>
+            <th style="width: 8rem">Critical</th>
+            <th style="width: 7rem">Wait-List</th>
+            <th>Note</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-r>
+          <tr>
+            <td>{{ r.priority }}</td>
+            <td>{{ r.courses }}</td>
+            <td>{{ r.credit }}</td>
+            <td>
+              @if (r.critical) { <p-tag [value]="r.critical" severity="warn" /> }
+            </td>
+            <td>
+              @if (r.waitList) { <p-tag value="Wait-List" severity="info" /> }
+            </td>
+            <td>{{ r.note }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="6">No advisor recommendations on file.</td></tr>
+        </ng-template>
+      </p-table>
+      @if (creditNote()) {
+        <p class="credit-note"><span class="lbl">Notes</span> {{ creditNote() }}</p>
+      }
+    </p-card>
+
+    <p-card header="Student Course Requests" styleClass="sa-card">
+      <p-table [value]="studentRows()" styleClass="p-datatable-sm p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 6rem">Priority</th>
+            <th>Course(s)</th>
+            <th style="width: 7rem">Credit</th>
+            <th style="width: 7rem">Wait-List</th>
+            <th style="width: 12rem">Status</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-r>
+          <tr>
+            <td>{{ r.priority }}</td>
+            <td>{{ r.courses }}</td>
+            <td>{{ r.credit }}</td>
+            <td>
+              @if (r.waitList) { <p-tag value="Wait-List" severity="info" /> }
+            </td>
+            <td>{{ r.status }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="5">No student course requests on file.</td></tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  } @else if (!loading()) {
+    <p class="hint">Enter a student's external id and look them up to view their advising record.</p>
+  }
+</div>

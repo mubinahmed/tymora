@@ -1,0 +1,74 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="list()"
+    [paginator]="true"
+    [rows]="15"
+    [rowsPerPageOptions]="[15, 30, 50]"
+    [globalFilterFields]="['name', 'building.abbreviation', 'roomType.label']"
+    sortField="name"
+    [sortOrder]="1"
+    dataKey="uniqueId"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ list().length }} room(s)</span>
+        <span class="spacer"></span>
+        <input
+          pInputText
+          type="text"
+          placeholder="Search…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+        />
+        <p-button label="Add Room" icon="pi pi-plus" [disabled]="!props.canAdd()" (onClick)="add()" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+        <th pSortableColumn="roomType.label">Type <p-sortIcon field="roomType.label" /></th>
+        <th class="num" pSortableColumn="capacity">Capacity <p-sortIcon field="capacity" /></th>
+        <th class="num">Exam Cap.</th>
+        <th>Department</th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-r>
+      <tr class="clickable" (click)="edit(r)">
+        <td>{{ r.name }}</td>
+        <td>{{ r.roomType?.label }}</td>
+        <td class="num">{{ r.capacity }}</td>
+        <td class="num">{{ r.examCapacity ?? '—' }}</td>
+        <td>{{ r.controlDepartment?.label ?? '—' }}</td>
+        <td class="row-actions" (click)="$event.stopPropagation()">
+          @if (r.canChange) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="edit(r)" />
+          }
+          @if (r.canChangeAvailability || r.canSeeAvailability) {
+            <p-button icon="pi pi-calendar" severity="secondary" [text]="true" title="Room Availability" (onClick)="availability(r)" />
+          }
+          @if (r.canChangeEventAvailability || r.canSeeEventAvailability) {
+            <p-button icon="pi pi-clock" severity="secondary" [text]="true" title="Event Availability" (onClick)="eventAvailability(r)" />
+          }
+          @if (r.canDelete) {
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(r)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="6">No rooms found.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <p-confirmDialog />
+}

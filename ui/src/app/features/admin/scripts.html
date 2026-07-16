@@ -1,0 +1,268 @@
+<div class="scripts-page">
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" styleClass="block-msg" />
+  }
+  @if (notice()) {
+    <p-message severity="success" [text]="notice()!" styleClass="block-msg" />
+  }
+
+  <!-- Run a script -->
+  <p-card>
+    <ng-template pTemplate="title">
+      <div class="card-head">
+        <span>Script</span>
+        <span class="spacer"></span>
+        @if (options()?.canAdd) {
+          <p-button label="Add New" icon="pi pi-plus" size="small" (onClick)="openAdd()" />
+        }
+        @if (selectedScript()?.canEdit) {
+          <p-button label="Edit" icon="pi pi-pencil" size="small" severity="secondary" (onClick)="openEdit()" />
+        }
+        @if (selectedScript()?.canDelete) {
+          <p-button label="Delete" icon="pi pi-trash" size="small" severity="danger" (onClick)="deleteScript()" />
+        }
+      </div>
+    </ng-template>
+
+    @if (loading()) {
+      <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+    } @else {
+      <div class="field">
+        <label>Name</label>
+        <p-select
+          [options]="visibleScripts()"
+          optionLabel="name"
+          optionValue="id"
+          [(ngModel)]="selectedId"
+          (onChange)="onScriptChange()"
+          placeholder="Select a script"
+          [filter]="true"
+          filterBy="name"
+          appendTo="body"
+          styleClass="full"
+        />
+      </div>
+
+      @if (selectedScript(); as s) {
+        @if (s.description) {
+          <div class="field">
+            <label>Description</label>
+            <div class="description">{{ s.description }}</div>
+          </div>
+        }
+
+        @for (p of s.parameters ?? []; track p.name) {
+          <div class="field">
+            <label>{{ paramLabel(p) }}</label>
+            @if (isMultiSelect(p)) {
+              <p-multiSelect
+                [options]="p.options ?? []"
+                optionLabel="text"
+                optionValue="value"
+                [(ngModel)]="paramModel[p.name!]"
+                appendTo="body"
+                styleClass="full"
+              />
+            } @else if (isSingleSelect(p)) {
+              <p-select
+                [options]="p.options ?? []"
+                optionLabel="text"
+                optionValue="value"
+                [(ngModel)]="paramModel[p.name!]"
+                [showClear]="true"
+                appendTo="body"
+                styleClass="full"
+              />
+            } @else if (isBoolean(p)) {
+              <p-checkbox [(ngModel)]="paramModel[p.name!]" [binary]="true" />
+            } @else if (isTextarea(p)) {
+              <textarea pTextarea rows="4" [(ngModel)]="paramModel[p.name!]" class="full"></textarea>
+            } @else if (isNumber(p)) {
+              <p-inputNumber
+                [(ngModel)]="paramModel[p.name!]"
+                [useGrouping]="false"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="isDecimal(p) ? 6 : 0"
+              />
+            } @else {
+              <input pInputText type="text" [(ngModel)]="paramModel[p.name!]" class="full" />
+            }
+          </div>
+        }
+
+        <div class="field">
+          <p-checkbox [(ngModel)]="sendEmail" [binary]="true" inputId="sendEmail" />
+          <label for="sendEmail" class="inline-label">Send email when finished</label>
+        </div>
+        @if (sendEmail) {
+          <div class="field">
+            <label>Email addresses</label>
+            <textarea pTextarea rows="2" [(ngModel)]="emailAddresses" class="full"></textarea>
+          </div>
+        }
+
+        @if (s.canExecute) {
+          <p-button
+            label="Execute"
+            icon="pi pi-play"
+            (onClick)="execute()"
+            [loading]="executing()"
+            [disabled]="executing()"
+          />
+        }
+      }
+    }
+  </p-card>
+
+  <!-- Execution queue -->
+  <p-card>
+    <ng-template pTemplate="title">
+      <div class="card-head">
+        <span>Execution Queue</span>
+        <span class="spacer"></span>
+        <p-button label="Refresh" icon="pi pi-refresh" size="small" severity="secondary" (onClick)="refreshQueue()" />
+      </div>
+    </ng-template>
+
+    <p-table
+      [value]="queue()"
+      dataKey="id"
+      styleClass="p-datatable-sm p-datatable-striped"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Progress</th>
+          <th>Owner</th>
+          <th>Session</th>
+          <th>Created</th>
+          <th>Started</th>
+          <th>Finished</th>
+          <th>Output</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-q>
+        <tr (click)="selectQueue(q)" class="clickable" [class.row-selected]="selectedQueue()?.id === q.id">
+          <td>{{ q.name }}</td>
+          <td><p-tag [value]="q.status" [severity]="statusSeverity(q.status)" /></td>
+          <td>{{ q.progress }}</td>
+          <td>{{ q.owner }}</td>
+          <td>{{ q.session }}</td>
+          <td>{{ q.created }}</td>
+          <td>{{ q.started }}</td>
+          <td>{{ q.finished }}</td>
+          <td>
+            @if (q.output && q.outputLink) {
+              <a [href]="q.outputLink" target="_blank" (click)="$event.stopPropagation()">{{ q.output }}</a>
+            }
+          </td>
+          <td>
+            @if (q.canDelete) {
+              <p-button
+                icon="pi pi-trash"
+                size="small"
+                severity="danger"
+                [text]="true"
+                (onClick)="deleteQueueItem(q); $event.stopPropagation()"
+              />
+            }
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="10">No executions in the queue.</td></tr>
+      </ng-template>
+    </p-table>
+
+    @if (selectedQueue()?.log) {
+      <div class="log-panel">
+        <h4>Log — {{ selectedQueue()!.name }}</h4>
+        <div class="log-body" [innerHTML]="selectedQueue()!.log"></div>
+      </div>
+    }
+  </p-card>
+</div>
+
+<!-- Create / edit dialog -->
+<p-dialog
+  [header]="isEdit ? 'Edit Script' : 'Add Script'"
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [modal]="true"
+  [style]="{ width: '60rem', maxWidth: '95vw' }"
+  [draggable]="false"
+>
+  @if (dialogError()) {
+    <p-message severity="error" [text]="dialogError()!" styleClass="block-msg" />
+  }
+
+  <div class="field">
+    <label>Name</label>
+    <input pInputText type="text" [(ngModel)]="edit.name" maxlength="128" class="full" />
+  </div>
+  <div class="field">
+    <label>Description</label>
+    <textarea pTextarea rows="3" [(ngModel)]="edit.description" class="full"></textarea>
+  </div>
+  <div class="field">
+    <label>Engine</label>
+    <p-select
+      [options]="options()?.engines ?? []"
+      [(ngModel)]="edit.engine"
+      placeholder="Select engine"
+      appendTo="body"
+      styleClass="full"
+    />
+  </div>
+  <div class="field">
+    <label>Permission</label>
+    <p-select
+      [options]="options()?.permissions ?? []"
+      [(ngModel)]="edit.permission"
+      placeholder="None"
+      [showClear]="true"
+      appendTo="body"
+      styleClass="full"
+    />
+  </div>
+  <div class="field">
+    <label>Script</label>
+    <textarea pTextarea rows="14" [(ngModel)]="edit.script" class="full mono"></textarea>
+  </div>
+
+  <div class="field">
+    <label>Parameters</label>
+    <table class="param-editor">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Label</th>
+          <th>Type</th>
+          <th>Default</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of editParams; track $index) {
+          <tr>
+            <td><input pInputText type="text" [(ngModel)]="p.name" maxlength="128" /></td>
+            <td><input pInputText type="text" [(ngModel)]="p.label" maxlength="256" /></td>
+            <td><input pInputText type="text" [(ngModel)]="p.type" maxlength="2048" /></td>
+            <td><input pInputText type="text" [(ngModel)]="p.default" maxlength="2048" /></td>
+            <td>
+              <p-button icon="pi pi-trash" size="small" severity="danger" [text]="true" (onClick)="removeParamRow($index)" />
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <p-button label="Add parameter" icon="pi pi-plus" size="small" severity="secondary" [text]="true" (onClick)="addParamRow()" />
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" (onClick)="dialogVisible.set(false)" [disabled]="saving()" />
+    <p-button [label]="isEdit ? 'Update' : 'Save'" icon="pi pi-check" (onClick)="saveScript()" [loading]="saving()" />
+  </ng-template>
+</p-dialog>

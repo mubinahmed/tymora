@@ -1,0 +1,178 @@
+<div class="hql-reports">
+  <p-card>
+    <div class="filter">
+      <div class="field">
+        <label>Appearance</label>
+        <p-select
+          [options]="appearances"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="appearance"
+          (onChange)="onAppearanceChange()"
+          appendTo="body"
+          styleClass="hql-select"
+        />
+      </div>
+
+      @if (loading()) {
+        <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+      } @else {
+        <div class="field">
+          <label>Report</label>
+          <p-select
+            [options]="reportOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="reportId"
+            (onChange)="onReportChange()"
+            placeholder="Select a report"
+            [filter]="true"
+            filterBy="label"
+            appendTo="body"
+            styleClass="hql-select"
+          />
+        </div>
+
+        @if (selectedQuery()?.description) {
+          <div class="field description" [innerHTML]="selectedQuery()!.description"></div>
+        }
+
+        @for (o of visibleOptions(); track o.type) {
+          <div class="field">
+            <label>{{ o.name }}</label>
+            @if (o.multiSelect) {
+              <p-multiSelect
+                [options]="optionItems(o)"
+                optionLabel="label"
+                optionValue="value"
+                [(ngModel)]="optionValues[o.type!]"
+                appendTo="body"
+                [filter]="true"
+                filterBy="label"
+                placeholder="All"
+                styleClass="hql-select"
+              />
+            } @else {
+              <p-select
+                [options]="optionItems(o)"
+                optionLabel="label"
+                optionValue="value"
+                [(ngModel)]="optionValues[o.type!]"
+                appendTo="body"
+                [filter]="true"
+                filterBy="label"
+                placeholder="Select"
+                styleClass="hql-select"
+              />
+            }
+          </div>
+        }
+
+        @for (p of queryParams(); track p.name) {
+          <div class="field">
+            <label>{{ paramLabel(p) }}</label>
+            @if (isBoolean(p)) {
+              <p-checkbox [(ngModel)]="paramValues[p.name!]" [binary]="true" />
+            } @else if (hasOptions(p) && p.multiSelect) {
+              <p-multiSelect
+                [options]="paramItems(p)"
+                optionLabel="label"
+                optionValue="value"
+                [(ngModel)]="paramValues[p.name!]"
+                appendTo="body"
+                [filter]="true"
+                filterBy="label"
+                placeholder="All"
+                styleClass="hql-select"
+              />
+            } @else if (hasOptions(p)) {
+              <p-select
+                [options]="paramItems(p)"
+                optionLabel="label"
+                optionValue="value"
+                [(ngModel)]="paramValues[p.name!]"
+                appendTo="body"
+                [filter]="true"
+                filterBy="label"
+                placeholder="Select"
+                styleClass="hql-select"
+              />
+            } @else if (isTextarea(p)) {
+              <textarea pTextarea rows="4" [(ngModel)]="paramValues[p.name!]"></textarea>
+            } @else {
+              <input pInputText type="text" [(ngModel)]="paramValues[p.name!]" />
+            }
+          </div>
+        }
+
+        <div class="actions">
+          <p-button
+            label="Execute"
+            icon="pi pi-play"
+            (onClick)="execute()"
+            [disabled]="!reportId"
+            [loading]="executing()"
+          />
+        </div>
+      }
+    </div>
+
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" />
+    }
+  </p-card>
+
+  @if (executing()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (resultsMessage() && !table()) {
+    <p-message severity="info" [text]="resultsMessage()!" />
+  } @else if (table()) {
+    <p-table
+      [value]="rows()"
+      [columns]="cols()"
+      [paginator]="rows().length > 50"
+      [rows]="50"
+      [rowsPerPageOptions]="[50, 100]"
+      styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines"
+    >
+      <ng-template pTemplate="caption">
+        <div class="tbl-caption">
+          <span>{{ selectedQuery()?.name || 'Results' }}</span>
+          <span class="spacer"></span>
+          <span>{{ resultsMessage() }}</span>
+          <p-button
+            text
+            icon="pi pi-chevron-left"
+            label="Previous"
+            (onClick)="previous()"
+            [disabled]="!hasPrev()"
+          />
+          <p-button
+            text
+            icon="pi pi-chevron-right"
+            iconPos="right"
+            label="Next"
+            (onClick)="next()"
+            [disabled]="!hasNext()"
+          />
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header" let-columns>
+        <tr>
+          @for (c of columns; track c.index) {
+            <th [pSortableColumn]="c.field">{{ c.label }}<p-sortIcon [field]="c.field" /></th>
+          }
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row let-columns="columns">
+        <tr>
+          @for (c of columns; track c.index) {
+            <td [innerHTML]="cell(row, c.index)"></td>
+          }
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+</div>

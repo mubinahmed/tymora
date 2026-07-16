@@ -1,0 +1,502 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error() && !props()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back" icon="pi pi-arrow-left" (onClick)="back()" /></div>
+} @else {
+  <p-card [header]="isNew() ? 'Add Room' : 'Edit Room'">
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" styleClass="mb" />
+    }
+    <form [formGroup]="form" class="building-form room-form" (ngSubmit)="save()">
+      <!-- ---- Room properties ---- -->
+      @if (sessionLabel()) {
+        <div class="field">
+          <label>Academic Session</label>
+          <input pInputText [value]="sessionLabel()" disabled />
+        </div>
+      }
+      <div class="field-row">
+        <div class="field">
+          <label for="rm-type">Type *</label>
+          <p-select
+            inputId="rm-type"
+            formControlName="roomTypeId"
+            [options]="roomTypeOptions()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select…"
+            appendTo="body"
+          />
+          @if (form.controls.roomTypeId.invalid && form.controls.roomTypeId.touched) {
+            <p-message severity="error" text="Type must be selected" />
+          }
+        </div>
+      </div>
+
+      @if (isRoomType()) {
+        <div class="field-row">
+          <div class="field">
+            <label for="rm-bldg">Building *</label>
+            <p-select
+              inputId="rm-bldg"
+              formControlName="buildingId"
+              [options]="buildingOptions()"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select…"
+              [filter]="true"
+              filterBy="label"
+              appendTo="body"
+            />
+            @if (form.controls.buildingId.invalid && form.controls.buildingId.touched) {
+              <p-message severity="error" text="Building must be selected" />
+            }
+          </div>
+          <div class="field">
+            <label for="rm-parent">Partition Of</label>
+            <p-select
+              inputId="rm-parent"
+              formControlName="parentId"
+              [options]="parentOptions()"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="(not a partition)"
+              [showClear]="true"
+              appendTo="body"
+            />
+          </div>
+        </div>
+      }
+
+      <div class="field-row">
+        <div class="field">
+          <label for="rm-name">{{ nameLabel() }} *</label>
+          <input pInputText id="rm-name" formControlName="name" maxlength="40" autocomplete="off" />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <p-message severity="error" [text]="nameLabel() + ' is required'" />
+          }
+        </div>
+        <div class="field">
+          <label for="rm-disp">Display Name</label>
+          <input pInputText id="rm-disp" formControlName="displayName" maxlength="100" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        @if (canExternalId()) {
+          <div class="field">
+            <label for="rm-ext">External Id</label>
+            <input pInputText id="rm-ext" formControlName="externalId" maxlength="40" autocomplete="off" />
+          </div>
+        } @else if (view()?.externalId) {
+          <div class="field">
+            <label>External Id</label>
+            <input pInputText [value]="view()!.externalId" disabled />
+          </div>
+        }
+        <div class="field">
+          <label for="rm-cap">Capacity *</label>
+          <p-inputNumber inputId="rm-cap" formControlName="capacity" [useGrouping]="false" [min]="0" />
+          @if (form.controls.capacity.invalid && form.controls.capacity.touched) {
+            <p-message severity="error" text="Capacity is required" />
+          }
+        </div>
+      </div>
+
+      @if (canControl()) {
+        <div class="field">
+          <label for="rm-ctrl">Controlling Department</label>
+          <p-select
+            inputId="rm-ctrl"
+            formControlName="controlDepartmentId"
+            [options]="controlDeptOptions()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="(no controlling department)"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="label"
+            appendTo="body"
+          />
+        </div>
+      } @else if (canCourses() && view()?.controlDepartment) {
+        <div class="field">
+          <label>Controlling Department</label>
+          <input pInputText [value]="controlDeptText()" disabled />
+        </div>
+      }
+
+      <div class="field-row">
+        <div class="field">
+          <label>Coordinates</label>
+          <div class="coord-row">
+            <p-inputNumber formControlName="x" [useGrouping]="false" [maxFractionDigits]="6" placeholder="X" />
+            <span class="comma">,</span>
+            <p-inputNumber formControlName="y" [useGrouping]="false" [maxFractionDigits]="6" placeholder="Y" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="rm-area">Area ({{ areaUnit() }})</label>
+          <p-inputNumber inputId="rm-area" formControlName="area" [useGrouping]="false" [min]="0" [maxFractionDigits]="4" />
+        </div>
+      </div>
+
+      <div class="checks">
+        @if (canCourses()) {
+          <div class="field-check">
+            <p-checkbox inputId="rm-dist" formControlName="distanceCheck" [binary]="true" />
+            <label for="rm-dist">Enable distance check (used in course timetabling)</label>
+          </div>
+        }
+        <div class="field-check">
+          <p-checkbox inputId="rm-check" formControlName="roomCheck" [binary]="true" />
+          <label for="rm-check">Enable room check (event conflict checking)</label>
+        </div>
+      </div>
+
+      <!-- ---- Examination properties ---- -->
+      @if (canExamStatus()) {
+        <h3 class="section">Examination Rooms</h3>
+        @if (examTypes().length) {
+          <div class="flags">
+            @for (t of examTypes(); track t.id) {
+              <div class="flag">
+                <p-checkbox
+                  [inputId]="'ex-' + t.id"
+                  [binary]="true"
+                  [ngModel]="examSel()[t.id!]"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="toggleExam(t.id!, $event)"
+                />
+                <label [for]="'ex-' + t.id">{{ t.label }}</label>
+              </div>
+            }
+          </div>
+        }
+        <div class="field">
+          <label for="rm-excap">Examination Seating Capacity</label>
+          <p-inputNumber inputId="rm-excap" formControlName="examCapacity" [useGrouping]="false" [min]="0" />
+        </div>
+      } @else if (canSeeExams() && (examCapacityText() || viewExamTypes())) {
+        <h3 class="section">Examination Rooms</h3>
+        @if (viewExamTypes()) {
+          <div class="field"><label>Examination Rooms</label><input pInputText [value]="viewExamTypes()" disabled /></div>
+        }
+        @if (examCapacityText()) {
+          <div class="field"><label>Examination Seating Capacity</label><input pInputText [value]="examCapacityText()" disabled /></div>
+        }
+      }
+
+      <!-- ---- Event properties ---- -->
+      @if (canEvent()) {
+        <h3 class="section">Event Properties</h3>
+        <div class="field-row">
+          <div class="field">
+            <label for="rm-edept">Event Department</label>
+            <p-select
+              inputId="rm-edept"
+              formControlName="eventDepartmentId"
+              [options]="eventDeptOptions()"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="(no event department)"
+              [showClear]="true"
+              [filter]="true"
+              filterBy="label"
+              appendTo="body"
+            />
+          </div>
+          <div class="field">
+            <label for="rm-estat">Event Status</label>
+            <p-select
+              inputId="rm-estat"
+              formControlName="eventStatus"
+              [options]="eventStatusOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Default"
+              [showClear]="true"
+              appendTo="body"
+            />
+          </div>
+          <div class="field">
+            <label for="rm-break">Break Time (min)</label>
+            <p-inputNumber inputId="rm-break" formControlName="breakTime" [useGrouping]="false" [min]="0" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="rm-enote">Event Note</label>
+          <textarea pTextarea id="rm-enote" formControlName="eventNote" rows="4" maxlength="2048"></textarea>
+        </div>
+        <div class="field">
+          <label for="rm-email">Event Email</label>
+          <input pInputText id="rm-email" formControlName="eventEmail" maxlength="200" autocomplete="off" />
+        </div>
+        @if (isEventRoom() && visibleServices().length) {
+          <div class="membership">
+            <span class="membership-label">Available Services</span>
+            <div class="flags">
+              @for (s of visibleServices(); track s.id) {
+                <div class="flag">
+                  <p-checkbox
+                    [inputId]="'svc-' + s.id"
+                    [binary]="true"
+                    [ngModel]="serviceSel[s.id!]"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="toggleService(s.id!, $event)"
+                  />
+                  <label [for]="'svc-' + s.id" [title]="s.message || ''">
+                    {{ s.label }}@if (s.departmentId != null) { <em> (departmental)</em> }
+                  </label>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      } @else if (canSeeEvents() && view()?.eventDepartment) {
+        <h3 class="section">Event Properties</h3>
+        <div class="field"><label>Event Department</label><input pInputText [value]="eventDeptText()" disabled /></div>
+        @if (eventStatusText()) {
+          <div class="field"><label>Event Status</label><input pInputText [value]="eventStatusText()" disabled /></div>
+        }
+        @if (breakTimeText()) {
+          <div class="field"><label>Break Time (min)</label><input pInputText [value]="breakTimeText()" disabled /></div>
+        }
+        @if (eventNoteText()) {
+          <div class="field"><label>Event Note</label><textarea pTextarea rows="3" [value]="eventNoteText()" disabled></textarea></div>
+        }
+        @if (eventEmailText()) {
+          <div class="field"><label>Event Email</label><input pInputText [value]="eventEmailText()" disabled /></div>
+        }
+      }
+
+      <!-- ---- Room groups ---- -->
+      @if (canGroups()) {
+        <h3 class="section">Room Groups</h3>
+        @if (globalGroups().length) {
+          <div class="membership">
+            <span class="membership-label">Global Groups</span>
+            <div class="flags">
+              @for (g of globalGroups(); track g.id) {
+                <div class="flag">
+                  <p-checkbox
+                    [inputId]="'g-' + g.id"
+                    [binary]="true"
+                    [ngModel]="groupSel[g.id!]"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="toggleGroup(g.id!, $event)"
+                  />
+                  <label [for]="'g-' + g.id">{{ g.label }}</label>
+                </div>
+              }
+            </div>
+          </div>
+        }
+        @for (grp of deptGroups(); track grp.label) {
+          <div class="membership">
+            <span class="membership-label">{{ grp.label }}</span>
+            <div class="flags">
+              @for (g of grp.groups; track g.id) {
+                <div class="flag">
+                  <p-checkbox
+                    [inputId]="'g-' + g.id"
+                    [binary]="true"
+                    [ngModel]="groupSel[g.id!]"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="toggleGroup(g.id!, $event)"
+                  />
+                  <label [for]="'g-' + g.id">{{ g.label }}</label>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      } @else if (viewGroups().length) {
+        <h3 class="section">Room Groups</h3>
+        <div class="ro-chips">
+          @for (g of viewGroups(); track g.id) { <span class="ro-chip">{{ g.label }}</span> }
+        </div>
+      }
+
+      <!-- ---- Room features ---- -->
+      @if (canFeatures()) {
+        <h3 class="section">Room Features</h3>
+        @if (globalFeatures().length) {
+          <div class="membership">
+            <span class="membership-label">Features</span>
+            <div class="flags">
+              @for (ft of globalFeatures(); track ft.id) {
+                <div class="flag">
+                  <p-checkbox
+                    [inputId]="'f-' + ft.id"
+                    [binary]="true"
+                    [ngModel]="featureSel[ft.id!]"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="toggleFeature(ft.id!, $event)"
+                  />
+                  <label [for]="'f-' + ft.id" [title]="ft.description || ''">{{ ft.title || ft.label }}</label>
+                </div>
+              }
+            </div>
+          </div>
+        }
+        @for (grp of typedFeatures(); track grp.label) {
+          <div class="membership">
+            <span class="membership-label">{{ grp.label }}</span>
+            <div class="flags">
+              @for (ft of grp.features; track ft.id) {
+                <div class="flag">
+                  <p-checkbox
+                    [inputId]="'f-' + ft.id"
+                    [binary]="true"
+                    [ngModel]="featureSel[ft.id!]"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="toggleFeature(ft.id!, $event)"
+                  />
+                  <label [for]="'f-' + ft.id" [title]="ft.description || ''">{{ ft.title || ft.label }}</label>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      } @else if (viewFeatures().length) {
+        <h3 class="section">Room Features</h3>
+        <div class="ro-chips">
+          @for (ft of viewFeatures(); track ft.id) { <span class="ro-chip" [title]="ft.description || ''">{{ ft.title || ft.label }}</span> }
+        </div>
+      }
+
+      <!-- ---- Room sharing matrix ---- -->
+      @if (sharingModel(); as sm) {
+        <h3 class="section">Room Sharing</h3>
+        <app-room-sharing-matrix [model]="sm" [editable]="canSharing()" (changed)="markSharingDirty()" />
+      }
+
+      <!-- ---- Examination period preferences ---- -->
+      @if (canEditRoomExams() && activePeriodModels().length) {
+        <h3 class="section">Examination Period Preferences</h3>
+        @for (pm of activePeriodModels(); track pm.label) {
+          <div class="membership">
+            <span class="membership-label">{{ pm.label }}</span>
+            <app-period-preferences-grid [model]="pm.model" [editable]="canEditRoomExams()" (changed)="markPrefsDirty()" />
+          </div>
+        }
+      }
+
+      <!-- ---- Event availability matrix ---- -->
+      @if (eventAvailModel(); as em) {
+        @if (isEventRoom()) {
+          <h3 class="section">Event Availability</h3>
+          <app-room-sharing-matrix [model]="em" [editable]="canEventAvail()" [includeNote]="false" (changed)="markEventAvailDirty()" />
+        }
+      }
+
+      <!-- ---- Pictures ---- -->
+      @if (canPicture()) {
+        <h3 class="section">Room Pictures</h3>
+        <div class="pic-upload">
+          <input type="file" accept="image/*" #picFile (change)="onPictureSelected(picFile)" [disabled]="uploading()" />
+          @if (uploading()) {
+            <span class="hint"><i class="pi pi-spin pi-spinner"></i> Uploading…</span>
+          }
+        </div>
+        @if (pictures().length) {
+          <table class="pic-table">
+            <thead>
+              <tr><th>Picture</th><th>Name</th><th>Content Type</th><th>Picture Type</th><th></th></tr>
+            </thead>
+            <tbody>
+              @for (pic of pictures(); track pic.uniqueId) {
+                <tr>
+                  <td>
+                    @if (isPersistedPicture(pic)) {
+                      <img class="pic-thumb" [src]="pictureUrl(pic)" [alt]="pic.name || ''" />
+                    } @else {
+                      <span class="hint">pending save</span>
+                    }
+                  </td>
+                  <td>{{ pic.name }}</td>
+                  <td>{{ pic.type }}</td>
+                  <td>
+                    <p-select
+                      [options]="pictureTypeOptions()"
+                      optionLabel="label"
+                      optionValue="value"
+                      [ngModel]="pic.pictureType?.id ?? null"
+                      (ngModelChange)="setPictureType(pic, $event)"
+                      [ngModelOptions]="{ standalone: true }"
+                      placeholder="(none)"
+                      [showClear]="true"
+                      appendTo="body"
+                    />
+                  </td>
+                  <td>
+                    <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Remove" (onClick)="removePicture(pic)" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+
+      <!-- ---- Apply also to future sessions / rooms ---- -->
+      @if (futureRows().length) {
+        <h3 class="section">Apply Also To</h3>
+        <div class="rs-scroll">
+          <table class="future-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Room</th>
+                <th>Academic Session</th>
+                @for (op of futureOps; track op.bit) {
+                  @if (futureOpVisible(op.bit)) {
+                    <th>{{ op.label }}</th>
+                  }
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of futureRows(); track row.key) {
+                <tr>
+                  <td>
+                    <p-checkbox [binary]="true" [ngModel]="row.selected" [ngModelOptions]="{ standalone: true }" (ngModelChange)="toggleFutureRow(row, $event)" />
+                  </td>
+                  <td>{{ row.label }}</td>
+                  <td>{{ row.session }}</td>
+                  @for (op of futureOps; track op.bit) {
+                    @if (futureOpVisible(op.bit)) {
+                      <td class="future-op">
+                        <p-checkbox
+                          [binary]="true"
+                          [disabled]="!row.selected || op.bit === 1"
+                          [ngModel]="row.ops[op.bit]"
+                          [ngModelOptions]="{ standalone: true }"
+                          (ngModelChange)="toggleFutureOp(row, op.bit, $event)"
+                        />
+                      </td>
+                    }
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </form>
+
+    <ng-template pTemplate="footer">
+      <div class="tbl-caption">
+        <p-button label="Back" severity="secondary" [text]="true" icon="pi pi-arrow-left" (onClick)="back()" [disabled]="saving()" />
+        @if (canDelete()) {
+          <p-button label="Delete" severity="danger" [text]="true" icon="pi pi-trash" (onClick)="confirmDelete()" [disabled]="saving()" />
+        }
+        <span class="spacer"></span>
+        <p-button [label]="isNew() ? 'Create Room' : 'Save'" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+      </div>
+    </ng-template>
+  </p-card>
+  <p-confirmDialog />
+}

@@ -1,0 +1,107 @@
+<div class="offering-search">
+  <div class="search-bar">
+    @if (sessions().length) {
+      <p-select
+        [options]="sessionOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="sessionId"
+        (onChange)="onSessionChange()"
+        [filter]="sessions().length > 8"
+        filterBy="label"
+        appendTo="body"
+        placeholder="Select academic session"
+        styleClass="sa-select"
+      />
+    }
+    <p-button label="Reload" icon="pi pi-refresh" (onClick)="load()"
+      [disabled]="sessionId == null || loadingData()" [loading]="loadingData()" />
+    @if (loading()) {
+      <p-progressSpinner strokeWidth="4" styleClass="inline-spin" />
+    }
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+
+  @if (eligibility()?.message) {
+    <p-message severity="warn" [text]="eligibility()!.message!" />
+  }
+
+  @if (loadingData()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (searched()) {
+    <p-card header="Course Requests" styleClass="sa-card">
+      <p-table
+        [value]="requestRows()"
+        styleClass="p-datatable-sm p-datatable-striped"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 6rem">Priority</th>
+            <th>Course(s)</th>
+            <th style="width: 8rem">Wait-List</th>
+            <th style="width: 12rem">Status</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-r>
+          <tr>
+            <td>{{ r.priority }}</td>
+            <td>{{ r.courses }}</td>
+            <td>
+              @if (r.waitList) { <p-tag value="Wait-List" severity="warn" /> }
+            </td>
+            <td>{{ r.status }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="4">No course requests on file.</td></tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <p-card header="Current Schedule" styleClass="sa-card">
+      @for (m of scheduleErrors(); track $index) {
+        <p-message severity="error" [text]="m" styleClass="sa-inline-msg" />
+      }
+      @for (m of scheduleMessages(); track $index) {
+        <p-message severity="info" [text]="m" styleClass="sa-inline-msg" />
+      }
+      <p-table
+        [value]="scheduleRows()"
+        styleClass="p-datatable-sm p-datatable-striped"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Course</th>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Section</th>
+            <th>Days &amp; Times</th>
+            <th>Room</th>
+            <th>Instructor</th>
+            <th>Credit</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-r>
+          <tr>
+            <td>{{ r.course }}</td>
+            <td>{{ r.title }}</td>
+            <td>{{ r.subpart }}</td>
+            <td>{{ r.section }}</td>
+            <td>{{ r.time }}</td>
+            <td>{{ r.room }}</td>
+            <td>{{ r.instructor }}</td>
+            <td>{{ r.credit }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="8">No classes are currently scheduled.</td></tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  } @else if (!loading()) {
+    <p class="hint">Select an academic session to view the student's course requests and schedule.</p>
+  }
+</div>
