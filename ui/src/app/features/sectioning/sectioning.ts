@@ -173,11 +173,27 @@ export class Sectioning implements OnInit {
     this.rpc.service<EligibilityCheck>(SERVICE, 'checkEligibility', [cx]).subscribe({
       next: (elig) => {
         this.eligibility.set(elig ?? null);
-        this.loadRequests(cx);
+        // savedRequest / savedResult resolve a student server-side and throw
+        // (NPE) when there is none — e.g. an administrator/advisor with no
+        // student in this session. Only fetch the student's data when
+        // eligibility resolved a studentId; otherwise the eligibility message
+        // (rendered by the template) explains why there's nothing to show.
+        if (elig?.studentId != null) {
+          this.loadRequests(cx);
+        } else {
+          this.loadingData.set(false);
+          this.searched.set(false);
+        }
       },
       error: (e: ApiError) => this.fail(e, true),
     });
   }
+
+  /** Eligibility resolved but no student is associated with this user/session. */
+  protected readonly noStudent = computed(() => {
+    const e = this.eligibility();
+    return e != null && e.studentId == null;
+  });
 
   private loadRequests(cx: StudentSectioningContext): void {
     this.rpc.service<CourseRequestInterface>(SERVICE, 'savedRequest', [cx]).subscribe({

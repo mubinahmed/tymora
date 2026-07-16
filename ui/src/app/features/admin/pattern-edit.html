@@ -1,0 +1,150 @@
+<div class="mb">
+  <p-selectButton
+    [options]="kindOptions"
+    [ngModel]="kind()"
+    (ngModelChange)="switchKind($event)"
+    optionLabel="label"
+    optionValue="value"
+    [allowEmpty]="false"
+  />
+</div>
+
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-message
+    severity="info"
+    text="Editing descriptive fields only. The {{ isTime() ? 'day / start-time grid' : 'day-pattern calendar' }} and department / pattern-set associations are managed on the legacy page."
+  />
+
+  <p-table
+    #dt
+    [value]="records()"
+    [paginator]="records().length > 20"
+    [rows]="20"
+    [rowsPerPageOptions]="[20, 50, 100]"
+    dataKey="id"
+    styleClass="p-datatable-sm p-datatable-striped mt"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ records().length }} {{ isTime() ? 'time' : 'date' }} pattern(s)</span>
+        <span class="spacer"></span>
+        <input
+          pInputText
+          type="text"
+          placeholder="Search…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+        />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+        <th pSortableColumn="type">Type <p-sortIcon field="type" /></th>
+        <th>Used</th>
+        @if (isTime()) {
+          <th pSortableColumn="nrMeetings">Nbr Mtgs <p-sortIcon field="nrMeetings" /></th>
+          <th pSortableColumn="minPerMtg">Min/Mtg <p-sortIcon field="minPerMtg" /></th>
+          <th pSortableColumn="slotsPerMtg">Slots/Mtg <p-sortIcon field="slotsPerMtg" /></th>
+          <th pSortableColumn="breakTime">Break <p-sortIcon field="breakTime" /></th>
+        } @else {
+          <th>Weeks</th>
+          <th>Dates</th>
+        }
+        <th>Visible</th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-r>
+      <tr class="clickable" (click)="edit(r)">
+        <td>
+          {{ r.name }}
+          @if (r.default) { <p-tag value="default" severity="success" /> }
+        </td>
+        <td>{{ r.typeLabel || typeLabel(r.type) }}</td>
+        <td>
+          @if (r.used) { <i class="pi pi-check" title="In use"></i> }
+        </td>
+        @if (isTime()) {
+          <td>{{ r.nrMeetings }}</td>
+          <td>{{ r.minPerMtg }}</td>
+          <td>{{ r.slotsPerMtg }}</td>
+          <td>{{ r.breakTime }}</td>
+        } @else {
+          <td>{{ r.numberOfWeeks }}</td>
+          <td class="preview">{{ r.patternPreview }}</td>
+        }
+        <td>
+          @if (r.visible) { <i class="pi pi-eye" title="Visible"></i> }
+          @else { <i class="pi pi-eye-slash" title="Hidden"></i> }
+        </td>
+        <td class="row-actions" (click)="$event.stopPropagation()">
+          @if (editable()) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="edit(r)" />
+          }
+          @if (deletable()) {
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(r)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td [attr.colspan]="isTime() ? 9 : 7">No patterns found.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <p-confirmDialog />
+
+  <p-dialog
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [modal]="true"
+    [style]="{ width: '34rem' }"
+    [header]="(isTime() ? 'Edit Time Pattern' : 'Edit Date Pattern')"
+  >
+    <div class="form-grid">
+      <label for="p-name">Name</label>
+      <input id="p-name" pInputText [(ngModel)]="editing.name" [maxlength]="isTime() ? 50 : 100" />
+
+      <label for="p-type">Type</label>
+      <p-select
+        inputId="p-type"
+        [(ngModel)]="editing.type"
+        [options]="types()"
+        optionLabel="label"
+        optionValue="id"
+        appendTo="body"
+        placeholder="Select a type"
+      />
+
+      @if (isTime()) {
+        <label for="p-nr">Nbr Meetings</label>
+        <p-inputNumber inputId="p-nr" [(ngModel)]="editing.nrMeetings" [showButtons]="true" [min]="0" />
+
+        <label for="p-min">Minutes / Meeting</label>
+        <p-inputNumber inputId="p-min" [(ngModel)]="editing.minPerMtg" [showButtons]="true" [min]="0" />
+
+        <label for="p-slots">Slots / Meeting</label>
+        <p-inputNumber inputId="p-slots" [(ngModel)]="editing.slotsPerMtg" [showButtons]="true" [min]="0" />
+
+        <label for="p-break">Break Time</label>
+        <p-inputNumber inputId="p-break" [(ngModel)]="editing.breakTime" [showButtons]="true" [min]="0" />
+      }
+
+      <label for="p-visible">Visible</label>
+      <p-checkbox inputId="p-visible" [(ngModel)]="editing.visible" [binary]="true" />
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" />
+      <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="submit()" />
+    </ng-template>
+  </p-dialog>
+}

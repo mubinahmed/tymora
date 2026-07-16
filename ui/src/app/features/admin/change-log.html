@@ -13,8 +13,14 @@
   >
     <ng-template pTemplate="caption">
       <div class="tbl-caption">
-        <span>{{ rows().length }} row(s)</span>
+        <p-select
+          [options]="limitOptions"
+          [(ngModel)]="limit"
+          (onChange)="onLimitChange()"
+          [style]="{ minWidth: '10rem' }"
+        />
         <span class="spacer"></span>
+        <span>{{ rows().length }} change(s)</span>
         <input
           pInputText
           type="text"
@@ -22,13 +28,12 @@
           [value]="filter()"
           (input)="filter.set($any($event.target).value)"
         />
-        <p-button label="CSV" icon="pi pi-download" severity="secondary" [text]="true" (onClick)="exportCsv()" [disabled]="!rows().length" />
       </div>
     </ng-template>
 
     <ng-template pTemplate="header">
       <tr>
-        @for (col of d.columns ?? []; track $index) {
+        @for (col of columns(); track $index) {
           <th>{{ col }}</th>
         }
       </tr>
@@ -36,7 +41,7 @@
 
     <ng-template pTemplate="body" let-row>
       <tr>
-        @for (col of d.columns ?? []; track $index) {
+        @for (col of columns(); track $index) {
           <td>{{ row.cells?.[$index] ?? '' }}</td>
         }
       </tr>
@@ -44,7 +49,7 @@
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td [attr.colspan]="(d.columns ?? []).length || 1">No records found.</td>
+        <td [attr.colspan]="columns().length || 1">No changes recorded.</td>
       </tr>
     </ng-template>
   </p-table>

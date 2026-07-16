@@ -340,5 +340,51 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/examinations/exam-grid').then((m) => m.ExamGrid),
   },
+  // ---- Wave 7: remaining legacy pages ----
+  {
+    path: 'change-log',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/change-log').then((m) => m.ChangeLog),
+  },
+  {
+    path: 'manage-solvers',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/solver/manage-solvers').then((m) => m.ManageSolvers),
+  },
+  {
+    path: 'instructor-detail/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/instructors/instructor-detail').then((m) => m.InstructorDetail),
+  },
+  {
+    path: 'class-assignments',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/class-assignments').then((m) => m.ClassAssignments),
+  },
+  {
+    path: 'distribution-prefs',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/distribution-prefs').then((m) => m.DistributionPrefs),
+  },
+  {
+    path: 'exact-time',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/exact-time-edit').then((m) => m.ExactTimeEdit),
+  },
+  {
+    path: 'exam-periods',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-periods').then((m) => m.ExamPeriods),
+  },
+  {
+    path: 'application-config',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/application-config').then((m) => m.ApplicationConfig),
+  },
+  {
+    path: 'manager-settings',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/manager-settings').then((m) => m.ManagerSettings),
+  },
   { path: '**', redirectTo: 'home' },
 ];

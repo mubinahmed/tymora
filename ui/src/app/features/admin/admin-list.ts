@@ -7,6 +7,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError, SimpleListResponse, SimpleListRow } from '../../core/models';
+import { downloadCsv } from '../../core/csv';
 
 /**
  * Generic read-only listing for legacy Struts admin pages served by the new
@@ -65,5 +66,13 @@ export class AdminList {
 
   reload(): void {
     this.load(this.pageKey());
+  }
+
+  exportCsv(): void {
+    const d = this.data();
+    if (!d) return;
+    const cols = d.columns ?? [];
+    const rows = this.rows().map((r) => (r.cells ?? []).map((c) => c ?? ''));
+    downloadCsv(d.title || 'export', cols, rows);
   }
 }

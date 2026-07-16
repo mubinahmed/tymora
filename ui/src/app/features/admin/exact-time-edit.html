@@ -1,0 +1,66 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    [value]="records()"
+    dataKey="id"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>Exact Time Minutes</span>
+        <span class="spacer"></span>
+        @if (editable()) {
+          <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+        }
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Minutes Range</th>
+        <th>Time Slots per Meeting</th>
+        <th>Break Time (min)</th>
+        <th style="width: 100%"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-r>
+      <tr>
+        <td>{{ rangeLabel(r) }}</td>
+        <td>
+          <p-inputNumber
+            [(ngModel)]="r.nrSlots"
+            [disabled]="!editable()"
+            [min]="0"
+            [max]="999"
+            [useGrouping]="false"
+          />
+        </td>
+        <td>
+          <p-inputNumber
+            [(ngModel)]="r.breakTime"
+            [disabled]="!editable()"
+            [min]="0"
+            [max]="999"
+            [useGrouping]="false"
+          />
+        </td>
+        <td></td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="4">No exact time patterns found.</td></tr>
+    </ng-template>
+  </p-table>
+
+  @if (editable()) {
+    <div class="mt" style="text-align: right">
+      <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+    </div>
+  }
+}

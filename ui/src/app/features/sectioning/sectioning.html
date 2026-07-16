@@ -29,6 +29,11 @@
     <p-message severity="warn" [text]="eligibility()!.message!" />
   }
 
+  @if (noStudent() && !eligibility()?.message) {
+    <p-message severity="info"
+      text="No student record is associated with your account for the selected session. The scheduling assistant shows a specific student's requests and schedule." />
+  }
+
   @if (loadingData()) {
     <div class="center"><p-progressSpinner strokeWidth="4" /></div>
   } @else if (searched()) {
@@ -101,7 +106,7 @@
         </ng-template>
       </p-table>
     </p-card>
-  } @else if (!loading()) {
+  } @else if (!loading() && !eligibility()) {
     <p class="hint">Select an academic session to view the student's course requests and schedule.</p>
   }
 </div>

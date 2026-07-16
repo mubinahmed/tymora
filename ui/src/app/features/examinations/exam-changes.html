@@ -1,0 +1,82 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else if (data(); as d) {
+  <div class="tbl-caption mb">
+    <p-selectButton
+      [options]="modeOptions"
+      [(ngModel)]="mode"
+      (onChange)="onModeChange()"
+      optionLabel="label"
+      optionValue="value"
+      [allowEmpty]="false"
+    />
+    @if (d.examTypeLabel) {
+      <span>Examination type: <strong>{{ d.examTypeLabel }}</strong></span>
+    }
+    <span class="spacer"></span>
+    <p-button label="Refresh" icon="pi pi-refresh" [text]="true" (onClick)="reload()" />
+  </div>
+
+  @if (!solverLoaded()) {
+    <p-message severity="warn" [text]="d.message || 'Examination solver is not loaded in memory.'" />
+  } @else {
+    <p-table
+      [value]="rows()"
+      [paginator]="rows().length > 25"
+      [rows]="25"
+      [rowsPerPageOptions]="[25, 50, 100]"
+      styleClass="p-datatable-sm p-datatable-striped"
+    >
+      <ng-template pTemplate="caption">
+        <div class="tbl-caption">
+          <span>{{ rows().length }} changed exam(s)</span>
+          <span class="spacer"></span>
+          <input
+            pInputText
+            type="text"
+            placeholder="Filter…"
+            [value]="filter()"
+            (input)="filter.set($any($event.target).value)"
+          />
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Examination</th>
+          <th>Period</th>
+          <th>Room(s)</th>
+          <th>Seating</th>
+          <th style="text-align:right">Students</th>
+          <th>Instructor</th>
+          <th style="text-align:right">Direct</th>
+          <th style="text-align:right">&gt;2 A Day</th>
+          <th style="text-align:right">Back-To-Back</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.exam }}</td>
+          <td>{{ row.fromPeriod }} &rarr; {{ row.toPeriod }}</td>
+          <td>{{ row.fromRoom }} &rarr; {{ row.toRoom }}</td>
+          <td>{{ row.seatingType }}</td>
+          <td style="text-align:right">{{ row.students }}</td>
+          <td>{{ row.instructor }}</td>
+          <td style="text-align:right">{{ row.directConflicts }}</td>
+          <td style="text-align:right">{{ row.moreThanTwoADayConflicts }}</td>
+          <td style="text-align:right">{{ row.backToBackConflicts }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9">No examination assignment changes.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+}
