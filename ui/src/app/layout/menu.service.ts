@@ -92,7 +92,7 @@ export class MenuService {
     'examChanges.action': '/exam-changes',
     'ecbs.action': '/exam-cbs',
     curprojrules: '/curriculum-projection-rules',
-    'applicationConfig.action': '/application-config',
+    'applicationConfig.action': '/application-config-edit',
     'managerSettings.action': '/manager-settings',
     'deptStatusTypeEdit.action': '/status-types-edit',
     'timetableManagerList.action': '/managers-edit',

@@ -422,5 +422,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/admin/session-create').then((m) => m.SessionCreate),
   },
+  {
+    path: 'application-config-edit',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/application-config-edit').then((m) => m.ApplicationConfigEdit),
+  },
   { path: '**', redirectTo: 'home' },
 ];

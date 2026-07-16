@@ -249,6 +249,7 @@ a.link:hover { text-decoration: underline; }
 .room-form .hint { color: var(--p-text-muted-color, #6b7280); font-size: 0.85rem; }
 .ro-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .ro-chip { font-size: 0.8rem; background: var(--p-content-hover-background, #eef1f6); border: 1px solid var(--p-content-border-color, #e5e7eb); border-radius: 999px; padding: 0.1rem 0.6rem; }
+.acfg-value { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 0.8rem; word-break: break-word; max-width: 40rem; }
 
 .flags {
   border: 1px solid var(--p-content-border-color, #e5e7eb);
