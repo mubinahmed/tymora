@@ -166,7 +166,7 @@ public class SessionCreateBackend implements GwtRpcImplementation<SessionCreateR
 			session.setLastWeekToDrop(4);
 			// Optional (nullable) setup left unset on create -- configured later.
 			session.setDefaultDatePattern(null);
-			session.setHolidays(null);
+			session.setHolidays((String) null);
 			session.setNotificationsBeginDate(null);
 			session.setNotificationsEndDate(null);
 			session.setDefaultSectioningStatus(null);

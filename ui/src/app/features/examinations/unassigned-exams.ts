@@ -9,6 +9,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
+import { downloadCsv } from '../../core/csv';
 
 /** One selectable examination type (UnassignedExamsInterface.ExamTypeInfo). */
 interface ExamTypeInfo {
@@ -94,6 +95,11 @@ export class UnassignedExams implements OnInit {
 
   reload(): void {
     this.load();
+  }
+
+  exportCsv(): void {
+    const rows = this.rows().map((r) => (r.cells ?? []).map((c) => c ?? ''));
+    downloadCsv(this.data()?.title || 'Not-Assigned Examinations', this.columns(), rows);
   }
 
   private load(): void {

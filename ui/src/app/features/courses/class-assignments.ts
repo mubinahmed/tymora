@@ -9,6 +9,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
+import { downloadCsv } from '../../core/csv';
 
 /**
  * Read-only Class Assignments report (legacy classAssignmentsReportSearch.action),
@@ -113,5 +114,10 @@ export class ClassAssignments {
         this.searching.set(false);
       },
     });
+  }
+
+  exportCsv(): void {
+    const rows = this.rows().map((r) => (r.cells ?? []).map((c) => c ?? ''));
+    downloadCsv(this.result()?.title || 'Class Assignments', this.columns(), rows);
   }
 }

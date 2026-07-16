@@ -386,5 +386,41 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/admin/manager-settings').then((m) => m.ManagerSettings),
   },
+  // ---- Wave 8: solver-proxy exams, projection rules, deferred editors ----
+  {
+    path: 'exam-changes',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-changes').then((m) => m.ExamChanges),
+  },
+  {
+    path: 'exam-cbs',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-cbs').then((m) => m.ExamCbs),
+  },
+  {
+    path: 'curriculum-projection-rules',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/curricula/curriculum-projection-rules').then((m) => m.CurriculumProjectionRules),
+  },
+  {
+    path: 'exam-periods-edit',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-periods-edit').then((m) => m.ExamPeriodsEdit),
+  },
+  {
+    path: 'distribution-prefs-edit',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/distribution-prefs-edit').then((m) => m.DistributionPrefsEdit),
+  },
+  {
+    path: 'pattern-edit',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/pattern-edit').then((m) => m.PatternEdit),
+  },
+  {
+    path: 'session-create',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/session-create').then((m) => m.SessionCreate),
+  },
   { path: '**', redirectTo: 'home' },
 ];

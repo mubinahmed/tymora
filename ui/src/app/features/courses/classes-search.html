@@ -46,6 +46,8 @@
     <ng-template pTemplate="caption">
       <div class="tbl-caption">
         <span>{{ rows().length }} class(es)</span>
+        <span class="spacer"></span>
+        <p-button label="CSV" icon="pi pi-download" severity="secondary" [text]="true" (onClick)="exportCsv()" [disabled]="!rows().length" />
       </div>
     </ng-template>
 

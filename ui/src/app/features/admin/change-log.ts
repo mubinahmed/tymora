@@ -9,6 +9,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
+import { downloadCsv } from '../../core/csv';
 
 /** A projected change-log row (reuses SimpleListInterface.Row). */
 interface ChangeLogRow {
@@ -89,6 +90,11 @@ export class ChangeLog implements OnInit {
 
   reload(): void {
     this.load();
+  }
+
+  exportCsv(): void {
+    const rows = this.rows().map((r) => (r.cells ?? []).map((c) => c ?? ''));
+    downloadCsv(this.data()?.title || 'Last Changes', this.columns(), rows);
   }
 
   private load(): void {

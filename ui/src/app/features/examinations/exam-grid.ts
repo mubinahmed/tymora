@@ -9,6 +9,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
+import { downloadCsv } from '../../core/csv';
 
 /** One selectable examination type (ExamTimetableGridInterface.ExamTypeInfo). */
 interface ExamTypeInfo {
@@ -95,6 +96,11 @@ export class ExamGrid implements OnInit {
 
   reload(): void {
     this.load();
+  }
+
+  exportCsv(): void {
+    const rows = this.rows().map((r) => (r.cells ?? []).map((c) => c ?? ''));
+    downloadCsv(this.data()?.title || 'Examination Timetable', this.columns(), rows);
   }
 
   private load(): void {

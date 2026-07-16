@@ -28,6 +28,7 @@
           [value]="filter()"
           (input)="filter.set($any($event.target).value)"
         />
+        <p-button label="CSV" icon="pi pi-download" severity="secondary" [text]="true" (onClick)="exportCsv()" [disabled]="!rows().length" />
       </div>
     </ng-template>
 
