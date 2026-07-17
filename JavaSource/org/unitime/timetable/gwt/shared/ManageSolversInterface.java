@@ -46,9 +46,43 @@ public class ManageSolversInterface implements IsSerializable {
 		public String toString() { return "ManageSolvers[]"; }
 	}
 
+	/**
+	 * Mutating command behind the "Manage Solvers" page (legacy manageSolvers.action ops).
+	 * Carries the operation name plus the identity of the target solver instance / server.
+	 * Reuses {@link ManageSolversResponse} so the client gets a freshly rebuilt list back.
+	 */
+	public static class ManageSolversOpRequest implements GwtRpcRequest<ManageSolversResponse> {
+		private String iOperation;
+		private String iHost;
+		private String iOwner;
+		private String iType;
+		private Long iOnlineId;
+
+		public ManageSolversOpRequest() {}
+
+		public String getOperation() { return iOperation; }
+		public void setOperation(String operation) { iOperation = operation; }
+
+		public String getHost() { return iHost; }
+		public void setHost(String host) { iHost = host; }
+
+		public String getOwner() { return iOwner; }
+		public void setOwner(String owner) { iOwner = owner; }
+
+		public String getType() { return iType; }
+		public void setType(String type) { iType = type; }
+
+		public Long getOnlineId() { return iOnlineId; }
+		public void setOnlineId(Long onlineId) { iOnlineId = onlineId; }
+
+		@Override
+		public String toString() { return "ManageSolversOp[" + iOperation + "]"; }
+	}
+
 	public static class ManageSolversResponse implements GwtRpcResponse {
 		private List<SolverInstanceInterface> iSolvers = new ArrayList<SolverInstanceInterface>();
 		private List<SolverServerInterface> iServers = new ArrayList<SolverServerInterface>();
+		private String iNavigate;
 
 		public ManageSolversResponse() {}
 
@@ -57,11 +91,17 @@ public class ManageSolversInterface implements IsSerializable {
 
 		public List<SolverServerInterface> getServers() { return iServers; }
 		public void addServer(SolverServerInterface server) { iServers.add(server); }
+
+		/** Optional client-side navigation target (e.g. "solver?type=course"); set only by the Select op. */
+		public String getNavigate() { return iNavigate; }
+		public void setNavigate(String navigate) { iNavigate = navigate; }
 	}
 
 	public static class SolverInstanceInterface implements IsSerializable {
 		private String iType;
 		private String iOwner;
+		private String iOwnerId;
+		private Long iOnlineId;
 		private String iSession;
 		private String iHost;
 		private String iConfiguration;
@@ -80,6 +120,14 @@ public class ManageSolversInterface implements IsSerializable {
 
 		public String getOwner() { return iOwner; }
 		public void setOwner(String owner) { iOwner = owner; }
+
+		/** OwnerPuid used by the Select/Unload operations (not the friendly owner label). */
+		public String getOwnerId() { return iOwnerId; }
+		public void setOwnerId(String ownerId) { iOwnerId = ownerId; }
+
+		/** Session id of an online student-sectioning instance; null for regular solvers. */
+		public Long getOnlineId() { return iOnlineId; }
+		public void setOnlineId(Long onlineId) { iOnlineId = onlineId; }
 
 		public String getSession() { return iSession; }
 		public void setSession(String session) { iSession = session; }

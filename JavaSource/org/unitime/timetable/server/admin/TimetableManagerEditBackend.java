@@ -22,19 +22,27 @@ package org.unitime.timetable.server.admin;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.hibernate.Transaction;
 import org.unitime.timetable.gwt.command.client.GwtRpcException;
 import org.unitime.timetable.gwt.command.server.GwtRpcImplementation;
 import org.unitime.timetable.gwt.command.server.GwtRpcImplements;
+import org.unitime.timetable.gwt.shared.TimetableManagerEditInterface.IdName;
 import org.unitime.timetable.gwt.shared.TimetableManagerEditInterface.ManagerLine;
 import org.unitime.timetable.gwt.shared.TimetableManagerEditInterface.TimetableManagerEditRequest;
 import org.unitime.timetable.gwt.shared.TimetableManagerEditInterface.TimetableManagerEditResponse;
 import org.unitime.timetable.model.ChangeLog;
 import org.unitime.timetable.model.Department;
+import org.unitime.timetable.model.ManagerRole;
+import org.unitime.timetable.model.Roles;
 import org.unitime.timetable.model.SolverGroup;
 import org.unitime.timetable.model.TimetableManager;
+import org.unitime.timetable.model.dao.DepartmentDAO;
+import org.unitime.timetable.model.dao.RolesDAO;
 import org.unitime.timetable.model.dao.TimetableManagerDAO;
 import org.unitime.timetable.security.SessionContext;
 import org.unitime.timetable.security.rights.Right;
@@ -99,13 +107,22 @@ public class TimetableManagerEditBackend implements GwtRpcImplementation<Timetab
 
 	protected TimetableManagerEditResponse load(TimetableManagerEditRequest request, SessionContext context) {
 		context.checkPermission(Right.TimetableManagers);
-		if (request.getUniqueId() == null)
-			throw new GwtRpcException("No manager specified.");
+		Long sessionId = context.getUser().getCurrentAcademicSessionId();
+		TimetableManagerEditResponse response = new TimetableManagerEditResponse();
+
+		if (request.getUniqueId() == null) {
+			// Create-dialog case: no manager yet, return only the assignable
+			// options so the new-manager form can offer roles / departments.
+			context.checkPermission(Right.TimetableManagerAdd);
+			fillAvailableRoles(response, context);
+			fillAvailableDepartments(response, sessionId);
+			return response;
+		}
+
 		TimetableManager manager = TimetableManagerDAO.getInstance().get(request.getUniqueId());
 		if (manager == null)
 			throw new GwtRpcException("Manager no longer exists.");
 		context.checkPermission(manager, Right.TimetableManagerEdit);
-		TimetableManagerEditResponse response = new TimetableManagerEditResponse();
 		response.setUniqueId(manager.getUniqueId());
 		response.setExternalUniqueId(manager.getExternalUniqueId());
 		response.setFirstName(manager.getFirstName());
@@ -113,7 +130,161 @@ public class TimetableManagerEditBackend implements GwtRpcImplementation<Timetab
 		response.setLastName(manager.getLastName());
 		response.setAcademicTitle(manager.getAcademicTitle());
 		response.setEmailAddress(manager.getEmailAddress());
+
+		// Current roles (each with primary flag) - see loadForm() in the legacy action.
+		if (manager.getManagerRoles() != null) {
+			for (ManagerRole mr : manager.getManagerRoles()) {
+				Roles role = mr.getRole();
+				if (role == null) continue;
+				response.addRoleId(role.getRoleId());
+				if (mr.isPrimary() != null && mr.isPrimary().booleanValue())
+					response.setPrimaryRoleId(role.getRoleId());
+			}
+		}
+		// Current-session departments only (loadForm() filters by session id).
+		if (manager.getDepartments() != null) {
+			for (Department d : manager.getDepartments()) {
+				if (d.getSessionId() != null && d.getSessionId().equals(sessionId))
+					response.addDepartmentId(d.getUniqueId());
+			}
+		}
+
+		fillAvailableRoles(response, context);
+		fillAvailableDepartments(response, sessionId);
 		return response;
+	}
+
+	/**
+	 * Assignable manager roles (Roles.findAll(true)); roles carrying the
+	 * SessionIndependent right are hidden from callers who lack it - mirrors
+	 * setupRoles() in the legacy action.
+	 */
+	protected void fillAvailableRoles(TimetableManagerEditResponse response, SessionContext context) {
+		boolean sessionIndependent = context.hasPermission(Right.SessionIndependent);
+		for (Roles role : Roles.findAll(true)) {
+			if (!sessionIndependent && role.hasRight(Right.SessionIndependent)) continue;
+			response.addAvailableRole(new IdName(role.getRoleId(), role.getAbbv()));
+		}
+	}
+
+	/** Departments of the current academic session (LookupTables.setupDepts). */
+	protected void fillAvailableDepartments(TimetableManagerEditResponse response, Long sessionId) {
+		if (sessionId == null) return;
+		for (Department d : Department.findAll(sessionId))
+			response.addAvailableDepartment(new IdName(d.getUniqueId(), d.getLabel()));
+	}
+
+	/** Role ids the current user may assign - Roles.findAll(true) minus SessionIndependent when not held. */
+	protected Set<Long> assignableRoleIds(SessionContext context) {
+		Set<Long> ids = new HashSet<Long>();
+		boolean sessionIndependent = context.hasPermission(Right.SessionIndependent);
+		for (Roles role : Roles.findAll(true)) {
+			if (!sessionIndependent && role.hasRight(Right.SessionIndependent)) continue;
+			ids.add(role.getRoleId());
+		}
+		return ids;
+	}
+
+	/**
+	 * Upsert the manager's roles (add/remove ManagerRole, set exactly one primary)
+	 * - faithful merge of updateManager()/addManager() in the legacy action. Roles
+	 * already on the manager are preserved even when hidden from the caller; new
+	 * roles must be assignable. receive_emails on existing rows is left untouched
+	 * (not managed here); new rows default to false, as the legacy action does.
+	 */
+	protected void applyRoles(TimetableManager manager, TimetableManagerEditRequest request, SessionContext context, org.hibernate.Session hibSession) {
+		List<Long> requested = new ArrayList<Long>();
+		if (request.getRoleIds() != null)
+			for (Long id : request.getRoleIds())
+				if (id != null && !requested.contains(id)) requested.add(id);
+
+		Set<ManagerRole> mgrRoles = manager.getManagerRoles();
+		if (mgrRoles == null) { mgrRoles = new HashSet<ManagerRole>(); manager.setManagerRoles(mgrRoles); }
+
+		Set<Long> existingIds = new HashSet<Long>();
+		for (ManagerRole mr : mgrRoles)
+			if (mr.getRole() != null) existingIds.add(mr.getRole().getRoleId());
+
+		// Guard: only assignable roles may be newly added; pre-existing roles stay.
+		Set<Long> assignable = assignableRoleIds(context);
+		for (Long id : requested)
+			if (!assignable.contains(id) && !existingIds.contains(id))
+				throw new GwtRpcException("You are not allowed to assign one of the selected roles.");
+
+		// Determine the single primary role.
+		Long primary = request.getPrimaryRoleId();
+		if (requested.isEmpty())
+			primary = null;
+		else if (primary == null || !requested.contains(primary))
+			primary = requested.get(0);
+
+		// Add / update.
+		for (Long roleId : requested) {
+			ManagerRole existing = null;
+			for (ManagerRole mr : mgrRoles)
+				if (mr.getRole() != null && roleId.equals(mr.getRole().getRoleId())) { existing = mr; break; }
+			if (existing != null) {
+				existing.setPrimary(roleId.equals(primary));
+			} else {
+				Roles role = RolesDAO.getInstance().get(roleId, hibSession);
+				if (role == null) throw new GwtRpcException("Selected role no longer exists.");
+				ManagerRole mr = new ManagerRole();
+				mr.setRole(role);
+				mr.setTimetableManager(manager);
+				mr.setPrimary(roleId.equals(primary));
+				mr.setReceiveEmails(Boolean.FALSE);
+				manager.addToManagerRoles(mr);
+			}
+		}
+
+		// Remove roles no longer requested (orphanRemoval deletes the join row).
+		for (Iterator<ManagerRole> it = mgrRoles.iterator(); it.hasNext(); ) {
+			ManagerRole mr = it.next();
+			Long rid = (mr.getRole() == null ? null : mr.getRole().getRoleId());
+			if (rid == null || !requested.contains(rid))
+				it.remove();
+		}
+	}
+
+	/**
+	 * Upsert the manager's CURRENT-SESSION departments (add/remove) - faithful
+	 * merge of updateManager()/addManager(). Departments of OTHER academic sessions
+	 * are never touched. The many-to-many join is owned by Department, so both sides
+	 * are updated and each changed Department is merged.
+	 */
+	protected void applyDepartments(TimetableManager manager, TimetableManagerEditRequest request, Long sessionId, org.hibernate.Session hibSession) {
+		List<Long> requested = new ArrayList<Long>();
+		if (request.getDepartmentIds() != null)
+			for (Long id : request.getDepartmentIds())
+				if (id != null && !requested.contains(id)) requested.add(id);
+
+		Set<Department> mgrDepts = manager.getDepartments();
+		if (mgrDepts == null) { mgrDepts = new HashSet<Department>(); manager.setDepartments(mgrDepts); }
+
+		Set<Long> existingIds = new HashSet<Long>();
+		for (Department d : mgrDepts) existingIds.add(d.getUniqueId());
+
+		// Add departments not yet linked.
+		for (Long deptId : requested) {
+			if (existingIds.contains(deptId)) continue;
+			Department dept = DepartmentDAO.getInstance().get(deptId, hibSession);
+			if (dept == null) throw new GwtRpcException("Selected department no longer exists.");
+			if (dept.getSessionId() == null || !dept.getSessionId().equals(sessionId))
+				throw new GwtRpcException("Selected department does not belong to the current academic session.");
+			mgrDepts.add(dept);
+			dept.addToTimetableManagers(manager);
+			hibSession.merge(dept);
+		}
+
+		// Remove current-session departments no longer requested; SKIP other sessions.
+		for (Iterator<Department> it = mgrDepts.iterator(); it.hasNext(); ) {
+			Department d = it.next();
+			if (d.getSessionId() == null || !d.getSessionId().equals(sessionId)) continue;
+			if (requested.contains(d.getUniqueId())) continue;
+			it.remove();
+			if (d.getTimetableManagers() != null) d.getTimetableManagers().remove(manager);
+			hibSession.merge(d);
+		}
 	}
 
 	protected TimetableManagerEditResponse save(TimetableManagerEditRequest request, SessionContext context) {
@@ -150,10 +321,16 @@ public class TimetableManagerEditBackend implements GwtRpcImplementation<Timetab
 			manager.setAcademicTitle(trimToNull(request.getAcademicTitle()));
 			manager.setEmailAddress(trimToNull(request.getEmailAddress()));
 
+			// Persist core identity first so that (a) role rows can reference a
+			// managed manager and (b) the Department many-to-many join is valid.
 			if (create)
 				hibSession.persist(manager);
-			else
-				hibSession.merge(manager);
+
+			Long sessionId = context.getUser().getCurrentAcademicSessionId();
+			applyRoles(manager, request, context, hibSession);
+			applyDepartments(manager, request, sessionId, hibSession);
+
+			hibSession.merge(manager);
 
 			ChangeLog.addChange(hibSession, context, manager,
 					ChangeLog.Source.MANAGER_EDIT,

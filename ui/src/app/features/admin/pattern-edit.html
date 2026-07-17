@@ -17,7 +17,7 @@
 } @else {
   <p-message
     severity="info"
-    text="Editing descriptive fields only. The {{ isTime() ? 'day / start-time grid' : 'day-pattern calendar' }} and department / pattern-set associations are managed on the legacy page."
+    text="Editable: descriptive fields and the {{ isTime() ? 'day-combination / start-time grid' : 'day-pattern calendar' }}. Still managed on the legacy page: department / pattern-set associations{{ isTime() ? '' : ' and number-of-weeks' }}, and creating new patterns."
   />
 
   <p-table
@@ -106,7 +106,7 @@
     [visible]="dialogVisible()"
     (visibleChange)="dialogVisible.set($event)"
     [modal]="true"
-    [style]="{ width: '34rem' }"
+    [style]="{ width: isTime() ? '40rem' : '52rem' }"
     [header]="(isTime() ? 'Edit Time Pattern' : 'Edit Date Pattern')"
   >
     <div class="form-grid">
@@ -141,6 +141,83 @@
       <label for="p-visible">Visible</label>
       <p-checkbox inputId="p-visible" [(ngModel)]="editing.visible" [binary]="true" />
     </div>
+
+    @if (!isTime()) {
+      <!-- Date-pattern day bitmap: calendar of session dates -->
+      <div class="grid-section">
+        <h4>Dates</h4>
+        @if (editing.patternEditable) {
+          <p class="grid-hint">Click a date to toggle whether classes are offered on it.</p>
+        } @else {
+          <p class="grid-hint">Read-only (you do not have permission to edit this pattern).</p>
+        }
+        <div class="cal-legend">
+          <span><span class="sw offered"></span>Offered</span>
+          <span><span class="sw holiday"></span>Holiday</span>
+          <span><span class="sw brk"></span>Break</span>
+        </div>
+        @if (calendarMonths().length) {
+          <div class="cal-wrap">
+            @for (mo of calendarMonths(); track mo.label) {
+              <div class="cal-month">
+                <h4>{{ mo.label }}</h4>
+                <div class="cal-grid">
+                  @for (wd of weekdayLabels; track wd) { <div class="dow">{{ wd }}</div> }
+                  @for (c of mo.cells; track $index) {
+                    <div [class]="dayCellClass(c)" (click)="toggleDate(c)">{{ c ? c.day : '' }}</div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="grid-hint">No session calendar available.</p>
+        }
+      </div>
+    } @else {
+      <!-- Time-pattern day-combination + start-time grid -->
+      <div class="grid-section">
+        <h4>Meeting Day Combinations</h4>
+        @if (editing.gridEditable) {
+          <p class="grid-hint">
+            Each row is one allowed combination of meeting days
+            @if (editing.nrMeetings) { (should select {{ editing.nrMeetings }} day(s) each) }.
+          </p>
+          @for (combo of dayCombos(); track $index) {
+            <div class="combo-row">
+              <div class="combo-days">
+                @for (dn of (dayNames().length ? dayNames() : weekdayLabels); track $index) {
+                  <label class="combo-day">
+                    {{ dn }}
+                    <p-checkbox [binary]="true" [(ngModel)]="combo[$index]" />
+                  </label>
+                }
+              </div>
+              <p-button icon="pi pi-trash" severity="danger" [text]="true" (onClick)="removeCombo($index)" />
+            </div>
+          }
+          <p-button label="Add day combination" icon="pi pi-plus" severity="secondary" [text]="true" (onClick)="addCombo()" />
+
+          <h4>Start Times</h4>
+          <p class="grid-hint">Allowed class start times for this pattern.</p>
+          <p-multiSelect
+            [options]="timeOptions()"
+            [ngModel]="startSlots()"
+            (ngModelChange)="startSlots.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            appendTo="body"
+            placeholder="Select start times"
+            [style]="{ width: '100%' }"
+          />
+        } @else {
+          <p class="grid-hint">
+            Read-only — this time pattern is in use, so its day/time grid cannot be changed.
+          </p>
+        }
+      </div>
+    }
 
     <ng-template pTemplate="footer">
       <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" />

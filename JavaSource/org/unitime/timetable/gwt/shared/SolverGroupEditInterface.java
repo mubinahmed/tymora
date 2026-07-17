@@ -32,13 +32,15 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  * current academic session (migration of the legacy solverGroupEdit.action Struts
  * page). One request with an operation enum drives the screen:
  * <ul>
- *   <li>LOAD   &mdash; return all solver groups of the current session (editable fields + flags);</li>
- *   <li>SAVE   &mdash; create (uniqueId == null) or merge-update name/abbv of an existing group;</li>
+ *   <li>LOAD   &mdash; return all solver groups of the current session (editable fields + flags),
+ *              plus the pool of departments that may be assigned;</li>
+ *   <li>SAVE   &mdash; create (uniqueId == null) or merge-update name/abbv and department
+ *              membership of an existing group;</li>
  *   <li>DELETE &mdash; remove a group (only when it has no solutions).</li>
  * </ul>
- * Only the name and abbreviation are edited here. Department membership, timetable
- * managers and solutions are intentionally NOT managed by this bean (deferred);
- * on SAVE-update those relations are left untouched.
+ * Name, abbreviation and department membership are edited here. Timetable managers
+ * and solutions are intentionally NOT managed by this bean (deferred); on SAVE-update
+ * those relations are left untouched.
  *
  * @author Angular migration
  */
@@ -53,6 +55,7 @@ public class SolverGroupEditInterface implements IsSerializable {
 		private Long iUniqueId;
 		private String iName;
 		private String iAbbv;
+		private List<Long> iDepartmentIds = new ArrayList<Long>();
 
 		public SolverGroupEditRequest() {}
 
@@ -68,6 +71,10 @@ public class SolverGroupEditInterface implements IsSerializable {
 		public String getAbbv() { return iAbbv; }
 		public void setAbbv(String abbv) { iAbbv = abbv; }
 
+		/** Department ids the user selected for this group (SAVE only). */
+		public List<Long> getDepartmentIds() { return iDepartmentIds; }
+		public void setDepartmentIds(List<Long> departmentIds) { iDepartmentIds = departmentIds; }
+
 		@Override
 		public String toString() {
 			return "SolverGroupEdit[" + iOperation + "," + iUniqueId + "]";
@@ -77,6 +84,7 @@ public class SolverGroupEditInterface implements IsSerializable {
 	public static class SolverGroupEditResponse implements GwtRpcResponse {
 		private boolean iCanAdd = false;
 		private List<SolverGroupInfo> iGroups = new ArrayList<SolverGroupInfo>();
+		private List<DepartmentInfo> iDepartments = new ArrayList<DepartmentInfo>();
 
 		public SolverGroupEditResponse() {}
 
@@ -85,6 +93,33 @@ public class SolverGroupEditInterface implements IsSerializable {
 
 		public List<SolverGroupInfo> getGroups() { return iGroups; }
 		public void addGroup(SolverGroupInfo group) { iGroups.add(group); }
+
+		/** Pool of departments that may be assigned to a solver group in this session. */
+		public List<DepartmentInfo> getDepartments() { return iDepartments; }
+		public void addDepartment(DepartmentInfo department) { iDepartments.add(department); }
+	}
+
+	/**
+	 * A department in the current session that can be a member of a solver group.
+	 * {@link #getSolverGroupId()} is the id of the solver group it currently belongs
+	 * to (null when unassigned); the client uses it to decide which departments are
+	 * available for a given group (unassigned + the group's own).
+	 */
+	public static class DepartmentInfo implements IsSerializable {
+		private Long iUniqueId;
+		private String iLabel;
+		private Long iSolverGroupId;
+
+		public DepartmentInfo() {}
+
+		public Long getUniqueId() { return iUniqueId; }
+		public void setUniqueId(Long uniqueId) { iUniqueId = uniqueId; }
+
+		public String getLabel() { return iLabel; }
+		public void setLabel(String label) { iLabel = label; }
+
+		public Long getSolverGroupId() { return iSolverGroupId; }
+		public void setSolverGroupId(Long solverGroupId) { iSolverGroupId = solverGroupId; }
 	}
 
 	public static class SolverGroupInfo implements IsSerializable {
@@ -92,6 +127,8 @@ public class SolverGroupEditInterface implements IsSerializable {
 		private String iName;
 		private String iAbbv;
 		private String iDepartments;
+		private List<Long> iDepartmentIds = new ArrayList<Long>();
+		private boolean iDepartmentsEditable = true;
 		private boolean iCommitted = false;
 		private boolean iCanEdit = false;
 		private boolean iCanDelete = false;
@@ -109,6 +146,17 @@ public class SolverGroupEditInterface implements IsSerializable {
 
 		public String getDepartments() { return iDepartments; }
 		public void setDepartments(String departments) { iDepartments = departments; }
+
+		/** Ids of the departments currently assigned to this group. */
+		public List<Long> getDepartmentIds() { return iDepartmentIds; }
+		public void addDepartmentId(Long departmentId) { iDepartmentIds.add(departmentId); }
+
+		/**
+		 * Whether department membership may be changed. The legacy screen forbids
+		 * editing departments once the group has committed/other solutions.
+		 */
+		public boolean isDepartmentsEditable() { return iDepartmentsEditable; }
+		public void setDepartmentsEditable(boolean departmentsEditable) { iDepartmentsEditable = departmentsEditable; }
 
 		public boolean isCommitted() { return iCommitted; }
 		public void setCommitted(boolean committed) { iCommitted = committed; }

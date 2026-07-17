@@ -85,9 +85,30 @@
           <small class="err">Name is required (max 50 characters).</small>
         }
       </div>
+      <div class="field">
+        <label for="sg-depts">Departments</label>
+        <p-multiSelect
+          inputId="sg-depts"
+          formControlName="departmentIds"
+          [options]="availableDepartments()"
+          optionLabel="label"
+          optionValue="uniqueId"
+          [filter]="true"
+          filterBy="label"
+          display="chip"
+          placeholder="Select departments"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+        />
+        @if (!departmentsEditable()) {
+          <small class="hint">Department membership cannot be changed while the group has solutions.</small>
+        } @else {
+          <small class="hint">Only departments not already assigned to another solver group are listed.</small>
+        }
+      </div>
       <p-message
         severity="info"
-        text="Department membership, managers and solutions are managed on the legacy Solver Groups page and are not changed here."
+        text="Managers and solutions are managed on the legacy Solver Groups page and are not changed here."
       />
     </form>
 

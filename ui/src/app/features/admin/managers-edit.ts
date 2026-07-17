@@ -7,6 +7,8 @@ import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { SelectModule } from 'primeng/select';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
@@ -14,6 +16,12 @@ import { ApiError } from '../../core/models';
 
 /** Mirrors TimetableManagerEditInterface (Gson: Java iField -> field). */
 type Operation = 'LIST' | 'LOAD' | 'SAVE' | 'DELETE';
+
+/** Assignable role / department option (IdName in the shared DTO). */
+interface IdName {
+  id: number;
+  name: string;
+}
 
 interface TimetableManagerEditRequest {
   operation: Operation;
@@ -24,6 +32,9 @@ interface TimetableManagerEditRequest {
   lastName?: string;
   academicTitle?: string;
   emailAddress?: string;
+  roleIds?: number[];
+  primaryRoleId?: number;
+  departmentIds?: number[];
 }
 
 interface ManagerLine {
@@ -43,6 +54,11 @@ interface TimetableManagerEditResponse {
   lastName?: string;
   academicTitle?: string;
   emailAddress?: string;
+  roleIds?: number[];
+  primaryRoleId?: number;
+  departmentIds?: number[];
+  availableRoles?: IdName[];
+  availableDepartments?: IdName[];
   managers?: ManagerLine[];
   canAdd?: boolean;
 }
@@ -65,6 +81,8 @@ const RPC = 'TimetableManagerEditRequest';
     MessageModule,
     ProgressSpinnerModule,
     ConfirmDialogModule,
+    MultiSelectModule,
+    SelectModule,
   ],
   providers: [ConfirmationService],
   templateUrl: './managers-edit.html',
@@ -86,6 +104,15 @@ export class ManagersEdit {
   protected readonly editingId = signal<number | null>(null);
   protected readonly heading = computed(() => (this.editingId() == null ? 'New Manager' : 'Edit Manager'));
 
+  protected readonly availableRoles = signal<IdName[]>([]);
+  protected readonly availableDepartments = signal<IdName[]>([]);
+  protected readonly selectedRoleIds = signal<number[]>([]);
+  // The primary picker only offers roles that are currently selected.
+  protected readonly primaryRoleOptions = computed(() => {
+    const sel = new Set(this.selectedRoleIds());
+    return this.availableRoles().filter((r) => sel.has(r.id));
+  });
+
   protected readonly form = this.fb.group({
     externalUniqueId: ['', [Validators.maxLength(40)]],
     firstName: ['', [Validators.maxLength(100)]],
@@ -93,10 +120,25 @@ export class ManagersEdit {
     lastName: ['', [Validators.required, Validators.maxLength(100)]],
     academicTitle: ['', [Validators.maxLength(50)]],
     emailAddress: ['', [Validators.maxLength(200)]],
+    roleIds: [[] as number[]],
+    primaryRoleId: [null as number | null],
+    departmentIds: [[] as number[]],
   });
 
   constructor() {
     this.page.set('Timetabling Managers');
+    // Keep the primary picker in sync with the selected roles: default the primary
+    // to the first selected role, and clear it when no roles remain.
+    this.form.controls.roleIds.valueChanges.subscribe((ids) => {
+      const list = ids ?? [];
+      this.selectedRoleIds.set(list);
+      const primary = this.form.controls.primaryRoleId.value;
+      if (list.length === 0) {
+        if (primary != null) this.form.controls.primaryRoleId.setValue(null);
+      } else if (primary == null || !list.includes(primary)) {
+        this.form.controls.primaryRoleId.setValue(list[0]);
+      }
+    });
     this.reload();
   }
 
@@ -118,6 +160,8 @@ export class ManagersEdit {
 
   openCreate(): void {
     this.editingId.set(null);
+    this.availableRoles.set([]);
+    this.availableDepartments.set([]);
     this.form.reset({
       externalUniqueId: '',
       firstName: '',
@@ -125,18 +169,37 @@ export class ManagersEdit {
       lastName: '',
       academicTitle: '',
       emailAddress: '',
+      roleIds: [],
+      primaryRoleId: null,
+      departmentIds: [],
     });
     this.dialogVisible.set(true);
+    // Fetch the assignable role / department options (no manager loaded yet).
+    this.rpc
+      .execute<TimetableManagerEditResponse>(RPC, { operation: 'LOAD' } as TimetableManagerEditRequest)
+      .subscribe({
+        next: (res) => {
+          this.availableRoles.set(res.availableRoles ?? []);
+          this.availableDepartments.set(res.availableDepartments ?? []);
+        },
+        error: (e: ApiError) => {
+          this.messages.add({ severity: 'error', summary: 'Load failed', detail: e.message });
+        },
+      });
   }
 
   openEdit(m: ManagerLine): void {
     this.editingId.set(m.uniqueId);
+    this.availableRoles.set([]);
+    this.availableDepartments.set([]);
     this.dialogVisible.set(true);
     // Load the full editable record (the list row only carries display fields).
     this.rpc
       .execute<TimetableManagerEditResponse>(RPC, { operation: 'LOAD', uniqueId: m.uniqueId } as TimetableManagerEditRequest)
       .subscribe({
         next: (res) => {
+          this.availableRoles.set(res.availableRoles ?? []);
+          this.availableDepartments.set(res.availableDepartments ?? []);
           this.form.reset({
             externalUniqueId: res.externalUniqueId ?? '',
             firstName: res.firstName ?? '',
@@ -144,6 +207,9 @@ export class ManagersEdit {
             lastName: res.lastName ?? '',
             academicTitle: res.academicTitle ?? '',
             emailAddress: res.emailAddress ?? '',
+            roleIds: res.roleIds ?? [],
+            primaryRoleId: res.primaryRoleId ?? null,
+            departmentIds: res.departmentIds ?? [],
           });
         },
         error: (e: ApiError) => {
@@ -163,6 +229,7 @@ export class ManagersEdit {
       return;
     }
     const v = this.form.getRawValue();
+    const roleIds = v.roleIds ?? [];
     const request: TimetableManagerEditRequest = {
       operation: 'SAVE',
       uniqueId: this.editingId() ?? undefined,
@@ -172,6 +239,9 @@ export class ManagersEdit {
       lastName: v.lastName?.trim() || undefined,
       academicTitle: v.academicTitle?.trim() || undefined,
       emailAddress: v.emailAddress?.trim() || undefined,
+      roleIds,
+      primaryRoleId: roleIds.length ? v.primaryRoleId ?? undefined : undefined,
+      departmentIds: v.departmentIds ?? [],
     };
     this.saving.set(true);
     this.rpc.execute<TimetableManagerEditResponse>(RPC, request).subscribe({

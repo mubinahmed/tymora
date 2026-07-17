@@ -34,6 +34,7 @@ import org.unitime.timetable.gwt.shared.ManageSolversInterface.ManageSolversResp
 import org.unitime.timetable.gwt.shared.ManageSolversInterface.SolverInstanceInterface;
 import org.unitime.timetable.gwt.shared.ManageSolversInterface.SolverServerInterface;
 import org.unitime.timetable.model.SolverParameterGroup.SolverType;
+import org.unitime.timetable.onlinesectioning.OnlineSectioningServer;
 import org.unitime.timetable.security.SessionContext;
 import org.unitime.timetable.security.rights.Right;
 import org.unitime.timetable.solver.CommonSolverInterface;
@@ -91,7 +92,50 @@ public class ManageSolversBackend implements GwtRpcImplementation<ManageSolversR
 			response.addServer(s);
 		}
 
+		addOnlineInstances(response);
+
 		return response;
+	}
+
+	/**
+	 * Project the online student-scheduling instances (identified by their session id)
+	 * as extra solver-instance rows. These rows carry an onlineId (and host) instead of
+	 * an owner puid; the Angular screen keys its Reload / Unload actions off onlineId.
+	 */
+	private void addOnlineInstances(ManageSolversResponse response) {
+		try {
+			for (SolverServer server: solverServerService.getServers(true)) {
+				SolverContainer<OnlineSectioningServer> container = null;
+				try { container = server.getOnlineStudentSchedulingContainer(); } catch (Exception e) {}
+				if (container == null) continue;
+				try {
+					for (String sessionId: container.getSolvers()) {
+						OnlineSectioningServer solver = null;
+						try { solver = container.getSolver(sessionId); } catch (Exception e) {}
+						if (solver == null) continue;
+						try {
+							SolverInstanceInterface row = new SolverInstanceInterface();
+							try { row.setOnlineId(Long.valueOf(sessionId)); } catch (Exception e) {}
+							try { row.setHost(solver.getHost()); } catch (Exception e) {}
+							try { row.setSession(solver.getAcademicSession().toString()); } catch (Exception e) {}
+							try { row.setConfiguration(solver.getAcademicSession().isSectioningEnabled() ? "Online" : "Assistant"); } catch (Exception e) {}
+							try { row.setStatus(solver.isReady() ? "Ready" : "Loading"); } catch (Exception e) {}
+							try {
+								Date d = new Date(solver.getConfig().getPropertyLong("General.StartUpDate", 0));
+								if (d.getTime() > 0) row.setCreated(sDF.format(d));
+							} catch (Exception e) {}
+							response.addSolver(row);
+						} catch (Exception e) {
+							sLog.debug("Failed to project online solver " + sessionId + ": " + e.getMessage());
+						}
+					}
+				} catch (Exception e) {
+					sLog.debug("Failed to list online solvers on " + safeHost(server) + ": " + e.getMessage());
+				}
+			}
+		} catch (Exception e) {
+			sLog.debug("Failed to list online solver servers: " + e.getMessage());
+		}
 	}
 
 	private void addInstances(ManageSolversResponse response, SolverServer server, SolverType type, int[] counts) {
@@ -126,6 +170,7 @@ public class ManageSolversBackend implements GwtRpcImplementation<ManageSolversR
 		try { properties = solver.getProperties(); } catch (Exception e) {}
 		if (properties != null) {
 			try { row.setOwner(ManageSolversAction.getSolverOwner(properties)); } catch (Exception e) {}
+			try { row.setOwnerId(properties.getProperty("General.OwnerPuid")); } catch (Exception e) {}
 			try { row.setSession(ManageSolversAction.getSolverSession(properties)); } catch (Exception e) {}
 			try { row.setConfiguration(ManageSolversAction.getSolverConfiguration(properties)); } catch (Exception e) {}
 		}

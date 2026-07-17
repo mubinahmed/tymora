@@ -93,6 +93,56 @@
         <label for="emailAddress">Email</label>
         <input id="emailAddress" pInputText formControlName="emailAddress" maxlength="200" />
       </div>
+
+      <div class="field">
+        <label for="roleIds">Roles</label>
+        <p-multiSelect
+          inputId="roleIds"
+          formControlName="roleIds"
+          [options]="availableRoles()"
+          optionLabel="name"
+          optionValue="id"
+          [filter]="true"
+          filterBy="name"
+          display="chip"
+          placeholder="Select roles"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+        />
+      </div>
+
+      @if (selectedRoleIds().length) {
+        <div class="field">
+          <label for="primaryRoleId">Primary Role</label>
+          <p-select
+            inputId="primaryRoleId"
+            formControlName="primaryRoleId"
+            [options]="primaryRoleOptions()"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="Select primary role"
+            appendTo="body"
+            [style]="{ width: '100%' }"
+          />
+        </div>
+      }
+
+      <div class="field">
+        <label for="departmentIds">Departments</label>
+        <p-multiSelect
+          inputId="departmentIds"
+          formControlName="departmentIds"
+          [options]="availableDepartments()"
+          optionLabel="name"
+          optionValue="id"
+          [filter]="true"
+          filterBy="name"
+          display="chip"
+          placeholder="Select departments"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+        />
+      </div>
     </form>
 
     <ng-template pTemplate="footer">
