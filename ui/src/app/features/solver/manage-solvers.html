@@ -100,7 +100,12 @@
       </ng-template>
       <ng-template pTemplate="body" let-row>
         <tr>
-          <td>{{ row.host }}{{ row.local ? ' (local)' : '' }}</td>
+          <td>
+            {{ row.host }}
+            @if (row.local) { <p-tag value="Tomcat" severity="info" styleClass="ml" /> }
+            @if (row.coordinator) { <p-tag value="Coordinator" severity="success" styleClass="ml" /> }
+            @if (row.active && !row.available) { <p-tag value="Unavailable" severity="warn" styleClass="ml" /> }
+          </td>
           @if (row.active) {
             <td>{{ row.version }}</td>
             <td>{{ row.started }}</td>
@@ -119,10 +124,14 @@
                   <p-button label="Disable" icon="pi pi-ban" size="small" severity="danger" [text]="true"
                     [disabled]="busy()" (onClick)="disable(row)" />
                 }
-                <p-button label="Reset" icon="pi pi-replay" size="small" severity="danger" [text]="true"
-                  [disabled]="busy()" (onClick)="reset(row)" />
-                <p-button label="Reconnect" icon="pi pi-link" size="small" severity="danger" [text]="true"
-                  [disabled]="busy()" (onClick)="reconnect(row)" />
+                @if (row.coordinator) {
+                  <p-button label="Reset" icon="pi pi-replay" size="small" severity="danger" [text]="true"
+                    [disabled]="busy()" (onClick)="reset(row)" />
+                }
+                @if (clusterEnabled()) {
+                  <p-button label="Reconnect" icon="pi pi-link" size="small" severity="danger" [text]="true"
+                    [disabled]="busy()" (onClick)="reconnect(row)" />
+                }
                 <p-button label="Reconnect Hibernate" icon="pi pi-database" size="small" severity="danger" [text]="true"
                   [disabled]="busy()" (onClick)="hibernate(row)" />
                 @if (!row.local) {

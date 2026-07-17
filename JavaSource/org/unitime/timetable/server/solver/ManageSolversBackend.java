@@ -33,6 +33,7 @@ import org.unitime.timetable.gwt.shared.ManageSolversInterface.ManageSolversRequ
 import org.unitime.timetable.gwt.shared.ManageSolversInterface.ManageSolversResponse;
 import org.unitime.timetable.gwt.shared.ManageSolversInterface.SolverInstanceInterface;
 import org.unitime.timetable.gwt.shared.ManageSolversInterface.SolverServerInterface;
+import org.unitime.timetable.defaults.ApplicationProperty;
 import org.unitime.timetable.model.SolverParameterGroup.SolverType;
 import org.unitime.timetable.onlinesectioning.OnlineSectioningServer;
 import org.unitime.timetable.security.SessionContext;
@@ -65,6 +66,7 @@ public class ManageSolversBackend implements GwtRpcImplementation<ManageSolversR
 		context.checkPermission(Right.ManageSolvers);
 
 		ManageSolversResponse response = new ManageSolversResponse();
+		response.setClusterEnabled(ApplicationProperty.SolverClusterEnabled.isTrue());
 
 		for (SolverServer server: solverServerService.getServers(false)) {
 			// Available server row
@@ -80,6 +82,8 @@ public class ManageSolversBackend implements GwtRpcImplementation<ManageSolversR
 				try { s.setCores(server.getAvailableProcessors()); } catch (Exception e) {}
 				try { s.setUsage(server.getUsage()); } catch (Exception e) {}
 				try { s.setLocal(server.isLocal()); } catch (Exception e) {}
+				try { s.setCoordinator(server.isCoordinator()); } catch (Exception e) {}
+				try { s.setAvailable(server.isAvailable()); } catch (Exception e) {}
 			}
 			int[] counts = new int[3]; // active, working, passivated
 			addInstances(response, server, SolverType.COURSE, counts);

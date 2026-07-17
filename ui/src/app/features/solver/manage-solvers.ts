@@ -43,12 +43,15 @@ interface SolverServerRow {
   passivatedInstances?: number;
   active?: boolean;
   local?: boolean;
+  coordinator?: boolean;
+  available?: boolean;
 }
 
 interface ManageSolversResponse {
   solvers?: SolverInstance[];
   servers?: SolverServerRow[];
   navigate?: string;
+  clusterEnabled?: boolean;
 }
 
 /** Mutating command (ManageSolversOpRequest -> ManageSolversOpBackend). */
@@ -100,6 +103,8 @@ export class ManageSolvers implements OnInit {
 
   protected readonly solvers = computed<SolverInstance[]>(() => this.response()?.solvers ?? []);
   protected readonly servers = computed<SolverServerRow[]>(() => this.response()?.servers ?? []);
+  /** Reconnect server op is only applicable when the solver cluster is enabled (matches legacy). */
+  protected readonly clusterEnabled = computed<boolean>(() => this.response()?.clusterEnabled ?? false);
 
   private readonly TYPE_LABEL: Record<string, string> = {
     COURSE: 'Course Timetabling',

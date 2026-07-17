@@ -83,6 +83,7 @@ public class ManageSolversInterface implements IsSerializable {
 		private List<SolverInstanceInterface> iSolvers = new ArrayList<SolverInstanceInterface>();
 		private List<SolverServerInterface> iServers = new ArrayList<SolverServerInterface>();
 		private String iNavigate;
+		private boolean iClusterEnabled = false;
 
 		public ManageSolversResponse() {}
 
@@ -91,6 +92,10 @@ public class ManageSolversInterface implements IsSerializable {
 
 		public List<SolverServerInterface> getServers() { return iServers; }
 		public void addServer(SolverServerInterface server) { iServers.add(server); }
+
+		/** True when the solver cluster is enabled; the Reconnect server op is only applicable then (matches legacy). */
+		public boolean isClusterEnabled() { return iClusterEnabled; }
+		public void setClusterEnabled(boolean clusterEnabled) { iClusterEnabled = clusterEnabled; }
 
 		/** Optional client-side navigation target (e.g. "solver?type=course"); set only by the Select op. */
 		public String getNavigate() { return iNavigate; }
@@ -172,6 +177,8 @@ public class ManageSolversInterface implements IsSerializable {
 		private int iPassivatedInstances;
 		private boolean iActive;
 		private boolean iLocal;
+		private boolean iCoordinator;
+		private boolean iAvailable = true;
 
 		public SolverServerInterface() {}
 
@@ -207,5 +214,13 @@ public class ManageSolversInterface implements IsSerializable {
 
 		public boolean isLocal() { return iLocal; }
 		public void setLocal(boolean local) { iLocal = local; }
+
+		/** True when this server is the cluster coordinator; the Reset server op is only shown then (matches legacy). */
+		public boolean isCoordinator() { return iCoordinator; }
+		public void setCoordinator(boolean coordinator) { iCoordinator = coordinator; }
+
+		/** False marks the server as unavailable (shown as a flag next to the host, matches legacy). */
+		public boolean isAvailable() { return iAvailable; }
+		public void setAvailable(boolean available) { iAvailable = available; }
 	}
 }
