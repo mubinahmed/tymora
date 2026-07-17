@@ -5,6 +5,7 @@ import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
+import { ExportService } from '../../core/export';
 import { ApiError, PageMessage, SolverReportsResponse, TableInterface } from '../../core/models';
 import { RpcTable } from '../../shared/rpc-table';
 
@@ -25,6 +26,7 @@ import { RpcTable } from '../../shared/rpc-table';
 export class SolutionReports implements OnInit {
   private rpc = inject(RpcService);
   private page = inject(PageService);
+  private exportSvc = inject(ExportService);
 
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -55,5 +57,18 @@ export class SolutionReports implements OnInit {
 
   severity(m: PageMessage): 'error' | 'warn' | 'info' {
     return m.type === 'ERROR' ? 'error' : m.type === 'WARNING' ? 'warn' : 'info';
+  }
+
+  /**
+   * Server-side per-table export via the /export servlet (legacy
+   * SolutionReportsPage.exportData). sort is not tracked here, so 0 is used.
+   */
+  exportServer(t: TableInterface, format: 'pdf' | 'csv'): void {
+    const query = 'output=solution-reports.' + format + '&sort=0&table=' + (t.tableId ?? '');
+    this.exportSvc.export(query);
+  }
+
+  rowCount(t: TableInterface): number {
+    return t.rows?.length ?? 0;
   }
 }

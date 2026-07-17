@@ -25,6 +25,22 @@
           }
         }
         <p-button label="Search" icon="pi pi-search" (onClick)="search()" [loading]="searching()" />
+        <p-button
+          label="PDF"
+          icon="pi pi-file-pdf"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="exportServer('pdf')"
+          [disabled]="!hasRows()"
+        />
+        <p-button
+          label="CSV"
+          icon="pi pi-download"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="exportServer('csv')"
+          [disabled]="!hasRows()"
+        />
       </div>
     </p-card>
 

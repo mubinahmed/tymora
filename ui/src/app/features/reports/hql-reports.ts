@@ -12,6 +12,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { CardModule } from 'primeng/card';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
+import { ExportService } from '../../core/export';
 import {
   ApiError,
   HQLExecuteRpcRequest,
@@ -74,6 +75,7 @@ const PAGE_SIZE = 100;
 export class HqlReports implements OnInit {
   private rpc = inject(RpcService);
   private page = inject(PageService);
+  private exportSvc = inject(ExportService);
 
   protected readonly appearances = [
     { label: 'Course Reports', value: 'courses' },
@@ -264,6 +266,72 @@ export class HqlReports implements OnInit {
     }
 
     return out;
+  }
+
+  /**
+   * Serialize the current option filters + parameters into the legacy
+   * SavedHQLPage export `params` string (see SavedHQLPage.java ~360-460):
+   * colon-separated over the query's %TYPE% option filters in order (each =
+   * selected value(s) comma-joined, EMPTY when a multi-select has everything
+   * selected), then "&<name>=<encodeURIComponent(value)>" for each of the
+   * query's own non-empty parameters. Returns null (and sets an error) when a
+   * required option filter has no selection.
+   */
+  private buildExportParams(): string | null {
+    let params = '';
+    for (const o of this.visibleOptions()) {
+      if (!o.type) continue;
+      const raw = this.optionValues[o.type];
+      const multi = !!o.multiSelect;
+      let value = '';
+      let allSelected = false;
+      if (multi) {
+        const selected = Array.isArray(raw) ? raw : [];
+        const total = this.optionItems(o).length;
+        allSelected = total > 0 && selected.length === total;
+        value = selected.join(',');
+      } else {
+        value = typeof raw === 'string' ? raw : '';
+      }
+      if (!value) {
+        this.error.set(`Please select ${o.name}.`);
+        return null;
+      }
+      if (params !== '') params += ':';
+      params += multi && allSelected ? '' : value;
+    }
+    for (const p of this.queryParams()) {
+      if (!p.name) continue;
+      const raw = this.paramValues[p.name];
+      let value = '';
+      if (this.isBoolean(p)) {
+        value = raw === true || raw === 'true' ? 'true' : 'false';
+      } else if (Array.isArray(raw)) {
+        value = raw.join(',');
+      } else {
+        value = typeof raw === 'string' ? raw : '';
+      }
+      if (value === '') continue;
+      params += '&' + p.name + '=' + encodeURIComponent(value);
+    }
+    return params;
+  }
+
+  /**
+   * Server-side export via the /export servlet (SavedHQLPage export buttons).
+   * There is no HQL PDF exporter — only CSV and XLS.
+   */
+  exportServer(ext: 'csv' | 'xls'): void {
+    const q = this.selectedQuery();
+    if (!q) {
+      this.error.set('No report selected.');
+      return;
+    }
+    const params = this.buildExportParams();
+    if (params === null) return;
+    this.error.set(null);
+    const query = 'output=hql-report.' + ext + '&report=' + q.id + '&params=' + params + '&sort=0';
+    this.exportSvc.export(query);
   }
 
   execute(reset = true): void {

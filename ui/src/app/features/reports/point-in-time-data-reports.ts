@@ -10,6 +10,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { CardModule } from 'primeng/card';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
+import { ExportService } from '../../core/export';
 import {
   ApiError,
   IdValue,
@@ -57,6 +58,7 @@ interface Col {
 export class PointInTimeDataReports implements OnInit {
   private rpc = inject(RpcService);
   private page = inject(PageService);
+  private exportSvc = inject(ExportService);
 
   protected readonly loading = signal(true);
   protected readonly executing = signal(false);
@@ -207,6 +209,53 @@ export class PointInTimeDataReports implements OnInit {
         this.executing.set(false);
       },
     });
+  }
+
+  /**
+   * Serialize the visible parameters into the legacy PointInTimeDataReportsPage
+   * export `params` string (~line 256): colon-separated over the report's
+   * parameters in order (text = its value; multi-select = comma-joined values,
+   * EMPTY when everything is selected; single-select = its value). Returns null
+   * (and sets an error) when a required parameter has no value.
+   */
+  private buildExportParams(): string | null {
+    let params = '';
+    for (const p of this.visibleParameters()) {
+      if (!p.type) continue;
+      const raw = this.paramValues[p.type];
+      const multi = !p.textField && !!p.multiSelect;
+      let value = '';
+      let allSelected = false;
+      if (multi) {
+        const selected = Array.isArray(raw) ? raw : [];
+        const total = this.optionsFor(p).length;
+        allSelected = total > 0 && selected.length === total;
+        value = selected.join(',');
+      } else {
+        value = typeof raw === 'string' ? raw : '';
+      }
+      if (!value) {
+        this.error.set(`Please select ${p.name}.`);
+        return null;
+      }
+      if (params !== '') params += ':';
+      params += multi && allSelected ? '' : value;
+    }
+    return params;
+  }
+
+  /** Server-side CSV export via the /export servlet (no PDF/XLS exporter here). */
+  exportServer(): void {
+    const rpt = this.selectedReport();
+    if (!rpt) {
+      this.error.set('No report selected.');
+      return;
+    }
+    const params = this.buildExportParams();
+    if (params === null) return;
+    this.error.set(null);
+    const query = 'output=pitd-report.csv&report=' + rpt.id + '&params=' + params + '&sort=0';
+    this.exportSvc.export(query);
   }
 
   cell(row: string[], index: number): string {

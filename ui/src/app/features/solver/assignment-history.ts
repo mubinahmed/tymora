@@ -9,6 +9,7 @@ import { CardModule } from 'primeng/card';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
+import { ExportService } from '../../core/export';
 import {
   ApiError,
   AssignmentHistoryFilterResponse,
@@ -49,6 +50,7 @@ import { RpcTable } from '../../shared/rpc-table';
 export class AssignmentHistory implements OnInit {
   private rpc = inject(RpcService);
   private page = inject(PageService);
+  private exportSvc = inject(ExportService);
 
   protected readonly loading = signal(false);
   protected readonly searching = signal(false);
@@ -123,6 +125,23 @@ export class AssignmentHistory implements OnInit {
         this.searching.set(false);
       },
     });
+  }
+
+  /**
+   * Server-side export via the /export servlet (legacy AssignmentHistoryPage.
+   * exportData). The filter is serialized exactly like PageFilter.getQuery():
+   * "&<name>=<encodeURIComponent(value)>" for every parameter whose value is
+   * non-null. sort is not tracked here, so 0 is used.
+   */
+  exportServer(format: 'pdf' | 'csv'): void {
+    let query = 'output=assignment-history.' + format;
+    for (const p of this.params()) {
+      if (!p.name) continue;
+      const value = p.value;
+      if (value != null) query += '&' + p.name + '=' + encodeURIComponent(value);
+    }
+    query += '&sort=0';
+    this.exportSvc.export(query);
   }
 
   pmSeverity(m: PageMessage): 'error' | 'warn' | 'info' {

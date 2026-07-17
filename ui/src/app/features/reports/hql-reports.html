@@ -113,6 +113,22 @@
             [disabled]="!reportId"
             [loading]="executing()"
           />
+          <p-button
+            label="CSV"
+            icon="pi pi-download"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="exportServer('csv')"
+            [disabled]="!table()"
+          />
+          <p-button
+            label="Excel"
+            icon="pi pi-file-excel"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="exportServer('xls')"
+            [disabled]="!table()"
+          />
         </div>
       }
     </div>

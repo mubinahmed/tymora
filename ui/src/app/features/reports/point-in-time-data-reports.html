@@ -65,6 +65,14 @@
             [disabled]="!reportId"
             [loading]="executing()"
           />
+          <p-button
+            label="CSV"
+            icon="pi pi-download"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="exportServer()"
+            [disabled]="!table()"
+          />
         </div>
       </div>
 

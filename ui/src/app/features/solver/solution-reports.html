@@ -21,6 +21,24 @@
   } @else {
     @for (t of tables(); track $index) {
       <p-card class="mt" [header]="t.name ?? ''">
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-bottom:0.5rem;">
+          <p-button
+            label="PDF"
+            icon="pi pi-file-pdf"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="exportServer(t, 'pdf')"
+            [disabled]="!t.tableId || rowCount(t) === 0"
+          />
+          <p-button
+            label="CSV"
+            icon="pi pi-download"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="exportServer(t, 'csv')"
+            [disabled]="!t.tableId || rowCount(t) === 0"
+          />
+        </div>
         @if (t.errorMessage) {
           <p-message severity="error" [text]="t.errorMessage" />
         }
