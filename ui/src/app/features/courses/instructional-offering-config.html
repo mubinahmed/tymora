@@ -1,0 +1,148 @@
+<p-confirmDialog />
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back to offerings" icon="pi pi-arrow-left" routerLink="/offerings" /></div>
+} @else if (data(); as d) {
+  <form class="form-page building-form" style="max-width: 82rem;">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-sitemap"></i></span>
+        <div>
+          <h2>{{ d.courseName }}{{ d.configName ? ' [' + d.configName + ']' : '' }}</h2>
+          <p>Scheduling subparts of this configuration — instructional type, class counts, limits and rooms.</p>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Configuration limit</label>
+          @if (d.unlimited) {
+            <p-tag value="Unlimited" severity="info" [rounded]="true" />
+          } @else {
+            <p-inputNumber [(ngModel)]="d.limit" [ngModelOptions]="{ standalone: true }" [useGrouping]="false" [min]="0" />
+          }
+        </div>
+        @if (imOptions().length) {
+          <div class="field">
+            <label>Instructional method</label>
+            <p-select [options]="imOptions()" optionLabel="label" optionValue="id"
+              [(ngModel)]="d.instructionalMethodId" [ngModelOptions]="{ standalone: true }"
+              [disabled]="!d.instructionalMethodEditable" appendTo="body" />
+          </div>
+        }
+        @if (dtOptions().length) {
+          <div class="field">
+            <label>Duration type</label>
+            <p-select [options]="dtOptions()" optionLabel="label" optionValue="id"
+              [(ngModel)]="d.durationTypeId" [ngModelOptions]="{ standalone: true }"
+              [disabled]="!d.durationTypeEditable" appendTo="body" />
+          </div>
+        }
+      </div>
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-list"></i></span>
+        <div>
+          <h2>Scheduling subparts</h2>
+          <p>Each row is a subpart; indent shows nesting.</p>
+        </div>
+        <span class="head-spacer"></span>
+        <p-button label="Add subpart" icon="pi pi-plus" severity="secondary" [text]="true" type="button" (onClick)="addSubpart()" />
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="aci-grid">
+          <thead>
+            <tr>
+              <th style="min-width:11rem;">Type</th>
+              <th style="width:5.5rem;">Classes</th>
+              <th style="width:6rem;">Min/week</th>
+              <th style="width:6rem;">Limit</th>
+              @if (d.displayOptionForMaxLimit) { <th style="width:6rem;">Max</th> }
+              <th style="width:5rem;">Rooms</th>
+              <th style="width:6rem;">Ratio</th>
+              <th style="width:4rem;">Split</th>
+              <th style="width:12rem;">Department</th>
+              <th style="width:3rem;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of lines(); track $index) {
+              <tr [class.aci-error]="!!line.error">
+                <td [style.padding-left.px]="8 + (line.indent || 0) * 14">
+                  @if (line.editable) {
+                    <p-select [options]="itypeOptions()" optionLabel="label" optionValue="id"
+                      [(ngModel)]="line.iType" [ngModelOptions]="{ standalone: true }"
+                      [filter]="true" filterBy="label" appendTo="body" styleClass="aci-select" />
+                  } @else { <span class="muted">{{ line.label }}</span> }
+                </td>
+                <td>
+                  @if (line.editable) {
+                    <p-inputNumber [(ngModel)]="line.numberOfClasses" [ngModelOptions]="{ standalone: true }" [useGrouping]="false" [min]="1" styleClass="aci-select" />
+                  } @else { <span class="muted">{{ line.numberOfClasses }}</span> }
+                </td>
+                <td>
+                  @if (line.editable) {
+                    <p-inputNumber [(ngModel)]="line.minutesPerWeek" [ngModelOptions]="{ standalone: true }" [useGrouping]="false" [min]="0" styleClass="aci-select" />
+                  } @else { <span class="muted">{{ line.minutesPerWeek }}</span> }
+                </td>
+                <td>
+                  @if (line.editable) {
+                    <p-inputNumber [(ngModel)]="line.minClassLimit" [ngModelOptions]="{ standalone: true }" [useGrouping]="false" [min]="0" styleClass="aci-select" />
+                  } @else { <span class="muted">{{ line.minClassLimit }}</span> }
+                </td>
+                @if (d.displayOptionForMaxLimit) {
+                  <td>
+                    @if (line.editable) {
+                      <p-inputNumber [(ngModel)]="line.maxClassLimit" [ngModelOptions]="{ standalone: true }" [useGrouping]="false" [min]="0" styleClass="aci-select" />
+                    } @else { <span class="muted">{{ line.maxClassLimit }}</span> }
+                  </td>
+                }
+                <td>
+                  @if (line.editable) {
+                    <p-inputNumber [(ngModel)]="line.numberOfRooms" [ngModelOptions]="{ standalone: true }" [useGrouping]="false" [min]="0" styleClass="aci-select" />
+                  } @else { <span class="muted">{{ line.numberOfRooms }}</span> }
+                </td>
+                <td>
+                  @if (line.editable) {
+                    <p-inputNumber [(ngModel)]="line.roomRatio" [ngModelOptions]="{ standalone: true }" [minFractionDigits]="1" [maxFractionDigits]="2" [min]="0" styleClass="aci-select" />
+                  } @else { <span class="muted">{{ line.roomRatio }}</span> }
+                </td>
+                <td style="text-align:center;">
+                  <p-checkbox [(ngModel)]="line.splitAttendance" [ngModelOptions]="{ standalone: true }" [binary]="true"
+                    [disabled]="!line.editable || (line.numberOfRooms || 0) <= 1" />
+                </td>
+                <td>
+                  @if (line.editable) {
+                    <p-select [options]="deptOptions()" optionLabel="label" optionValue="id"
+                      [(ngModel)]="line.departmentId" [ngModelOptions]="{ standalone: true }" appendTo="body" styleClass="aci-select" />
+                  } @else { <span class="muted">—</span> }
+                </td>
+                <td style="text-align:center;">
+                  @if (line.canDelete) {
+                    <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Remove subpart" (onClick)="deleteSubpart(line)" />
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <p-button label="Back to offering" severity="secondary" [text]="true" icon="pi pi-arrow-left" type="button"
+        [routerLink]="offeringId() ? ['/offering-detail', offeringId()] : ['/offerings']" [disabled]="saving()" />
+      @if (d.canDelete) {
+        <p-button label="Delete configuration" severity="danger" [text]="true" icon="pi pi-trash" type="button"
+          (onClick)="askDelete()" [disabled]="saving()" />
+      }
+      <span class="spacer"></span>
+      <p-button label="Save" icon="pi pi-check" type="button" (onClick)="save()" [loading]="saving()" />
+    </div>
+  </form>
+}

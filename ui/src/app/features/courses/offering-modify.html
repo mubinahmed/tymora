@@ -30,6 +30,12 @@
                   [useGrouping]="false" [min]="0" />
               }
             </div>
+            <div class="field" style="align-self:end; flex:0; flex-direction:row; gap:0.25rem;">
+              <p-button label="Config setup" icon="pi pi-sitemap" severity="secondary" [text]="true" type="button"
+                [routerLink]="['/instructional-offering-config', cfg.configId]" />
+              <p-button label="Class setup" icon="pi pi-table" severity="secondary" [text]="true" type="button"
+                [routerLink]="['/multiple-class-setup', cfg.configId]" />
+            </div>
           </div>
           @if (cfg.subparts?.length) {
             <div style="margin-top:0.75rem;">
@@ -48,8 +54,9 @@
 
       <div class="wip-banner" style="margin-top:1.25rem;">
         <i class="pi pi-info-circle"></i>
-        <div>Adding or removing configurations, subparts and classes stays on the GWT class-setup
-          editors; here you can rename configurations and adjust their limits.</div>
+        <div>Rename configurations and adjust their limits here. Use <b>Config setup</b> to edit the
+          subpart structure (types, class counts, minutes/week) and <b>Class setup</b> for per-class
+          limits, rooms and date patterns.</div>
       </div>
     </fieldset>
 

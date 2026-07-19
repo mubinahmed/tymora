@@ -19,6 +19,7 @@ export interface CrossListsResponse {
   singleCourseLimit?: boolean;
   saved?: boolean;
   courses?: CrossCourse[];
+  availableCourses?: CrossCourse[];
 }
 
 export interface CrossListsRequest {

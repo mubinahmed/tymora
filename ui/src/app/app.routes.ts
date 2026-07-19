@@ -462,6 +462,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/courses/offering-modify').then((m) => m.OfferingModify),
   },
   {
+    path: 'multiple-class-setup/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/multiple-class-setup').then((m) => m.MultipleClassSetup),
+  },
+  {
+    path: 'instructional-offering-config/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/instructional-offering-config').then((m) => m.InstructionalOfferingConfig),
+  },
+  {
     path: 'cross-lists/:id',
     canActivate: [authGuard],
     loadComponent: () => import('./features/courses/cross-lists').then((m) => m.CrossLists),

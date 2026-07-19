@@ -21,7 +21,9 @@ package org.unitime.timetable.server.courses;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.unitime.timetable.defaults.ApplicationProperty;
 import org.unitime.timetable.gwt.command.client.GwtRpcException;
@@ -86,6 +88,24 @@ public class CrossListsBackend implements GwtRpcImplementation<CrossListsRequest
 			c.setReservation(co.getReservation());
 			c.setCanDelete(context.hasPermission(co, Right.CourseOfferingDeleteFromCrossList));
 			r.addCourse(c);
+		}
+
+		// Courses that can be ADDED: not-offered, single-course offerings in this session,
+		// not already part of this offering (mirrors the legacy add-course dropdown filter).
+		Set<Long> current = new HashSet<Long>();
+		for (CourseOffering co : io.getCourseOfferings()) current.add(co.getUniqueId());
+		List<CourseOffering> avail = InstructionalOfferingDAO.getInstance().getSession().createQuery(
+				"select co from CourseOffering co where co.subjectArea.session.uniqueId = :sessionId " +
+				"and co.instructionalOffering.notOffered = true order by co.subjectArea.subjectAreaAbbreviation, co.courseNbr",
+				CourseOffering.class).setParameter("sessionId", io.getSessionId()).setCacheable(true).list();
+		for (CourseOffering co : avail) {
+			if (current.contains(co.getUniqueId())) continue;
+			if (co.getInstructionalOffering().getCourseOfferings().size() != 1) continue;
+			CrossCourse c = new CrossCourse();
+			c.setCourseId(co.getUniqueId());
+			c.setCourseName(co.getCourseName());
+			c.setTitle(co.getTitle() == null ? "" : co.getTitle().trim());
+			r.addAvailableCourse(c);
 		}
 	}
 }

@@ -99,6 +99,7 @@ public class CrossListsInterface implements IsSerializable {
 		private boolean iSingleCourseLimit;
 		private boolean iSaved;
 		private List<CrossCourse> iCourses = new ArrayList<CrossCourse>();
+		private List<CrossCourse> iAvailableCourses = new ArrayList<CrossCourse>();
 
 		public CrossListsResponse() {}
 
@@ -125,6 +126,9 @@ public class CrossListsInterface implements IsSerializable {
 
 		public List<CrossCourse> getCourses() { return iCourses; }
 		public void addCourse(CrossCourse course) { iCourses.add(course); }
+
+		public List<CrossCourse> getAvailableCourses() { return iAvailableCourses; }
+		public void addAvailableCourse(CrossCourse course) { iAvailableCourses.add(course); }
 	}
 
 	public static class CrossCourse implements IsSerializable {

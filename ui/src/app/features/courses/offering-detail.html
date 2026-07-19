@@ -105,6 +105,10 @@
             <p-tag [value]="cfg.unlimited ? 'Unlimited' : ('Limit ' + (cfg.limit || '—'))"
               severity="info" [rounded]="true" />
             <span style="flex:1"></span>
+            <p-button label="Config setup" icon="pi pi-sitemap" severity="secondary" [text]="true"
+              [routerLink]="['/instructional-offering-config', cfg.id]" />
+            <p-button label="Class setup" icon="pi pi-table" severity="secondary" [text]="true"
+              [routerLink]="['/multiple-class-setup', cfg.id]" />
             <p-button label="Assign instructors" icon="pi pi-user-edit" severity="secondary" [text]="true"
               [routerLink]="['/class-instructor-assignment', cfg.id]" />
           </div>
