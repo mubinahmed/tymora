@@ -512,5 +512,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/admin/distribution-types').then((m) => m.DistributionTypes),
   },
+  {
+    path: 'solver-settings',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/solver/solver-settings').then((m) => m.SolverSettings),
+  },
   { path: '**', redirectTo: 'home' },
 ];

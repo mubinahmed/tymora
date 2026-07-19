@@ -73,6 +73,7 @@ export class MenuService {
     'itypeDescList.action': '/admin/itype',
     'distributionTypeList.action': '/distribution-types',
     'roleList.action': '/admin/roles',
+    'solverSettings.action': '/solver-settings',
     'datePatternEdit.action': '/pattern-edit',
     'timePatternEdit.action': '/pattern-edit',
     'instructorSearch.action': '/list/instructors',
