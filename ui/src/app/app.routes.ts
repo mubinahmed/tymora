@@ -507,5 +507,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/courses/date-pattern').then((m) => m.DatePatternDisplay),
   },
+  {
+    path: 'distribution-types',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/distribution-types').then((m) => m.DistributionTypes),
+  },
   { path: '**', redirectTo: 'home' },
 ];

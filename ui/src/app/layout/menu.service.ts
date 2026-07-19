@@ -71,7 +71,7 @@ export class MenuService {
     'sessionList.action': '/list/sessions',
     // Instructional types are now editable via the additive `itype` SimpleEdit admin table.
     'itypeDescList.action': '/admin/itype',
-    'distributionTypeList.action': '/list/distributionTypes',
+    'distributionTypeList.action': '/distribution-types',
     'roleList.action': '/admin/roles',
     'datePatternEdit.action': '/pattern-edit',
     'timePatternEdit.action': '/pattern-edit',
