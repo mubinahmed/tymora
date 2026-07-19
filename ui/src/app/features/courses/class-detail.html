@@ -1,0 +1,123 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back" icon="pi pi-arrow-left" routerLink="/offerings" /></div>
+} @else if (data(); as d) {
+  <div class="form-page">
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-users"></i></span>
+        <div>
+          <h2>{{ d.className || 'Class' }}</h2>
+          <p>{{ d.courseName }}{{ d.courseTitle ? ' — ' + d.courseTitle : '' }}</p>
+        </div>
+        <span class="head-spacer"></span>
+        @if (d.cancelled) {
+          <p-tag value="Cancelled" severity="danger" [rounded]="true" />
+        } @else {
+          <p-tag value="Active" severity="success" [rounded]="true" />
+        }
+      </div>
+
+      <div class="detail-grid">
+        <div><div class="dt">Section</div><div class="dd">{{ d.section || '—' }}</div></div>
+        <div><div class="dt">Type</div><div class="dd">{{ d.itypeDesc || '—' }}</div></div>
+        <div>
+          <div class="dt">Subpart</div>
+          <div class="dd">
+            @if (d.subpartId) {
+              <a class="link" [routerLink]="['/subpart-detail', d.subpartId]">{{ d.itypeDesc || 'Subpart' }}</a>
+            } @else { — }
+          </div>
+        </div>
+        <div>
+          <div class="dt">Parent class</div>
+          <div class="dd">
+            @if (d.parentClassId) {
+              <a class="link" [routerLink]="['/class-detail', d.parentClassId]">{{ d.parentClassName }}</a>
+            } @else { {{ d.parentClassName || '—' }} }
+          </div>
+        </div>
+        <div><div class="dt">Limit</div><div class="dd">{{ d.expectedCapacity || '—' }}</div></div>
+        <div><div class="dt">Enrollment</div><div class="dd">{{ d.enrollment || '—' }}</div></div>
+        <div><div class="dt">Snapshot limit</div><div class="dd">{{ d.snapshotLimit || '—' }}</div></div>
+        <div><div class="dt">Cross-listed</div><div class="dd">{{ d.crosslisted ? 'Yes' : 'No' }}</div></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-clock"></i></span>
+        <div>
+          <h2>Assignment &amp; scheduling</h2>
+          <p>Committed time and room, rooms setup and student scheduling flags.</p>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div><div class="dt">Assigned time</div><div class="dd">{{ d.time || '—' }}</div></div>
+        <div><div class="dt">Assigned room</div><div class="dd">{{ d.room || '—' }}</div></div>
+        <div>
+          <div class="dt">Date pattern</div>
+          <div class="dd">
+            @if (d.datePatternId) {
+              <a class="link" [routerLink]="['/date-pattern', d.datePatternId]">{{ d.datePattern || '—' }}</a>
+            } @else { {{ d.datePattern || '—' }} }
+          </div>
+        </div>
+        <div><div class="dt">Number of rooms</div><div class="dd">{{ d.nbrRooms ?? '—' }}</div></div>
+        <div><div class="dt">Room ratio</div><div class="dd">{{ d.roomRatio || '—' }}</div></div>
+        <div><div class="dt">Split attendance</div><div class="dd">{{ d.splitAttendance ? 'Yes' : 'No' }}</div></div>
+        <div><div class="dt">Managing department</div><div class="dd">{{ d.managingDept || '—' }}</div></div>
+        <div><div class="dt">Funding department</div><div class="dd">{{ d.fundingDept || '—' }}</div></div>
+        <div><div class="dt">Display instructor</div><div class="dd">{{ d.displayInstructor ? 'Yes' : 'No' }}</div></div>
+        <div><div class="dt">Student scheduling</div><div class="dd">{{ d.enabledForStudentScheduling ? 'Enabled' : 'Disabled' }}</div></div>
+        <div><div class="dt">LMS</div><div class="dd">{{ d.lms || '—' }}</div></div>
+      </div>
+      @if (d.schedulePrintNote || d.notes) {
+        <div style="margin-top:1.25rem; display:grid; gap:0.9rem;">
+          @if (d.schedulePrintNote) {
+            <div><div class="dt" style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ut-muted);margin-bottom:4px;">Schedule print note</div><div class="dd" style="font-size:.9rem;color:var(--ut-text);">{{ d.schedulePrintNote }}</div></div>
+          }
+          @if (d.notes) {
+            <div><div class="dt" style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ut-muted);margin-bottom:4px;">Notes</div><div class="dd" style="font-size:.9rem;color:var(--ut-text);">{{ d.notes }}</div></div>
+          }
+        </div>
+      }
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-user"></i></span>
+        <div>
+          <h2>Instructors</h2>
+          <p>Instructors assigned to this class.</p>
+        </div>
+      </div>
+      @if (d.instructors?.length) {
+        <p-table [value]="d.instructors!" styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr><th>Instructor</th><th>Share</th><th>Lead</th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-i>
+            <tr>
+              <td><a class="link" [routerLink]="['/instructor-detail', i.instructorId]">{{ i.name }}</a></td>
+              <td>{{ i.share || '—' }}</td>
+              <td>@if (i.lead) { <i class="pi pi-check" style="color:var(--ut-blue)"></i> } @else { — }</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      } @else {
+        <div class="empty-state">No instructors assigned.</div>
+      }
+    </fieldset>
+
+    <div class="form-actions">
+      <p-button label="Back to offering" severity="secondary" [text]="true" icon="pi pi-arrow-left"
+        [routerLink]="offeringId() ? ['/offering-detail', offeringId()] : ['/offerings']" />
+      <span class="spacer"></span>
+      <p-button label="Edit class" icon="pi pi-pencil" [routerLink]="['/class-edit', d.classId]" />
+    </div>
+  </div>
+}

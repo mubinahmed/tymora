@@ -427,5 +427,54 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/admin/application-config-edit').then((m) => m.ApplicationConfigEdit),
   },
+  // ---- Wave 4 (offerings/classes detail & edit): Angular UI shells; backend
+  //      command beans to follow. Reached by id from the offerings search + each
+  //      other (offering detail is the hub of the tree).
+  {
+    path: 'offering-detail/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/offering-detail').then((m) => m.OfferingDetail),
+  },
+  {
+    path: 'offering-modify/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/offering-modify').then((m) => m.OfferingModify),
+  },
+  {
+    path: 'cross-lists/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/cross-lists').then((m) => m.CrossLists),
+  },
+  {
+    path: 'class-detail/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/class-detail').then((m) => m.ClassDetail),
+  },
+  {
+    path: 'class-edit/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/class-edit').then((m) => m.ClassEdit),
+  },
+  {
+    path: 'class-instructor-assignment/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/courses/class-instructor-assignment').then((m) => m.ClassInstructorAssignment),
+  },
+  {
+    path: 'subpart-detail/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/subpart-detail').then((m) => m.SchedulingSubpartDetail),
+  },
+  {
+    path: 'subpart-edit/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/subpart-edit').then((m) => m.SchedulingSubpartEdit),
+  },
+  {
+    path: 'date-pattern/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/date-pattern').then((m) => m.DatePatternDisplay),
+  },
   { path: '**', redirectTo: 'home' },
 ];

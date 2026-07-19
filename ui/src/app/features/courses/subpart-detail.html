@@ -1,0 +1,85 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back" icon="pi pi-arrow-left" routerLink="/offerings" /></div>
+} @else if (data(); as d) {
+  <div class="form-page">
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-sitemap"></i></span>
+        <div>
+          <h2>{{ d.courseName }} · {{ d.instructionalTypeLabel }}</h2>
+          <p>{{ d.courseTitle || 'Scheduling subpart detail' }}</p>
+        </div>
+        <span class="head-spacer"></span>
+        @if (d.unlimitedEnroll) {
+          <p-tag value="Unlimited" severity="info" [rounded]="true" />
+        }
+      </div>
+
+      <div class="detail-grid">
+        <div><div class="dt">Subject / Course</div><div class="dd">{{ d.subjectArea }} {{ d.courseNbr }}</div></div>
+        <div><div class="dt">Instructional type</div><div class="dd">{{ d.instructionalTypeLabel || '—' }}</div></div>
+        <div><div class="dt">Minutes per week</div><div class="dd">{{ d.minutesPerWeek ?? '—' }}</div></div>
+        <div>
+          <div class="dt">Date pattern</div>
+          <div class="dd">
+            @if (d.datePatternId) {
+              <a class="link" [routerLink]="['/date-pattern', d.datePatternId]">{{ d.datePattern || '—' }}</a>
+            } @else { {{ d.datePattern || '—' }} }
+          </div>
+        </div>
+        <div><div class="dt">Credit</div><div class="dd">{{ d.credit || '—' }}</div></div>
+        <div><div class="dt">Managing department</div><div class="dd">{{ d.managingDept || '—' }}</div></div>
+        <div>
+          <div class="dt">Parent subpart</div>
+          <div class="dd">
+            @if (d.parentSubpartId) {
+              <a class="link" [routerLink]="['/subpart-detail', d.parentSubpartId]">{{ d.parentSubpartLabel }}</a>
+            } @else { {{ d.parentSubpartLabel || '—' }} }
+          </div>
+        </div>
+        <div><div class="dt">Automatic spread in time</div><div class="dd">{{ d.autoSpreadInTime ? 'Yes' : 'No' }}</div></div>
+        <div><div class="dt">Student overlaps allowed</div><div class="dd">{{ d.studentAllowOverlap ? 'Yes' : 'No' }}</div></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-users"></i></span>
+        <div>
+          <h2>Classes</h2>
+          <p>Classes belonging to this scheduling subpart.</p>
+        </div>
+      </div>
+      @if (d.classes?.length) {
+        <p-table [value]="d.classes!" styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr><th>Section</th><th>Limit</th><th>Enrolled</th><th>Assigned time</th><th>Room</th><th>Instructors</th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-c>
+            <tr>
+              <td><a class="link" [routerLink]="['/class-detail', c.id]">{{ c.section || '—' }}</a></td>
+              <td>{{ c.limit || '—' }}</td>
+              <td>{{ c.enrollment || '—' }}</td>
+              <td>{{ c.time || '—' }}</td>
+              <td>{{ c.room || '—' }}</td>
+              <td>{{ c.instructors || '—' }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      } @else {
+        <div class="empty-state">No classes in this subpart.</div>
+      }
+    </fieldset>
+
+    <div class="form-actions">
+      <p-button label="Back to offering" severity="secondary" [text]="true" icon="pi pi-arrow-left"
+        [routerLink]="offeringId() ? ['/offering-detail', offeringId()] : ['/offerings']" />
+      <span class="spacer"></span>
+      <p-button label="Edit subpart" icon="pi pi-pencil" [routerLink]="['/subpart-edit', d.subpartId]" />
+    </div>
+  </div>
+}

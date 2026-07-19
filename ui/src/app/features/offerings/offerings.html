@@ -67,6 +67,8 @@
               @else { <p-tag value="Not offered" severity="secondary" /> }
             </td>
             <td class="row-actions">
+              <p-button icon="pi pi-eye" severity="secondary" [text]="true" title="Offering detail"
+                [routerLink]="['/offering-detail', o.id]" />
               <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit"
                 [routerLink]="['/course-offering', o.id]" />
             </td>

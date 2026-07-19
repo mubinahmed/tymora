@@ -1,0 +1,150 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back to offerings" icon="pi pi-arrow-left" routerLink="/offerings" /></div>
+} @else if (data(); as d) {
+  <div class="form-page">
+
+    <!-- Summary -->
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-book"></i></span>
+        <div>
+          <h2>{{ d.courseName }}</h2>
+          <p>{{ d.title || 'Instructional offering detail' }}</p>
+        </div>
+        <span class="head-spacer"></span>
+        @if (d.offered) {
+          <p-tag value="Offered" severity="success" [rounded]="true" />
+        } @else {
+          <p-tag value="Not offered" severity="secondary" [rounded]="true" />
+        }
+      </div>
+
+      <div class="detail-grid">
+        <div>
+          <div class="dt">Coordinators</div>
+          <div class="dd">
+            @if (d.coordinators?.length) {
+              @for (c of d.coordinators; track c.instructorId; let last = $last) {
+                <a class="link" [routerLink]="['/instructor-detail', c.instructorId]">{{ c.name }}</a
+                >{{ c.share ? ' (' + c.share + ')' : '' }}{{ last ? '' : ', ' }}
+              }
+            } @else {
+              <span class="muted">—</span>
+            }
+          </div>
+        </div>
+        <div><div class="dt">Consent</div><div class="dd">{{ d.consent || '—' }}</div></div>
+        <div><div class="dt">Credit</div><div class="dd">{{ d.credit || '—' }}</div></div>
+        <div>
+          <div class="dt">Enrollment / Limit</div>
+          <div class="dd">{{ d.enrollment ?? 0 }} / {{ d.unlimited ? '∞' : (d.limit ?? '—') }}</div>
+        </div>
+        <div><div class="dt">Snapshot limit</div><div class="dd">{{ d.snapshotLimit ?? '—' }}</div></div>
+        <div><div class="dt">Demand / Projected</div><div class="dd">{{ d.demand ?? '—' }} / {{ d.projectedDemand ?? '—' }}</div></div>
+        <div><div class="dt">By reservation only</div><div class="dd">{{ d.byReservationOnly ? 'Yes' : 'No' }}</div></div>
+        <div><div class="dt">Wait-list</div><div class="dd">{{ d.waitList || '—' }}</div></div>
+      </div>
+
+      @if (d.notes) {
+        <div style="margin-top: 1.25rem;">
+          <div class="dt" style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ut-muted);margin-bottom:4px;">Notes</div>
+          <div class="dd" style="font-size:.9rem;color:var(--ut-text);" [innerHTML]="d.notes"></div>
+        </div>
+      }
+    </fieldset>
+
+    <!-- Cross-listed courses -->
+    @if ((d.crossListings?.length ?? 0) > 1) {
+      <fieldset class="section">
+        <div class="section-head">
+          <span class="section-icon"><i class="pi pi-link"></i></span>
+          <div>
+            <h2>Cross-listed courses</h2>
+            <p>Courses sharing this offering's classes.</p>
+          </div>
+          <span class="head-spacer"></span>
+          <p-button label="Manage cross lists" icon="pi pi-pencil" severity="secondary"
+            [routerLink]="['/cross-lists', offeringId()]" />
+        </div>
+        <p-table [value]="d.crossListings!" styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr><th>Course</th><th>Title</th><th>Controlling</th><th>Reservation</th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-x>
+            <tr>
+              <td>{{ x.course }}</td>
+              <td>{{ x.title || '—' }}</td>
+              <td>@if (x.controlling) { <i class="pi pi-check" style="color:var(--ut-blue)"></i> } @else { — }</td>
+              <td>{{ x.reservation || '—' }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </fieldset>
+    }
+
+    <!-- Configurations -> subparts -> classes -->
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-sitemap"></i></span>
+        <div>
+          <h2>Configurations</h2>
+          <p>Instructional configurations, their scheduling subparts and classes.</p>
+        </div>
+        <span class="head-spacer"></span>
+        <p-button label="Modify configuration" icon="pi pi-pencil" severity="secondary"
+          [routerLink]="['/offering-modify', offeringId()]" />
+      </div>
+
+      @for (cfg of d.configs; track cfg.id) {
+        <div class="config-block">
+          <div class="config-head">
+            <span class="config-name">{{ cfg.name }}</span>
+            <p-tag [value]="cfg.unlimited ? 'Unlimited' : ('Limit ' + (cfg.limit || '—'))"
+              severity="info" [rounded]="true" />
+            <span style="flex:1"></span>
+            <p-button label="Assign instructors" icon="pi pi-user-edit" severity="secondary" [text]="true"
+              [routerLink]="['/class-instructor-assignment', cfg.id]" />
+          </div>
+
+          @for (sp of cfg.subparts; track sp.id) {
+            <div class="subpart" [style.margin-left.px]="(sp.indent || 0) * 16">
+              <a class="subpart-type link" [routerLink]="['/subpart-detail', sp.id]">{{ sp.type }}</a>
+              @if (sp.classes?.length) {
+                <p-table [value]="sp.classes!" styleClass="p-datatable-sm">
+                  <ng-template pTemplate="header">
+                    <tr><th>Section</th><th>Limit</th><th>Enrolled</th><th>Assigned time</th><th>Room</th><th>Instructors</th></tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-c>
+                    <tr>
+                      <td><a class="link" [routerLink]="['/class-detail', c.id]">{{ c.section || '—' }}</a></td>
+                      <td>{{ c.limit || '—' }}</td>
+                      <td>{{ c.enrollment || '—' }}</td>
+                      <td>{{ c.time || '—' }}</td>
+                      <td>{{ c.room || '—' }}</td>
+                      <td>{{ c.instructors || '—' }}</td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              } @else {
+                <div class="empty-state">No classes in this subpart.</div>
+              }
+            </div>
+          }
+        </div>
+      } @empty {
+        <div class="empty-state">This offering has no configurations.</div>
+      }
+    </fieldset>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <p-button label="Back to offerings" severity="secondary" [text]="true" icon="pi pi-arrow-left"
+        routerLink="/offerings" />
+      <span class="spacer"></span>
+      <p-button label="Edit course offering" icon="pi pi-pencil" [routerLink]="['/course-offering', courseId()]" />
+    </div>
+  </div>
+}

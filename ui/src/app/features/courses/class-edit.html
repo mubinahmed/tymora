@@ -1,0 +1,91 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back" icon="pi pi-arrow-left" routerLink="/offerings" /></div>
+} @else if (data(); as d) {
+  <form class="form-page building-form" [formGroup]="form" (ngSubmit)="save()">
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-pencil"></i></span>
+        <div>
+          <h2>{{ d.className || 'Class' }}</h2>
+          <p>{{ d.courseName }}{{ d.itypeDesc ? ' · ' + d.itypeDesc : '' }} — {{ d.managingDept || 'managing department' }}</p>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="ce-exp">Expected Capacity</label>
+          <p-inputNumber inputId="ce-exp" formControlName="expectedCapacity" [useGrouping]="false" [min]="0"
+            [disabled]="!!d.unlimited" />
+          @if (d.unlimited) { <small class="hint">Configuration is unlimited.</small> }
+        </div>
+        <div class="field">
+          <label for="ce-max">Max Expected Capacity</label>
+          <p-inputNumber inputId="ce-max" formControlName="maxExpectedCapacity" [useGrouping]="false" [min]="0"
+            [disabled]="!!d.unlimited" />
+        </div>
+        <div class="field">
+          <label for="ce-ratio">Room Ratio</label>
+          <p-inputNumber inputId="ce-ratio" formControlName="roomRatio" [minFractionDigits]="1" [maxFractionDigits]="2" [min]="0" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="ce-nbr">Number of Rooms</label>
+          <p-inputNumber inputId="ce-nbr" formControlName="nbrRooms" [useGrouping]="false" [min]="0" />
+        </div>
+        <div class="field">
+          <label for="ce-dp">Date Pattern</label>
+          <p-select inputId="ce-dp" formControlName="datePatternId" [options]="datePatternOptions()"
+            optionLabel="name" optionValue="id" appendTo="body" />
+          @if (!d.datePatternEditable) { <small class="hint">Date pattern is locked (class has enrollment).</small> }
+        </div>
+        <div class="field field-check" style="align-self:end; padding-bottom:0.5rem;">
+          <p-checkbox inputId="ce-split" formControlName="splitAttendance" [binary]="true" />
+          <label for="ce-split" style="text-transform:none; letter-spacing:normal; font-weight:400;">Split attendance (multiple rooms)</label>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-sliders-h"></i></span>
+        <div>
+          <h2>Scheduling &amp; notes</h2>
+          <p>Student-scheduling flags and notes. Instructors and preferences are edited on their own screens.</p>
+        </div>
+      </div>
+
+      <div class="checks" style="display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1rem;">
+        <div class="field-check" style="display:flex; align-items:center; gap:0.5rem;">
+          <p-checkbox inputId="ce-sched" formControlName="enabledForStudentScheduling" [binary]="true" />
+          <label for="ce-sched" style="text-transform:none; letter-spacing:normal; font-weight:400;">Enabled for student scheduling</label>
+        </div>
+        <div class="field-check" style="display:flex; align-items:center; gap:0.5rem;">
+          <p-checkbox inputId="ce-di" formControlName="displayInstructor" [binary]="true" />
+          <label for="ce-di" style="text-transform:none; letter-spacing:normal; font-weight:400;">Display instructor</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="ce-spn">Schedule Print Note</label>
+        <textarea pTextarea id="ce-spn" formControlName="schedulePrintNote" rows="2"></textarea>
+      </div>
+      <div class="field" style="margin-top:1rem;">
+        <label for="ce-notes">Notes</label>
+        <textarea pTextarea id="ce-notes" formControlName="notes" rows="3"></textarea>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <p-button label="Cancel" severity="secondary" [text]="true" icon="pi pi-arrow-left" type="button"
+        [routerLink]="['/class-detail', d.classId]" [disabled]="saving()" />
+      <span class="spacer"></span>
+      <p-button label="Save" icon="pi pi-check" type="submit" [loading]="saving()" />
+    </div>
+  </form>
+}
