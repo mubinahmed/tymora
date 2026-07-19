@@ -33,6 +33,18 @@ export class App implements OnInit {
     return u.role ? `${u.name} (${u.role})` : u.name;
   });
 
+  /** Initials for the header avatar chip (e.g. "Manager, Exam" -> "ME"). */
+  protected readonly initials = computed(() => {
+    const name = this.user()?.name?.trim();
+    if (!name) return '–';
+    const parts = name.split(/[\s,]+/).filter(Boolean);
+    const letters = (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '');
+    return (letters || name[0]).toUpperCase();
+  });
+
+  /** Small uppercase context line under the wordmark: current screen or module. */
+  protected readonly subtitle = computed(() => this.page.title() || 'Timetabling');
+
   ngOnInit(): void {
     this.auth.ensureLoaded().subscribe(() => {
       if (this.auth.isAuthenticated()) this.menu.load();

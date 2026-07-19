@@ -7,10 +7,10 @@ import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withInterceptors, withXsrfConfiguration } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
 import { MessageService } from 'primeng/api';
-import Aura from '@primeuix/themes/aura';
 
 import { routes } from './app.routes';
 import { apiInterceptor } from './core/http.interceptor';
+import { UniTimePreset } from './theme';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -22,7 +22,12 @@ export const appConfig: ApplicationConfig = {
       // Spring Security's cookie/header names for CSRF on state-changing calls.
       withXsrfConfiguration({ cookieName: 'XSRF-TOKEN', headerName: 'X-XSRF-TOKEN' }),
     ),
-    providePrimeNG({ theme: { preset: Aura } }),
+    providePrimeNG({
+      theme: {
+        preset: UniTimePreset,
+        options: { darkModeSelector: '.app-dark-never' },
+      },
+    }),
     MessageService,
   ],
 };
