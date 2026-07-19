@@ -69,8 +69,10 @@ export class MenuService {
     'instructionalOfferingSearch.action': '/offerings',
     // Read-only admin listings via the new SimpleListBackend command bean.
     'sessionList.action': '/list/sessions',
-    'itypeDescList.action': '/list/instructionalTypes',
+    // Instructional types are now editable via the additive `itype` SimpleEdit admin table.
+    'itypeDescList.action': '/admin/itype',
     'distributionTypeList.action': '/list/distributionTypes',
+    'roleList.action': '/admin/roles',
     'datePatternEdit.action': '/pattern-edit',
     'timePatternEdit.action': '/pattern-edit',
     'instructorSearch.action': '/list/instructors',
