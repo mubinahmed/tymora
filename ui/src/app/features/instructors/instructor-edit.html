@@ -1,0 +1,96 @@
+<p-confirmDialog />
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back to instructors" icon="pi pi-arrow-left" routerLink="/list/instructors" /></div>
+} @else if (data(); as d) {
+  <form class="form-page building-form" [formGroup]="form" (ngSubmit)="save()">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-user"></i></span>
+        <div>
+          <h2>{{ isEdit() ? (d.lname ? d.fname + ' ' + d.lname : 'Edit instructor') : 'New instructor' }}</h2>
+          <p>{{ isEdit() ? (d.deptCode + ' — ' + d.deptName) : 'Add an instructor to a department.' }}</p>
+        </div>
+      </div>
+
+      @if (!isEdit()) {
+        <div class="field">
+          <label for="ie-dept">Department *</label>
+          <p-select inputId="ie-dept" formControlName="departmentId" [options]="departments()"
+            optionLabel="name" optionValue="id" [filter]="true" filterBy="name" appendTo="body"
+            placeholder="Select department" />
+          @if (!departments().length) {
+            <small class="hint">You have no departments where you can add instructors.</small>
+          }
+        </div>
+      }
+
+      <div class="field-row">
+        <div class="field">
+          <label for="ie-fn">First Name</label>
+          <input pInputText id="ie-fn" formControlName="fname" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="ie-mn">Middle Name</label>
+          <input pInputText id="ie-mn" formControlName="mname" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="ie-ln">Last Name *</label>
+          <input pInputText id="ie-ln" formControlName="lname" autocomplete="off" />
+          @if (form.controls.lname.invalid && form.controls.lname.touched) {
+            <p-message severity="error" text="Last name is required" />
+          }
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="ie-title">Academic Title</label>
+          <input pInputText id="ie-title" formControlName="title" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="ie-pos">Position Type</label>
+          <p-select inputId="ie-pos" formControlName="positionTypeId" [options]="positionTypes()"
+            optionLabel="name" optionValue="id" [showClear]="true" appendTo="body" placeholder="(none)" />
+        </div>
+        <div class="field field-check" style="align-self:end; padding-bottom:0.5rem;">
+          <p-checkbox inputId="ie-ignore" formControlName="ignoreTooFar" [binary]="true" />
+          <label for="ie-ignore" style="text-transform:none; letter-spacing:normal; font-weight:400;">Ignore too-far distances</label>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="ie-ext">External Id</label>
+          <input pInputText id="ie-ext" formControlName="externalId" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="ie-acct">Account Name</label>
+          <input pInputText id="ie-acct" formControlName="careerAcct" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="ie-email">Email</label>
+          <input pInputText id="ie-email" type="email" formControlName="email" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="ie-note">Note</label>
+        <textarea pTextarea id="ie-note" formControlName="note" rows="3"></textarea>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <p-button label="Cancel" severity="secondary" [text]="true" icon="pi pi-arrow-left" type="button"
+        [routerLink]="isEdit() ? ['/instructor-detail', id()] : ['/list', 'instructors']" [disabled]="saving()" />
+      @if (isEdit()) {
+        <p-button label="Delete" severity="danger" [text]="true" icon="pi pi-trash" type="button"
+          (onClick)="askDelete()" [disabled]="saving()" />
+      }
+      <span class="spacer"></span>
+      <p-button [label]="isEdit() ? 'Update' : 'Create'" icon="pi pi-check" type="submit" [loading]="saving()" />
+    </div>
+  </form>
+}

@@ -58,17 +58,23 @@ public class OfferingModifyUpdateBackend implements GwtRpcImplementation<Offerin
 		if (io == null)
 			throw new GwtRpcException("Instructional offering " + offeringId + " was not found.");
 
+		// Validate ownership and check permissions BEFORE opening a transaction, so an
+		// access denial propagates as a clean 403 (not a wrapped 500) and we never start
+		// a transaction we would only roll back.
+		for (ConfigEdit edit : request.getConfigs()) {
+			if (edit.getConfigId() == null) continue;
+			InstrOfferingConfig config = InstrOfferingConfigDAO.getInstance().get(edit.getConfigId());
+			if (config == null || config.getInstructionalOffering() == null
+					|| !config.getInstructionalOffering().getUniqueId().equals(offeringId))
+				throw new GwtRpcException("Configuration " + edit.getConfigId() + " does not belong to this offering.");
+			context.checkPermission(edit.getConfigId(), "InstrOfferingConfig", Right.InstrOfferingConfigEdit);
+		}
+
 		Transaction tx = hibSession.beginTransaction();
 		try {
 			for (ConfigEdit edit : request.getConfigs()) {
 				if (edit.getConfigId() == null) continue;
 				InstrOfferingConfig config = InstrOfferingConfigDAO.getInstance().get(edit.getConfigId());
-				if (config == null || config.getInstructionalOffering() == null
-						|| !config.getInstructionalOffering().getUniqueId().equals(offeringId))
-					throw new GwtRpcException("Configuration " + edit.getConfigId() + " does not belong to this offering.");
-
-				context.checkPermission(edit.getConfigId(), "InstrOfferingConfig", Right.InstrOfferingConfigEdit);
-
 				if (edit.getName() != null && !edit.getName().trim().isEmpty())
 					config.setName(edit.getName().trim());
 				if (!Boolean.TRUE.equals(config.isUnlimitedEnrollment()))
@@ -86,9 +92,6 @@ public class OfferingModifyUpdateBackend implements GwtRpcImplementation<Offerin
 					null);
 
 			tx.commit();
-		} catch (GwtRpcException e) {
-			try { tx.rollback(); } catch (Exception x) {}
-			throw e;
 		} catch (Exception e) {
 			try { tx.rollback(); } catch (Exception x) {}
 			throw new GwtRpcException("Failed to save configurations: " + e.getMessage(), e);

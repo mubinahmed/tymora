@@ -74,6 +74,7 @@ export class MenuService {
     'datePatternEdit.action': '/pattern-edit',
     'timePatternEdit.action': '/pattern-edit',
     'instructorSearch.action': '/list/instructors',
+    'instructorAdd.action': '/instructor-add',
     // Wave 5: search + create/edit screens (supersede the read-only listings where they exist)
     'classSearch.action': '/classes',
     'examList.action': '/examinations-list',

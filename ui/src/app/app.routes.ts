@@ -357,6 +357,17 @@ export const routes: Routes = [
     loadComponent: () => import('./features/instructors/instructor-detail').then((m) => m.InstructorDetail),
   },
   {
+    // 'instructor-add' must precede 'instructor-edit/:id' semantics; distinct paths.
+    path: 'instructor-add',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/instructors/instructor-edit').then((m) => m.InstructorEdit),
+  },
+  {
+    path: 'instructor-edit/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/instructors/instructor-edit').then((m) => m.InstructorEdit),
+  },
+  {
     path: 'class-assignments',
     canActivate: [authGuard],
     loadComponent: () => import('./features/courses/class-assignments').then((m) => m.ClassAssignments),
