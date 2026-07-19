@@ -340,6 +340,16 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/examinations/exam-grid').then((m) => m.ExamGrid),
   },
+  {
+    path: 'exam-detail/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-detail').then((m) => m.ExamDetail),
+  },
+  {
+    path: 'exam-edit/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-edit').then((m) => m.ExamEdit),
+  },
   // ---- Wave 7: remaining legacy pages ----
   {
     path: 'change-log',

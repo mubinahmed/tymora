@@ -1,0 +1,83 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back to examinations" icon="pi pi-arrow-left" routerLink="/examinations-list" /></div>
+} @else if (data(); as d) {
+  <div class="form-page">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-file-edit"></i></span>
+        <div>
+          <h2>{{ d.label || 'Examination' }}</h2>
+          <p>{{ d.examTypeLabel }} examination</p>
+        </div>
+        <span class="head-spacer"></span>
+        @if (d.assignedPeriod) {
+          <p-tag [value]="'Assigned: ' + d.assignedPeriod" severity="success" [rounded]="true" />
+        } @else {
+          <p-tag value="Unassigned" severity="secondary" [rounded]="true" />
+        }
+      </div>
+
+      <div class="detail-grid">
+        <div><div class="dt">Type</div><div class="dd">{{ d.examTypeLabel || '—' }}</div></div>
+        <div><div class="dt">Length</div><div class="dd">{{ d.length ?? '—' }} minutes</div></div>
+        <div><div class="dt">Seating type</div><div class="dd">{{ d.seatingTypeLabel || '—' }}</div></div>
+        <div><div class="dt">Size</div><div class="dd">{{ d.sizeText || '—' }}</div></div>
+        <div><div class="dt">Maximum rooms</div><div class="dd">{{ d.maxNbrRooms ?? '—' }}</div></div>
+        <div><div class="dt">Print offset</div><div class="dd">{{ d.printOffset ?? '—' }}</div></div>
+        <div><div class="dt">Assigned period</div><div class="dd">{{ d.assignedPeriod || '—' }}</div></div>
+        <div><div class="dt">Average period</div><div class="dd">{{ d.avgPeriod || '—' }}</div></div>
+      </div>
+
+      @if (d.note) {
+        <div style="margin-top:1.25rem;">
+          <div class="dt" style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ut-muted);margin-bottom:4px;">Note</div>
+          <div class="dd" style="font-size:.9rem;color:var(--ut-text);" [innerHTML]="d.note"></div>
+        </div>
+      }
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-book"></i></span>
+        <div>
+          <h2>Examined courses / classes</h2>
+          <p>What this examination covers.</p>
+        </div>
+      </div>
+      @if (d.owners?.length) {
+        <div class="ro-chips">
+          @for (o of d.owners; track $index) { <span class="ro-chip">{{ o }}</span> }
+        </div>
+      } @else {
+        <div class="empty-state">No examined courses or classes.</div>
+      }
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-user"></i></span>
+        <div>
+          <h2>Instructors</h2>
+          <p>Instructors associated with this examination.</p>
+        </div>
+      </div>
+      @if (d.instructors?.length) {
+        <div class="ro-chips">
+          @for (i of d.instructors; track $index) { <span class="ro-chip">{{ i }}</span> }
+        </div>
+      } @else {
+        <div class="empty-state">No instructors.</div>
+      }
+    </fieldset>
+
+    <div class="form-actions">
+      <p-button label="Back to examinations" severity="secondary" [text]="true" icon="pi pi-arrow-left"
+        routerLink="/examinations-list" />
+      <span class="spacer"></span>
+      <p-button label="Edit examination" icon="pi pi-pencil" [routerLink]="['/exam-edit', d.examId]" />
+    </div>
+  </div>
+}

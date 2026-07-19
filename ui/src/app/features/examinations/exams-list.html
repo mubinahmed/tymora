@@ -38,6 +38,7 @@
         @for (col of columns(); track $index) {
           <th>{{ col }}</th>
         }
+        <th class="col-actions"></th>
       </tr>
     </ng-template>
 
@@ -46,12 +47,18 @@
         @for (col of columns(); track $index) {
           <td>{{ row.cells?.[$index] ?? '' }}</td>
         }
+        <td class="row-actions">
+          @if (row.id) {
+            <p-button icon="pi pi-eye" severity="secondary" [text]="true" title="Examination detail"
+              [routerLink]="['/exam-detail', row.id]" />
+          }
+        </td>
       </tr>
     </ng-template>
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td [attr.colspan]="columns().length || 1">No matching exams.</td>
+        <td [attr.colspan]="(columns().length || 1) + 1">No matching exams.</td>
       </tr>
     </ng-template>
   </p-table>
