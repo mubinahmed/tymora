@@ -74,6 +74,8 @@ export class MenuService {
     'distributionTypeList.action': '/distribution-types',
     'roleList.action': '/admin/roles',
     'solverSettings.action': '/solver-settings',
+    'userEdit.action': '/users',
+    'enrollmentAuditPdfReport.action': '/enrollment-audit-report',
     'datePatternEdit.action': '/pattern-edit',
     'timePatternEdit.action': '/pattern-edit',
     'instructorSearch.action': '/list/instructors',

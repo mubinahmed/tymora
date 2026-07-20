@@ -517,5 +517,16 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/solver/solver-settings').then((m) => m.SolverSettings),
   },
+  {
+    path: 'users',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/user-edit').then((m) => m.UserEdit),
+  },
+  {
+    path: 'enrollment-audit-report',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/reports/enrollment-audit-report').then((m) => m.EnrollmentAuditReport),
+  },
   { path: '**', redirectTo: 'home' },
 ];

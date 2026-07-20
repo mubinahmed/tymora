@@ -1,0 +1,93 @@
+<p-confirmDialog />
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+} @else if (form(); as f) {
+  <!-- Add / Edit one user -->
+  <div class="form-page" style="max-width: 52rem;">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-user"></i></span>
+        <div>
+          <h2>{{ f.newUser ? 'Add user' : 'Edit user' }}</h2>
+          <p>Database authentication account.</p>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="ue-eid">External Id *</label>
+          <input pInputText id="ue-eid" [(ngModel)]="f.externalId" [disabled]="!f.newUser"
+            autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="ue-name">User Name *</label>
+          <input pInputText id="ue-name" [(ngModel)]="f.name" autocomplete="off" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="ue-pwd">Password {{ f.newUser ? '*' : '' }}</label>
+          <input pInputText id="ue-pwd" type="password" [(ngModel)]="password"
+            autocomplete="new-password"
+            [placeholder]="f.newUser ? '' : 'Leave blank to keep current password'" />
+        </div>
+      </div>
+      @if (f.showTokens && f.token) {
+        <div class="field-row">
+          <div class="field" style="flex:2;">
+            <label>API Key</label>
+            <div class="muted" style="word-break:break-all; font-family:monospace; font-size:0.8rem;">{{ f.token }}</div>
+          </div>
+        </div>
+      }
+    </fieldset>
+
+    <div class="form-actions">
+      <p-button label="Back to list" severity="secondary" [text]="true" icon="pi pi-arrow-left" (onClick)="backToList()" [disabled]="saving()" />
+      @if (!f.newUser) {
+        <p-button label="Delete" severity="danger" [text]="true" icon="pi pi-trash" (onClick)="askDelete()" [disabled]="saving()" />
+      }
+      <span class="spacer"></span>
+      <p-button [label]="f.newUser ? 'Save' : 'Update'" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+    </div>
+  </div>
+} @else {
+  <!-- List -->
+  <div class="form-page" style="max-width: 60rem;">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-users"></i></span>
+        <div>
+          <h2>Users (Database Authentication)</h2>
+          <p>Accounts authenticated against the UniTime database.</p>
+        </div>
+        <span class="spacer"></span>
+        <p-button label="Add User" icon="pi pi-plus" (onClick)="add()" />
+      </div>
+      <p-table [value]="users()" styleClass="p-datatable-sm p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>External Id</th>
+            <th>User Name</th>
+            <th>Timetable Manager</th>
+            @if (showTokens()) { <th>API Key</th> }
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-u>
+          <tr style="cursor:pointer;" (click)="edit(u)">
+            <td>{{ u.externalId }}</td>
+            <td>{{ u.name }}</td>
+            <td>{{ u.managerName || '—' }}</td>
+            @if (showTokens()) {
+              <td style="font-family:monospace; font-size:0.78rem; word-break:break-all;">{{ u.token }}</td>
+            }
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td [attr.colspan]="showTokens() ? 4 : 3">No users.</td></tr>
+        </ng-template>
+      </p-table>
+    </fieldset>
+  </div>
+}
