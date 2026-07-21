@@ -341,6 +341,23 @@ export const routes: Routes = [
     loadComponent: () => import('./features/examinations/exam-grid').then((m) => m.ExamGrid),
   },
   {
+    path: 'exam-room-availability',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/examinations/exam-room-availability').then((m) => m.ExamRoomAvailability),
+  },
+  {
+    path: 'exam-distribution-prefs',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/examinations/exam-distribution-prefs').then((m) => m.ExamDistributionPrefs),
+  },
+  {
+    path: 'exam-pdf-reports',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-pdf-report').then((m) => m.ExamPdfReport),
+  },
+  {
     path: 'exam-detail/:id',
     canActivate: [authGuard],
     loadComponent: () => import('./features/examinations/exam-detail').then((m) => m.ExamDetail),

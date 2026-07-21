@@ -87,6 +87,9 @@ export class MenuService {
     'unassignedExams.action': '/unassigned-exams',
     'examAssignmentReport.action': '/exam-assignment-report',
     'examGrid.action': '/exam-grid',
+    'roomAvailability.action': '/exam-room-availability',
+    'examDistributionPrefs.action': '/exam-distribution-prefs',
+    'examPdfReport.action': '/exam-pdf-reports',
     // Wave 7 (instructorDetail.action omitted: it is a by-id route, /instructor-detail/:id)
     'lastChanges.action': '/change-log',
     'manageSolvers.action': '/manage-solvers',

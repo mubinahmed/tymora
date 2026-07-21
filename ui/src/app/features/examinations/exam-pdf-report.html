@@ -1,0 +1,178 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="refreshQueue()" /></div>
+} @else if (data(); as d) {
+  @if (d.warning) {
+    <p-message severity="warn" [text]="d.warning" styleClass="mb" />
+  }
+
+  <div class="form-page" style="max-width: 60rem;">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-file-pdf"></i></span>
+        <div>
+          <h2>Examination PDF Reports</h2>
+          <p>Generate examination reports for the current academic session. E-mail delivery stays on the classic screen.</p>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="epr-type">Examination type</label>
+          <p-select
+            inputId="epr-type"
+            [options]="examTypeOptions()"
+            [(ngModel)]="examTypeId"
+            (onChange)="onExamTypeChange()"
+            placeholder="Examination type"
+            appendTo="body"
+            [style]="{ minWidth: '12rem' }"
+          />
+        </div>
+        <div class="field">
+          <label for="epr-mode">Output format</label>
+          <p-select
+            inputId="epr-mode"
+            [options]="modeOptions()"
+            [(ngModel)]="mode"
+            placeholder="Format"
+            appendTo="body"
+            [style]="{ minWidth: '12rem' }"
+          />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="epr-reports">Reports *</label>
+        <p-multiSelect
+          inputId="epr-reports"
+          [options]="reportOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="selectedReports"
+          display="chip"
+          placeholder="Select one or more reports"
+          appendTo="body"
+          styleClass="w-full"
+        />
+      </div>
+
+      <div class="field">
+        <label>Scope</label>
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.4rem;">
+          <p-checkbox [(ngModel)]="all" [binary]="true" inputId="epr-all" />
+          <label for="epr-all" style="margin:0; font-weight:normal;">All subject areas in the session</label>
+        </div>
+      </div>
+
+      @if (!all) {
+        <div class="field">
+          <label for="epr-subjects">Subject areas *</label>
+          <p-multiSelect
+            inputId="epr-subjects"
+            [options]="subjectOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="selectedSubjects"
+            [filter]="true"
+            display="chip"
+            placeholder="Select subject areas"
+            appendTo="body"
+            styleClass="w-full"
+          />
+        </div>
+      }
+
+      <div class="field">
+        <label>Options</label>
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap:0.5rem; margin-top:0.4rem;">
+          @for (opt of optionDefs; track opt.key) {
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <p-checkbox [(ngModel)]="options[opt.key]" [binary]="true" [inputId]="'epr-' + opt.key" />
+              <label [for]="'epr-' + opt.key" style="margin:0; font-weight:normal;">{{ opt.label }}</label>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="epr-limit">Period conflict limit</label>
+          <input pInputText id="epr-limit" type="text" [(ngModel)]="limit" style="width: 8rem;" />
+        </div>
+        <div class="field">
+          <label for="epr-since">Changes since</label>
+          <input pInputText id="epr-since" type="text" [(ngModel)]="since" placeholder="MM/DD/YYYY" style="width: 10rem;" />
+        </div>
+        <div class="field">
+          <label for="epr-roomcodes">Room codes</label>
+          <input pInputText id="epr-roomcodes" type="text" [(ngModel)]="roomCodes" style="width: 12rem;" />
+        </div>
+        <div class="field">
+          <label for="epr-noroom">No-room text</label>
+          <input pInputText id="epr-noroom" type="text" [(ngModel)]="noRoom" style="width: 12rem;" />
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <span class="spacer"></span>
+      <p-button
+        label="Generate report"
+        icon="pi pi-cog"
+        (onClick)="generate()"
+        [loading]="generating()"
+        [disabled]="!canGenerate()"
+      />
+    </div>
+  </div>
+
+  <p-table [value]="queue()" styleClass="p-datatable-sm p-datatable-striped mt">
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>Report queue</span>
+        <span class="spacer"></span>
+        <p-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true" (onClick)="refreshQueue()" />
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Progress</th>
+        <th>Owner</th>
+        <th>Created</th>
+        <th>Finished</th>
+        <th>Output</th>
+        <th style="width: 3rem;"></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-q>
+      <tr>
+        <td>{{ q.name }}</td>
+        <td>{{ q.status }}</td>
+        <td>{{ q.progress }}</td>
+        <td>{{ q.owner }}</td>
+        <td>{{ q.created }}</td>
+        <td>{{ q.finished }}</td>
+        <td>
+          @if (q.output && q.outputLink) {
+            <a [href]="q.outputLink" target="_blank">{{ q.output }}</a>
+          }
+        </td>
+        <td>
+          @if (q.canDelete) {
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" (onClick)="remove(q)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8">No reports in the queue.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+}
