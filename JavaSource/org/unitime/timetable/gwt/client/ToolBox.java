@@ -158,7 +158,7 @@ public class ToolBox {
     		"<link type=\"text/css\" rel=\"stylesheet\" href=\"" + GWT.getHostPageBaseURL() + "unitime/gwt/standard/standard.css\">" +
     		"<link type=\"text/css\" rel=\"stylesheet\" href=\"" + GWT.getHostPageBaseURL() + "styles/unitime.css\">" +
     	    "<link rel=\"shortcut icon\" href=\"" + GWT.getHostPageBaseURL() + "images/timetabling.ico\">" +
-    	    "<title>UniTime " + CONSTANTS.version() + "| University Timetabling Application</title>" +
+    	    "<title>Tymora " + CONSTANTS.version() + "| University Timetabling Application</title>" +
     		"</header><body class='unitime-Body'>" + 
     	    "<span class='unitime-Page'>" +
     			"<span class='body'>"+
@@ -183,7 +183,7 @@ public class ToolBox {
     			"<span class='footer'>" +
     				"<span class='unitime-Footer'>" +
     					"<span class='row'>" +
-    						"<span class='cell left'>Printed from UniTime " + CONSTANTS.version() + " | University Timetabling Application</span>" +
+    						"<span class='cell left'>Printed from Tymora " + CONSTANTS.version() + " | University Timetabling Application</span>" +
     						"<span class='cell middle'>" + CONSTANTS.copyright() + "</span>" +
     						"<span class='cell right'>" + DateTimeFormat.getFormat(PredefinedFormat.DATE_TIME_MEDIUM).format(new Date()) + "</span>" +
     					"</span>" +
@@ -199,7 +199,7 @@ public class ToolBox {
         		"<link type=\"text/css\" rel=\"stylesheet\" href=\"" + GWT.getHostPageBaseURL() + "unitime/gwt/standard/standard.css\">" +
         		"<link type=\"text/css\" rel=\"stylesheet\" href=\"" + GWT.getHostPageBaseURL() + "styles/unitime.css\">" +
         	    "<link rel=\"shortcut icon\" href=\"" + GWT.getHostPageBaseURL() + "images/timetabling.ico\">" +
-        	    "<title>UniTime " + CONSTANTS.version() + "| University Timetabling Application</title>" +
+        	    "<title>Tymora " + CONSTANTS.version() + "| University Timetabling Application</title>" +
         		"</header><body class='unitime-Body'>";
     	for (Page p: pages) {
     		html += "<span class='unitime-PrintedPage'>" +
@@ -226,7 +226,7 @@ public class ToolBox {
     						"<span class='footer'>" +
     							"<span class='unitime-Footer'>" +
     								"<span class='row'>" +
-    									"<span class='cell left'>Printed from UniTime " + CONSTANTS.version() + " | University Timetabling Application</span>" +
+    									"<span class='cell left'>Printed from Tymora " + CONSTANTS.version() + " | University Timetabling Application</span>" +
     									"<span class='cell middle'>" + CONSTANTS.copyright() + "</span>" +
     									"<span class='cell right'>" + DateTimeFormat.getFormat(PredefinedFormat.DATE_TIME_MEDIUM).format(new Date()) + "</span>" +
     								"</span>" +
@@ -258,7 +258,7 @@ public class ToolBox {
 		if (t != null && t instanceof PageAccessException) {
 			open(GWT.getHostPageBaseURL() + "login.action?menu=hide&m=" + URL.encodeQueryString(t.getMessage())+"&target=" + URL.encodeQueryString(Window.Location.getHref()));
 			/*
-			UniTimeFrameDialog.openDialog("UniTime " + CONSTANTS.version() + "| Log In", "login.action?menu=hide&m=" + URL.encodeQueryString(t.getMessage())
+			UniTimeFrameDialog.openDialog("Tymora " + CONSTANTS.version() + "| Log In", "login.action?menu=hide&m=" + URL.encodeQueryString(t.getMessage())
 					+"&target=" + URL.encodeQueryString(Window.Location.getHref()), "700px", "420px");
 			*/
 		}

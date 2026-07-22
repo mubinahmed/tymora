@@ -30,67 +30,6 @@
 	<packaging>jar</packaging>
 
 	<name>UniTime</name>
-	<url>http://www.unitime.org</url>
-	<description>
-		UniTime is a comprehensive educational scheduling system that supports developing course and exam timetables,
-		managing changes to these timetables, sharing rooms with other events, and scheduling students to individual
-		classes. It is a distributed system that allows multiple university and departmental schedule managers to coordinate
-		efforts to build and modify a schedule that meets their diverse organizational needs while allowing for minimization
-		of student course conflicts. It can be used alone to create and maintain a school's schedule of classes and/or exams,
-		or interfaced with an existing student information system.
-	</description>
-
-	<organization>
-		<name>UniTime</name>
-		<url>http://www.unitime.org</url>
-	</organization>
-
-	<licenses>
-		<license>
-			<name>Apache Software License (ASL), Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0</url>
-		</license>
-	</licenses>
-
-	<developers>
-		<developer>
-			<id>muller</id>
-			<name>Tomas Muller</name>
-			<email>muller@unitime.org</email>
-			<url>http://muller.unitime.org</url>
-			<roles>
-				<role>technical lead</role>
-				<role>programmer</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-		<developer>
-			<id>says</id>
-			<name>Stephanie Schluttenhofer</name>
-			<email>says@unitime.org</email>
-			<roles>
-				<role>programmer</role>
-			</roles>
-			<timezone>-5</timezone>
-		</developer>
-		<developer>
-			<id>mullerova</id>
-			<name>Zuzana Mullerova</name>
-			<email>mullerova@unitime.org</email>
-			<roles>
-				<role>technical writer</role>
-				<role>support</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-	</developers>
-
-	<scm>
-		<url>https://github.com/UniTime/unitime</url>
-		<connection>scm:git:git://github.com/UniTime/unitime.git</connection>
-		<developerConnection>scm:git:git@github.com:UniTime/unitime.git</developerConnection>
-		<tag>UniTime-4.8</tag>
-	</scm>
 
 	<dependencies>
 		<dependency>
@@ -689,80 +628,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>license-maven-plugin</artifactId>
-				<version>1.9</version>
-				<executions>
-					<execution>
-						<id>default-cli</id>
-						<configuration>
-							<licenseMerges>
-								<licenseMerge>
-									Common Development and Distribution License (CDDL), Version 1.0|
-									Common Development and Distribution License (CDDL) version 1.0|
-									CDDL|CDDL 1.0|CDDL 1.0 license|
-									Common Development and Distribution License (CDDL) v1.0|
-									Common Development and Distribution License|
-									Common Development and Distribution License, Version 1.0|
-									CDDL + GPLv2 with classpath exception
-								</licenseMerge>
-								<licenseMerge>
-									Apache Software License (ASL), Version 2.0|
-									Apache License, Version 2.0|
-									Apache License Version 2.0|
-									The Apache Software License, Version 2.0|
-									Apache 2|Apache 2.0|Apache 2.0 license|
-									Apache License|Apache License 2.0|Apache License, version 2.0|
-									ASF 2.0|ASL 2.0|AL 2.0|Apache-2.0|
-									Google Web Toolkit Terms|GWT Terms
-								</licenseMerge>
-								<licenseMerge>
-									BSD or BSD-style License|
-									BSD License|BSD|
-									BSD-style License|BSD-style license|
-									New BSD license|FreeBSD License|
-									BSD 3-clause New License
-								</licenseMerge>
-								<licenseMerge>
-									GNU Lesser General Public License (LGPL), Version 3|
-									GNU Lesser General Public License, Version 3|
-									LGPL 3.0 license|LGPL 3.0
-								</licenseMerge>
-								<licenseMerge>
-									GNU Lesser General Public License (LGPL), Version 2.1|
-									GNU Lesser General Public License, version 2.1|
-									LGPL 2.1 license|LGPL 2.1|
-									GNU LESSER GENERAL PUBLIC LICENSE|
-									GNU Lesser General Public License
-								</licenseMerge>
-								<licenseMerge>
-									Eclipse Public License (EPL), Version 1.0|
-									EPL 1.0 license|EPL 1.0|
-									Eclipse Public License - v 1.0|
-									license.txt
-								</licenseMerge>
-								<licenseMerge>
-									GNU General Public License, Version 2 with the Classpath Exception|
-									GPLv2+CE
-								</licenseMerge>
-								<licenseMerge>
-									Mozilla Public License (MPL), Version 1.1|
-									MPL 1.1|
-									Mozilla Public License
-								</licenseMerge>
-							</licenseMerges>
-							<missingFile>3rd_party/3rd_party.properties</missingFile>
-							<fileTemplate>3rd_party/3rd_party.ftl</fileTemplate>
-							<useMissingFile>true</useMissingFile>
-							<sortArtifactByName>true</sortArtifactByName>
-							<outputDirectory>.</outputDirectory>
-							<excludedScopes>provided</excludedScopes>
-							<thirdPartyFilename>NOTICE</thirdPartyFilename>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
 
@@ -805,14 +670,6 @@
 		<nashorn.version>15.6</nashorn.version>
 		<jboss-logging.version>3.6.1.Final</jboss-logging.version>
 	</properties>
-
-	<distributionManagement>
-		<site>
-			<id>builds.unitime.org</id>
-			<name>UniTime Nightly Builds</name>
-			<url>http://builds.unitime.org</url>
-		</site>
-	</distributionManagement>
 
 	<repositories>
 		<repository>

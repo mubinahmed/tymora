@@ -113,7 +113,7 @@ public class CheckEligibility implements OnlineSectioningAction<OnlineSectioning
 						iCheck.setMessage(MSG.exceptionEnrollNotStudent(server.getAcademicSession().toString()));
 						if (CustomStudentEnrollmentHolder.hasProvider() && CustomStudentEnrollmentHolder.getProvider().isCanRequestUpdates()) {
 							hibSession.close(); hibSession = null;
-							// UniTime does not know about the student, but there is an enrollment provider capable of requesting updates -> use check eligibility to request an update
+							// Tymora does not know about the student, but there is an enrollment provider capable of requesting updates -> use check eligibility to request an update
 							CustomStudentEnrollmentHolder.getProvider().checkEligibility(server, helper, iCheck, new XStudent(null, helper.getUser().getExternalId(), helper.getUser().getName()));
 						}
 					}

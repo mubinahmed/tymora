@@ -46,7 +46,7 @@ public class StartupService implements InitializingBean, DisposableBean {
 	
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		Debug.info("******* UniTime " + Constants.getVersion() +
+		Debug.info("******* Tymora " + Constants.getVersion() +
 				" build on " + Constants.getReleaseDate() + " is starting up *******");
 
 		try {
@@ -79,11 +79,11 @@ public class StartupService implements InitializingBean, DisposableBean {
 			Debug.info(" - Starting Event Expiration Service ...");
 			EventExpirationService.getInstance().start();
 			
-			Debug.info("******* UniTime " + Constants.getVersion() +
+			Debug.info("******* Tymora " + Constants.getVersion() +
 					" build on " + Constants.getReleaseDate() + " initialized successfully *******");
 
 		} catch (Exception e) {
-			Debug.error("UniTime Initialization Failed : " + e.getMessage(), e);
+			Debug.error("Tymora Initialization Failed : " + e.getMessage(), e);
 			iInitializationException = e;
 		} finally {
 			HibernateUtil.closeCurrentThreadSessions();
@@ -98,7 +98,7 @@ public class StartupService implements InitializingBean, DisposableBean {
 	public void destroy() throws Exception {
 		try {
 			
-			Debug.info("******* UniTime " + Constants.getVersion() +
+			Debug.info("******* Tymora " + Constants.getVersion() +
 					" build on " + Constants.getReleaseDate() + " is going down *******");
 		
 			Debug.info(" - Stopping Event Expiration Service ...");
@@ -125,14 +125,14 @@ public class StartupService implements InitializingBean, DisposableBean {
 	         Debug.info(" - Closing Hibernate ... ");
 	         HibernateUtil.closeHibernate();
 	         
-	         Debug.info("******* UniTime " + Constants.getVersion() +
+	         Debug.info("******* Tymora " + Constants.getVersion() +
 						" shut down successfully *******");
 		} catch (Exception e) {
-			Debug.error("UniTime Shutdown Failed : " + e.getMessage(), e);
+			Debug.error("Tymora Shutdown Failed : " + e.getMessage(), e);
 			if (e instanceof RuntimeException)
 				throw (RuntimeException)e;
 			else
-				throw new RuntimeException("UniTime Shutdown Failed : " + e.getMessage(), e);
+				throw new RuntimeException("Tymora Shutdown Failed : " + e.getMessage(), e);
 		}
 	}
 }

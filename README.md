@@ -17,12 +17,11 @@
  * limitations under the License.
  * 
  -->
-# UniTime
+# Tymora
 
 Comprehensive University Timetabling System
-<https://www.unitime.org>
 
-UniTime is a comprehensive educational scheduling system that supports developing
+Tymora is a comprehensive educational scheduling system that supports developing
 course and exam timetables, managing changes to these timetables, sharing rooms
 with other events, and scheduling students to individual classes.
 It is a distributed system that allows multiple university and departmental schedule managers
@@ -35,7 +34,7 @@ The system was originally developed as a collaborative effort by faculty,
 students, and staff at universities in North America and Europe. The software
 is distributed free under an open source license in hopes that other colleges
 and universities can benefit their students through better scheduling or wish to
-contribute to ongoing research in this area. The UniTime project has become
+contribute to ongoing research in this area. The Tymora project has become
 a sponsored project of the [Apereo Foundation][apereo] in March 2015.
 
 ### Components
@@ -46,13 +45,13 @@ a sponsored project of the [Apereo Foundation][apereo] in March 2015.
 
 ### Tutorials
 - [Installation Instructions][install]
-- [Building UniTime][build]
-- [Setting up UniTime in Eclipse][eclipse]
+- [Building Tymora][build]
+- [Setting up Tymora in Eclipse][eclipse]
 - [Customization][customization]
 - [Localization][localization]
 
 ### Links
-- [UniTime 4.6 documentation][docs]
+- [Tymora 4.6 documentation][docs]
 - [Online Documentation][help]
 - [Online Demo][demo]
 - [Downloads][downloads]

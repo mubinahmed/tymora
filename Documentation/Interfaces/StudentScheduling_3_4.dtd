@@ -23,7 +23,7 @@
    - this interface is to be used to synchronize student information with an external system during (online) student scheduling
    - it also contains ability for the external system to approve / reject changes in student's schedule (an ability of a student to get into a course)
  - See studentSchedulingSynchronization.xml for an example and a desription.
- - Since UniTime 3.4
+ - Since Tymora 3.4
 -->
  
 <!ELEMENT message (student+) >

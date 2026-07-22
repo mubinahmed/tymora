@@ -33,13 +33,13 @@ public interface GwtMessages extends Messages {
 	@DefaultMessage("Version {0} built on {1}")
 	String pageVersion(String version, String buildDate);
 	
-	@DefaultMessage("UniTime {0}")
+	@DefaultMessage("Tymora {0}")
 	String unitimeVersion(String version);
 	
 	@DefaultMessage("&copy; 2008 - 2025 The Apereo Foundation,<br>distributed under the Apache License, Version 2.")
 	String pageCopyright();
 	
-	@DefaultMessage("UniTime {0}, \u00A9 2008 - 2025 The Apereo Foundation, distributed under the Apache License.")
+	@DefaultMessage("Tymora {0}, \u00A9 2008 - 2025 The Apereo Foundation, distributed under the Apache License.")
 	String pdfCopyright(String version);
 	
 	@DefaultMessage("Oooops, the loading is taking too much time... Something probably went wrong. You may need to reload this page.")
@@ -2316,7 +2316,7 @@ public interface GwtMessages extends Messages {
 	@DefaultMessage("Meeting {0} has no location.")
 	String failedSaveEventNoLocation(String meeting);
 	
-	@DefaultMessage("{0} is not managed in UniTime or disabled for events at the moment.")
+	@DefaultMessage("{0} is not managed in Tymora or disabled for events at the moment.")
 	String failedSaveEventWrongLocation(String location);
 	
 	@DefaultMessage("Requested meeting date {0} is in the past or outside of the academic session.")
@@ -4132,7 +4132,7 @@ public interface GwtMessages extends Messages {
 	@DefaultMessage("Requested meeting is in the past or outside of {0}.")
 	String conflictPastOrOutside(String academicSessionName);
 	
-	@DefaultMessage("{0} is not managed in UniTime or it is disabled for events.")
+	@DefaultMessage("{0} is not managed in Tymora or it is disabled for events.")
 	String conflictNotEventRoom(String locationName);
 	
 	@DefaultMessage("{0} is currently not available for event scheduling.")
@@ -5752,7 +5752,7 @@ public interface GwtMessages extends Messages {
 	@DefaultMessage("Failed to request password change: {0}")
 	String failedToResetPassword(String reason);
 	
-	@DefaultMessage("UniTime password change")
+	@DefaultMessage("Tymora password change")
 	String emailPasswordChange();
 	
 	@DefaultMessage("Generating password change request...")
@@ -5905,7 +5905,7 @@ public interface GwtMessages extends Messages {
 	@DefaultMessage("A student must have at least one of the selected majors.")
 	String infoMultipleMajorsOff();
 	
-	@DefaultMessage("UniTime Schedule")
+	@DefaultMessage("Tymora Schedule")
 	String scheduleNameDefault();
 	
 	@DefaultMessage("{0} Schedule")

@@ -45,7 +45,7 @@
       			<assigned departmentNumber="1146" percent="100"/>
    			</roomDepartments>
   		</room>
-  		<!-- area (square footage) since UniTime 3.4.128 -->
+  		<!-- area (square footage) since Tymora 3.4.128 -->
   		<room externalId="14P3G41C10IRK1GNDDEB" locationX="447" locationY="392" area="1265.3" roomNumber="204" roomClassification="classroom" capacity="58" instructional="True" scheduledRoomType="genClassroom">
    			<roomDepartments>
       			<assigned departmentNumber="1979" percent="100"/>

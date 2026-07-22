@@ -1,4 +1,4 @@
-# UniTime → Angular Migration: Screen Inventory & Path
+# Tymora → Angular Migration: Screen Inventory & Path
 
 > Companion to [`docs/angular-migration-roadmap.md`](docs/angular-migration-roadmap.md), which covers the *architecture and strategy*. This file is the **operational inventory**: every screen, its current tech, the backend it calls, how ready that backend is for a JSON facade, and which migration wave it belongs to.
 

@@ -26,7 +26,7 @@
 	<HEAD>
 	    <meta charset="UTF-8"/>
 	    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-		<TITLE>UniTime <%=Constants.VERSION%>| <loc:message name="pageLogOut"/></TITLE>
+		<TITLE>Tymora <%=Constants.VERSION%>| <loc:message name="pageLogOut"/></TITLE>
 		<SCRIPT type="text/javascript">
 			function closeWin() {
 				// window.close();				

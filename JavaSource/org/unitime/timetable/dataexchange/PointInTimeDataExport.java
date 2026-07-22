@@ -711,7 +711,7 @@ public class PointInTimeDataExport extends BaseExport {
 
 	private void exportCredit(Element subpartElement, CourseCreditUnitConfig credit) {
     	/* This only exports the minimum credit number as the credit for variable credit subparts. 
-    	 *    UniTime currently stores no information about the number of credits a student is 
+    	 *    Tymora currently stores no information about the number of credits a student is 
     	 *    enrolled to received for a sections.  Point in time data will treat all enrollments
     	 *    as the minimum amount of credit for the section.  If the credit data known for students
     	 *    changes in the future this should be updated to reflect that change. */

@@ -641,7 +641,7 @@ public class Solution extends BaseSolution implements ClassAssignmentProxy {
         	Email email = Email.createEmail();
         	email.addRecipient(mgr.getEmailAddress(), mgr.getName());
         	email.addNotifyCC();
-        	email.setSubject("UniTime (Solution Commit): "+subject);
+        	email.setSubject("Tymora (Solution Commit): "+subject);
         	email.setText(mail);
         	email.send();
 		} catch (Exception e) {

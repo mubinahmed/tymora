@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE staff PUBLIC "-//UniTime//UniTime Staff Import DTD/EN" "http://www.unitime.org/interface/Staff.dtd">
+<!DOCTYPE staff PUBLIC "-//UniTime//Tymora Staff Import DTD/EN" "http://www.unitime.org/interface/Staff.dtd">
 
 <!-- 
  * Licensed to The Apereo Foundation under one or more contributor license
@@ -26,9 +26,9 @@
 	-->
 <staff campus="PWL" term="Fal" year="2010">
 	<!--
-		Since UniTime 3.3.165 positionCode attribute (that has to be translated through position_code_to_type table) was replaced by positionType attribute
+		Since Tymora 3.3.165 positionCode attribute (that has to be translated through position_code_to_type table) was replaced by positionType attribute
 		that refers directly to position_type table.
-		Attribute acadTitle (academic title) was added in UniTime 3.5.172
+		Attribute acadTitle (academic title) was added in Tymora 3.5.172
 	 -->
 	<staffMember externalId="100" firstName="Joe" middleName="S" lastName="Doe" acadTitle="Dr." positionType="ASSOC_PROF" department="0101" email="doe@unitime.org"/>
 	<staffMember externalId="101" firstName="George" lastName="Newman" acadTitle="Prof." positionType="PROF" department="0101"/>

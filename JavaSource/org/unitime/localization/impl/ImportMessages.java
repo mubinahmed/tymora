@@ -75,7 +75,7 @@ public class ImportMessages {
 			out.println("# limitations under the License.");
 			out.println("#");
 			
-			CSVFile csv = new CSVFile(new File(System.getProperty("file", System.getProperty("user.home") + "/Downloads/UniTime Localization Czech.csv")));
+			CSVFile csv = new CSVFile(new File(System.getProperty("file", System.getProperty("user.home") + "/Downloads/Tymora Localization Czech.csv")));
 			for (CSVLine line: csv.getLines()) {
 				if (line.getFields().size() >= 2) {
 					out.println();

@@ -735,7 +735,7 @@ public class SolverServerImplementation extends AbstractSolverServer {
         
 		Logger log = LogManager.getRootLogger();
         log.info("-----------------------------------------------------------------------");
-        log.info("UniTime Log File");
+        log.info("Tymora Log File");
         log.info("");
         log.info("Created: " + new Date());
         log.info("");

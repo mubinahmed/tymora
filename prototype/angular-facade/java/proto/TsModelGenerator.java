@@ -33,7 +33,7 @@ import org.unitime.timetable.gwt.command.client.GwtRpcRequest;
 import org.unitime.timetable.gwt.command.client.GwtRpcResponse;
 
 /**
- * Generates TypeScript interfaces from the UniTime GWT shared DTOs by reflecting
+ * Generates TypeScript interfaces from the Tymora GWT shared DTOs by reflecting
  * over the COMPILED classes, so the output matches exactly what the facade's
  * Gson emits: iField -> field naming, enums as string unions, List -> [],
  * Map -> Record<string, V>, inheritance as `extends`.
@@ -249,7 +249,7 @@ public class TsModelGenerator {
 			Class<?> raw = (Class<?>) pt.getRawType();
 			Type[] args = pt.getActualTypeArguments();
 			if (Collection.class.isAssignableFrom(raw)) return elementType(tsType(args[0])) + "[]";
-			// Index signature (not Record<>) — a UniTime DTO is literally named "Record".
+			// Index signature (not Record<>) — a Tymora DTO is literally named "Record".
 			if (Map.class.isAssignableFrom(raw)) return "{ [key: string]: " + tsType(args[args.length - 1]) + " }";
 			return tsClass(raw);
 		}

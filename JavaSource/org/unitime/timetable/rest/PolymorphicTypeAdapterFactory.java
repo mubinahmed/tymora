@@ -1,7 +1,7 @@
 /*
  * Angular migration - Wave 0 facade: polymorphism support.
  *
- * Several UniTime DTO hierarchies are abstract with concrete subclasses
+ * Several Tymora DTO hierarchies are abstract with concrete subclasses
  * (e.g. ReservationInterface -> Course/Group/Individual/Override). Plain Gson
  * cannot deserialize JSON into an abstract type, and on serialize it emits no
  * hint of the runtime subtype. This TypeAdapterFactory fixes both:
@@ -11,7 +11,7 @@
  *     naming still applies);
  *   - on read it reads "@type", picks the subclass, and delegates.
  *
- * It only engages for ABSTRACT org.unitime classes that have concrete subtypes,
+ * It only engages for ABSTRACT org.Tymora classes that have concrete subtypes,
  * discovered once (cached) by classpath-scanning the shared/client packages, so
  * concrete DTOs are untouched. Additive; no existing class changes.
  */

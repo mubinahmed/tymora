@@ -38,7 +38,7 @@ import org.unitime.timetable.model.dao.SessionDAO;
  * 		java -Xmx2g -Dtmtbl.custom.properties=~/Tomcat/conf/unitime.properties -cp timetable.jar \
  * 		     org.unitime.timetable.util.ExportXmlFile session type output.xml
  * </code>
- * Where tmtbl.custom.properties points to UniTime custom properties (if there are any), session is the name of 
+ * Where tmtbl.custom.properties points to Tymora custom properties (if there are any), session is the name of 
  * the academic session (term + year + initiative, e.g., Fall2013PWL), type is the root element of the export
  * (e.g., offerings), and output.xml is the output file.
  *

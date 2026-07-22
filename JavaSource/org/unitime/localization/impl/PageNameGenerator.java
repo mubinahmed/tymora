@@ -101,7 +101,7 @@ public class PageNameGenerator {
         if (is != null) {
             sax.setEntityResolver(new EntityResolver() {
             	public InputSource resolveEntity(String publicId, String systemId) {
-            		if (publicId.equals("-//UniTime//UniTime Menu DTD/EN")) {
+            		if (publicId.equals("-//UniTime//Tymora Menu DTD/EN")) {
             			return new InputSource(PageNameGenerator.class.getClassLoader().getResourceAsStream("menu.dtd"));
             		}
             		return null;
@@ -112,7 +112,7 @@ public class PageNameGenerator {
         	File file = new File(iSource, "menu.xml");
     		sax.setEntityResolver(new EntityResolver() {
             	public InputSource resolveEntity(String publicId, String systemId) {
-            		if (publicId.equals("-//UniTime//UniTime Menu DTD/EN")) {
+            		if (publicId.equals("-//UniTime//Tymora Menu DTD/EN")) {
             			try {
             				return new InputSource(new FileInputStream(new File(iSource, "menu.dtd")));
             			} catch (FileNotFoundException e) {}

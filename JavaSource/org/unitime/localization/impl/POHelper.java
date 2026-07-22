@@ -350,7 +350,7 @@ public class POHelper extends ArrayList<POHelper.Block> {
 		out.println("\"Content-Type: text/plain; charset=UTF-8\\n\"");
 		out.println("\"PO-Revision-Date: " + new Date() + "\\n\"");
 		out.println("\"Language: " + iLocale + "\\n\"");
-		out.println("\"X-Generator: UniTime " + org.unitime.timetable.util.Constants.VERSION + "\\n\"");
+		out.println("\"X-Generator: Tymora " + org.unitime.timetable.util.Constants.VERSION + "\\n\"");
 		
 		for (Block block: this) {
 			block.print(out);
@@ -369,7 +369,7 @@ public class POHelper extends ArrayList<POHelper.Block> {
 		out.println("\"Content-Type: text/plain; charset=UTF-8\\n\"");
 		out.println("\"PO-Revision-Date: " + new Date() + "\\n\"");
 		out.println("\"Language: " + iLocale + "\\n\"");
-		out.println("\"X-Generator: UniTime " + org.unitime.timetable.util.Constants.VERSION + "\\n\"");
+		out.println("\"X-Generator: Tymora " + org.unitime.timetable.util.Constants.VERSION + "\\n\"");
 		
 		for (Block block: this) {
 			block.printPOT(out);

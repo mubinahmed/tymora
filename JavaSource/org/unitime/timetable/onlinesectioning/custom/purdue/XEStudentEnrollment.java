@@ -314,7 +314,7 @@ public class XEStudentEnrollment implements StudentEnrollmentProvider {
 	
 	@Override
 	public void checkEligibility(OnlineSectioningServer server, OnlineSectioningHelper helper, EligibilityCheck check, XStudent student) throws SectioningException {
-		// Cannot enroll -> no additional check is needed (unless it is the case when UniTime does not know about the student)
+		// Cannot enroll -> no additional check is needed (unless it is the case when Tymora does not know about the student)
 		if (!check.hasFlag(EligibilityFlag.CAN_ENROLL) && student.getStudentId() != null) return;
 
 		ClientResource resource = null;
@@ -423,7 +423,7 @@ public class XEStudentEnrollment implements StudentEnrollmentProvider {
 								.setParameter("campus", server.getAcademicSession().getCampus())
 								.uniqueResult().intValue() > 0);
 				if (!keepMessage)
-					check.setMessage("UniTime enrollment data are not synchronized with Banner enrollment data, please try again later.");
+					check.setMessage("Tymora enrollment data are not synchronized with Banner enrollment data, please try again later.");
 				check.setFlag(EligibilityFlag.CAN_ENROLL, false);
 				if (isCanRequestUpdates()) {
 					List<XStudent> students = new ArrayList<XStudent>(1); students.add(student);
@@ -481,7 +481,7 @@ public class XEStudentEnrollment implements StudentEnrollmentProvider {
 					removed += (removed.isEmpty() ? "" : ", ") + s;
 				if (!added.isEmpty() || !removed.isEmpty()) {
 					if (updateStudentRegistration(server, helper, student, original.registrations)) return;
-					check.setMessage("UniTime enrollment data are not synchronized with Banner enrollment data, please try again later" +
+					check.setMessage("Tymora enrollment data are not synchronized with Banner enrollment data, please try again later" +
 							" (" + (removed.isEmpty() ? "added " + added : added.isEmpty() ? "dropped " + removed : "added " + added + ", dropped " + removed) + ")");
 					check.setFlag(EligibilityFlag.CAN_ENROLL, false);
 					if (isCanRequestUpdates()) {

@@ -127,7 +127,7 @@ public class PdfWorksheet {
         iDoc.addTitle(subjects + (iCourseNumber==null?"":" "+iCourseNumber) + " Worksheet");
         iDoc.addAuthor(ApplicationProperty.WorksheetPdfAuthor.value().replace("%", Constants.getVersion()));
         iDoc.addSubject(subjects + (session == null ? "" : " -- " + session));
-        iDoc.addCreator("UniTime "+Constants.getVersion()+", www.unitime.org");
+        iDoc.addCreator("Tymora "+Constants.getVersion()+", www.unitime.org");
         if (!iSubjectAreas.isEmpty())
         	iCurrentSubjectArea = iSubjectAreas.first();
 

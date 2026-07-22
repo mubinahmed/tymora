@@ -199,7 +199,7 @@ public enum ApplicationProperty {
 	 * Default application menu style. Values:<ul>
 	 * <li>Static On Top ... Horizontal menu bar on the top of the page (takes 100% width of the page, does not move with the page)
 	 * <li>Dynamic On Top ... Horizontal menu bar on the top of the page (takes 100% width of the client window, moves with the page as it is scrolled)
-	 * <li>Tree On Side ... Tree on the left side of the page content (moves with the page, resembles the UniTime 3.1 menu the most)
+	 * <li>Tree On Side ... Tree on the left side of the page content (moves with the page, resembles the Tymora 3.1 menu the most)
 	 * <li>Stack On Side ... Tree on the left side of the page content, but the first level of the tree is a StackPanel (only one top level item can be opened at a time)
 	 * </ul>
 	 * If manager setting for this property is created, each user (timetable manager) can change his/her menu style.
@@ -362,7 +362,7 @@ public enum ApplicationProperty {
 	@Parameter("page name")
 	PageError("tmtbl.page.error.%"),
 
-	@Description("Configuration: UniTime URL (e.g., used in email notifications where URL cannot be deducted from the http request)")
+	@Description("Configuration: Tymora URL (e.g., used in email notifications where URL cannot be deducted from the http request)")
 	UniTimeUrl("unitime.url"),
 
 	@Type(Integer.class)
@@ -764,7 +764,7 @@ public enum ApplicationProperty {
 	RoomAvailabilitySolverWaitForSync("tmtbl.room.availability.solver.waitForSync"),
 
 	/**
-	 * If you are using UniTime in conjunction with an external system that identifies classes differently than UniTime
+	 * If you are using Tymora in conjunction with an external system that identifies classes differently than UniTime
 	 * you can create a java class that implements the ExternalClassNameHelperInterface interface to create custom
 	 * naming for the class that is displayed in places such as the personal exam schedule and personal class
 	 * schedule for students.
@@ -905,7 +905,7 @@ public enum ApplicationProperty {
 	
 	@Type(String.class)
 	@DefaultValue("select crs_dpt.dept_code from %SCHEMA%.department crs_dpt where crs_dpt.uniqueid = sa.department_uniqueid")
-	@Description("Query to determine the department code for a course based on data from an external database. Use 'sess' to reference the UniTime Academic Session data,  'sa' to reference the UniTime Subject Area data and 'co' to reference the UniTime CourseOffering data")
+	@Description("Query to determine the department code for a course based on data from an external database. Use 'sess' to reference the Tymora Academic Session data,  'sa' to reference the Tymora Subject Area data and 'co' to reference the Tymora CourseOffering data")
 	ExternalCourseDepartmentCodeLookupSQL("unitime.external.course.department_code_lookup_sql"),
 
 	
@@ -923,7 +923,7 @@ public enum ApplicationProperty {
 	@DefaultValue("select external_uid from %SCHEMA%.users where username = ?")
 	CustomSQLUidToExternalTranslation("unitime.custom.sql.uid2ext"),
 	
-	@Description("Custom SQL User Id Translation: SQL to translate the external user id that is used by UniTime to the user name (as returned by the authentication).\n"+
+	@Description("Custom SQL User Id Translation: SQL to translate the external user id that is used by Tymora to the user name (as returned by the authentication).\n"+
 			"This parameter is used by the CustomSQLExternalUidTranslation. You also need to set tmtbl.externalUid.translation to org.unitime.timetable.spring.security.CustomSQLExternalUidTranslation")
 	@DefaultValue("select username from %SCHEMA%.users where external_uid = ?")
 	CustomSQLExternalToUidTranslation("unitime.custom.sql.ext2uid"),
@@ -1474,7 +1474,7 @@ public enum ApplicationProperty {
 	@Description("Email Configuration: sender email address")
 	EmailSenderAddress("unitime.email.sender"),
 
-	@DefaultValue("UniTime Application")
+	@DefaultValue("Tymora Application")
 	@Description("Email Configuration: sender name")
 	EmailSenderName("unitime.email.sender.name"),
 
@@ -1482,7 +1482,7 @@ public enum ApplicationProperty {
 	@Description("Email Configuration: reply-to address")
 	EmailReplyToAddress("unitime.email.replyto"),
 
-	@DefaultValue("UniTime Support")
+	@DefaultValue("Tymora Support")
 	@Description("Email Configuration: reply-to name")
 	EmailReplyToName("unitime.email.replyto.name"),
 
@@ -1490,7 +1490,7 @@ public enum ApplicationProperty {
 	@Description("Email Notifications: email address")
 	EmailNotificationAddress("unitime.email.notif"),
 
-	@DefaultValue("UniTime Demo")
+	@DefaultValue("Tymora Demo")
 	@Description("Email Notifications: email address name")
 	EmailNotificationAddressName("unitime.email.notif.name"),
 
@@ -1561,13 +1561,13 @@ public enum ApplicationProperty {
 	EmailConfirmationIncludeCalendar("unitime.email.event.calendar"),
 
 	/**
-	 * Enable UniTime to receive replies on event confirmation emails.
+	 * Enable Tymora to receive replies on event confirmation emails.
 	 * If a reply message is received, a new note is added to the event's notes and an updated confirmation is sent to all contacts of the event.
 	 * If the reply message contains an attachment, it is also added to the new event note and included in the new confirmation email.
 	 */
 	@Type(Boolean.class)
 	@DefaultValue("false")
-	@Description("Event Email Confirmations: Enable UniTime to receive replies on event confirmation emails. If a reply message is received, a new note is added to the event's notes and an updated confirmation is sent to all contacts of the event. If the reply message contains an attachment, it is also added to the new event note and included in the new confirmation email.")
+	@Description("Event Email Confirmations: Enable Tymora to receive replies on event confirmation emails. If a reply message is received, a new note is added to the event's notes and an updated confirmation is sent to all contacts of the event. If the reply message contains an attachment, it is also added to the new event note and included in the new confirmation email.")
 	InboundEmailsEnabled("unitime.email.inbound.enabled"),
 
 	@Secret
@@ -1577,7 +1577,7 @@ public enum ApplicationProperty {
 	@Description("Event Email Confirmations: reply-to address for event confirmation emails (e.g., [username]@gmail.com)")
 	InboundEmailsReplyToAddress("unitime.email.inbound.address"),
 	
-	@DefaultValue("UniTime Events")
+	@DefaultValue("Tymora Events")
 	@Description("Event Email Confirmations: reply-to address name for event confirmation emails")
 	InboundEmailsReplyToAddressName("unitime.email.inbound.name"),
 
@@ -2072,7 +2072,7 @@ public enum ApplicationProperty {
 	@Description("PDF Worksheet: include committed assignments")
 	WorksheetPdfUseCommittedAssignments("tmtbl.pdf.worksheet.useCommitedAssignments"),
 
-	@DefaultValue("UniTime %")
+	@DefaultValue("Tymora %")
 	@Description("PDF Worksheet: author (% is replaced with version number)")
 	WorksheetPdfAuthor("tmtbl.pdf.worksheet.author"),
 
@@ -2196,7 +2196,7 @@ public enum ApplicationProperty {
 	ManualAdministration("tmtbl.help.manual.administration"),
 	
 	@DefaultValue("https://help.unitime.org/documentation")
-	@Description("Manuals: other UniTime documentation")
+	@Description("Manuals: other Tymora documentation")
 	ManualOtherDocumentation("tmtbl.help.manual.other"),
 	
 	@DefaultValue("https://help.unitime.org/manuals/scheduling-assistant")
@@ -2234,7 +2234,7 @@ public enum ApplicationProperty {
 
 	@Type(Boolean.class)
 	@DefaultValue("false")
-	@Description("Main Page: when Internet Explorer is used, show \"the UniTime application may run very slow in Internet Explorer\" warning")
+	@Description("Main Page: when Internet Explorer is used, show \"the Tymora application may run very slow in Internet Explorer\" warning")
 	@Deprecated
 	ChromeFrameWarning("unitime.warn.chromeframe"),
 	
@@ -3069,7 +3069,7 @@ public enum ApplicationProperty {
 	@Type(String.class)
 	@DefaultValue("Disabled")
 	@Description("Instructional Offering: wait-listing default value " +
-	"(ReSchedule means that wait-listing is not enabled, but UniTime will automatically move students around after unlock -- when enabled by student status)")
+	"(ReSchedule means that wait-listing is not enabled, but Tymora will automatically move students around after unlock -- when enabled by student status)")
 	@Since(4.6)
 	@Values({"WaitList", "ReSchedule", "Disabled"})
 	OfferingWaitListDefault("unitime.offering.waitListDefault"),
@@ -3434,13 +3434,13 @@ public enum ApplicationProperty {
 	
 	@Type(Boolean.class)
 	@DefaultValue("true")
-	@Description("Online Student Scheduling: confirmation email includes link to UniTime (Student Scheduling Assistant; UniTime URL needs to be configured using unitime.url)")
+	@Description("Online Student Scheduling: confirmation email includes link to Tymora (Student Scheduling Assistant; Tymora URL needs to be configured using unitime.url)")
 	@Since(4.8)
 	OnlineSchedulingEmailIncludeLink("unitime.enrollment.email.link"),
 	
 	@Type(Boolean.class)
 	@DefaultValue("true")
-	@Description("Email Notifications: include the link to UniTime in the instructor email notification (Personal Schedule; UniTime URL needs to be configured using unitime.url)")
+	@Description("Email Notifications: include the link to Tymora in the instructor email notification (Personal Schedule; Tymora URL needs to be configured using unitime.url)")
 	@Since(4.8)
 	NotificationsInstructorChangesIncludeLink("unitime.notifications.instructorChanges.includeLink"),
 
@@ -3951,7 +3951,7 @@ public enum ApplicationProperty {
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(value={ElementType.FIELD})
 	/**
-	 * UniTime version where the application property was introduced.
+	 * Tymora version where the application property was introduced.
 	 */
 	static @interface Since {
 		double value();

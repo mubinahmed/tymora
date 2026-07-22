@@ -41,7 +41,7 @@
     	<link rel="stylesheet" type="text/css" href="%tmtbl.custom.css%" />
     </tt:hasProperty>
     <link rel="shortcut icon" href="images/timetabling.ico">
-    <title>UniTime <%=Constants.VERSION%>| University Timetabling Application</title>
+    <title>Tymora <%=Constants.VERSION%>| University Timetabling Application</title>
     <script type="text/javascript" src="scripts/rtt.js"></script>
   </head>
   <body class="unitime-Body">

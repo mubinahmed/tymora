@@ -104,7 +104,7 @@ public class EventsExportEventsToICal extends EventsExporter {
 		ical.setMethod(new Method("PUBLISH"));
 		ical.setExperimentalProperty("X-WR-CALNAME", guessScheduleName(helper, request));
 		ical.setExperimentalProperty("X-WR-TIMEZONE", TimeZone.getDefault().getID());
-		ical.setProductId("-//UniTime LLC/UniTime " + Constants.getVersion() + " Events//EN");
+		ical.setProductId("-//Tymora LLC/Tymora " + Constants.getVersion() + " Events//EN");
 
         for (EventInterface event: events)
 			print(ical, event);

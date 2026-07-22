@@ -1,4 +1,4 @@
-# UniTime Angular front-end (`ui/`)
+# Tymora Angular front-end (`ui/`)
 
 Wave 0 foundation + first live screen for the GWT→Angular migration
 (see [`../ANGULAR_MIGRATION.MD`](../ANGULAR_MIGRATION.MD)). Talks to the existing
@@ -9,7 +9,7 @@ backend through the additive JSON facade (`/api/rpc/*`) — **no GWT code is cha
 
 ## Run (dev)
 
-Needs a running UniTime backend (the facade lives at `/api/rpc/*`).
+Needs a running Tymora backend (the facade lives at `/api/rpc/*`).
 
 1. Point the dev proxy at your server in `src/proxy.conf.json` (default
    `http://localhost:8080`; add the context path if your deploy uses one, e.g.
@@ -20,7 +20,7 @@ Needs a running UniTime backend (the facade lives at `/api/rpc/*`).
    npm install      # first time
    npm start        # ng serve, proxying /api and legacy paths to the backend
    ```
-3. Open http://localhost:4200. Sign in through the UniTime login when a data
+3. Open http://localhost:4200. Sign in through the Tymora login when a data
    screen redirects you (the interceptor handles 401 → `login.action`).
 
 Build for CI/prod: `npm run build` (output in `dist/ui/browser`).

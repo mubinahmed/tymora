@@ -1,4 +1,4 @@
-# Multi-stage build for the UniTime Angular front-end.
+# Multi-stage build for the Tymora Angular front-end.
 # Stage 1: build the production bundle. Stage 2: serve it with nginx, which
 # also reverse-proxies backend calls to the unitime-web container so the browser
 # sees a single origin (the JSESSIONID session cookie then works for the facade).

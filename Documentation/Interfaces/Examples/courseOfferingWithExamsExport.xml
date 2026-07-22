@@ -25,12 +25,12 @@
 	<offering id="10234" offered="true" action="update|delete|insert">
 		<courseCredit creditType="collegiate" creditUnitType="semesterHours" creditFormat="fixedUnit" fixedCredit="3"/>
 		<course subject="A&amp;AE" courseNbr="101" controlling="true" title="" scheduleBookNote="">
-			<!-- Since UniTime 3.4, consent is on courses not on offerings -->
+			<!-- Since Tymora 3.4, consent is on courses not on offerings -->
 			<!-- DP for department, IN for instructor -->
 			<consent type="DP|IN"/>
 		</course>
 		<course subject="A&amp;AE" courseNbr="101H" controlling="false" title="" scheduleBookNote="">
-			<!-- Since UniTime 3.5, course credit is on courses not on offerings -->
+			<!-- Since Tymora 3.5, course credit is on courses not on offerings -->
 			<!-- It is still allowed to have course credit on the offering (it acts as a default for all the courses of the offering) -->
 			<courseCredit creditType="collegiate" creditUnitType="semesterHours" creditFormat="fixedUnit" fixedCredit="2"/>
 		</course>

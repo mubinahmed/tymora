@@ -99,7 +99,7 @@ public abstract class EventRelatedImports extends BaseImport {
 	protected void mailLoadResults(){
     	try {
     		Email email = Email.createEmail();
-    		email.setSubject("UniTime (Data Import): " + getEmailSubject());
+    		email.setSubject("Tymora (Data Import): " + getEmailSubject());
            	
            	String mail = "";
            	for (Iterator<String> it = changeList.iterator(); it.hasNext(); ){

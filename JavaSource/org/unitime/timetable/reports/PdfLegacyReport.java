@@ -109,9 +109,9 @@ public class PdfLegacyReport implements ReportWriter {
             PdfWriter.getInstance(iDoc, iOut);
 
             iDoc.addTitle(iTitle);
-            iDoc.addAuthor("UniTime "+Constants.getVersion()+", www.unitime.org");
+            iDoc.addAuthor("Tymora "+Constants.getVersion()+", www.unitime.org");
             iDoc.addSubject(iSubject);
-            iDoc.addCreator("UniTime "+Constants.getVersion()+", www.unitime.org");
+            iDoc.addCreator("Tymora "+Constants.getVersion()+", www.unitime.org");
 
             iDoc.open();
         }
@@ -228,7 +228,7 @@ public class PdfLegacyReport implements ReportWriter {
     public void printHeader(boolean newPage) throws DocumentException {
     	if (newPage) {
             out(renderEnd(
-                    renderMiddle("UniTime "+Constants.getVersion(),iTitle),
+                    renderMiddle("Tymora "+Constants.getVersion(),iTitle),
                     iTitle2));
             out(mpad(
             		Formats.getDateFormat(Formats.Pattern.DATE_MEETING).format(new Date()),

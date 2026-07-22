@@ -185,7 +185,7 @@ public class Client implements EntryPoint {
 				if (p.name().equals(page)) {
 					LoadingWidget.getInstance().setMessage(MESSAGES.waitLoading(p.name(MESSAGES)));
 					UniTimePageLabel.getInstance().setPageName(p.name(MESSAGES));
-					Window.setTitle("UniTime " + CONSTANTS.version() + "| " + p.name(MESSAGES));
+					Window.setTitle("Tymora " + CONSTANTS.version() + "| " + p.name(MESSAGES));
 					RootPanel.get("UniTimeGWT:Body").add(p.widget());
 					return;
 				}

@@ -154,7 +154,7 @@ public class SpecialRegistrationInterface {
 		public ChangeStatus status;
 		/** Notes attached to the change (only the last one is needed by UniTime) */
 		public List<ChangeNote> notes;
-		/** Credit value associated with the course / change, populated by UniTime (only during registration) */
+		/** Credit value associated with the course / change, populated by Tymora (only during registration) */
 		public String credit;
 		/** Current grade mode (only used when operation = CHGMODE) */
 		public String currentGradeMode;
@@ -569,7 +569,7 @@ public class SpecialRegistrationInterface {
 	// Returns: SpecialRegistrationCancelResponse
 	
 	/**
-	 * Response message for the /cancelRegistrationRequestFromUniTime call
+	 * Response message for the /cancelRegistrationRequestFromTymora call
 	 */
 	public static class SpecialRegistrationCancelResponse extends Response<String> {
 	}

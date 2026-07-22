@@ -1,4 +1,4 @@
-# UniTime UI → Angular Migration Roadmap
+# Tymora UI → Angular Migration Roadmap
 
 *Backend kept as-is · GWT code untouched · incremental (strangler-fig) migration*
 
@@ -6,7 +6,7 @@
 
 ## 1. What the codebase actually is today
 
-UniTime is **not** a single-stack UI. It is a hybrid that has accreted three UI generations, all served from one WAR:
+Tymora is **not** a single-stack UI. It is a hybrid that has accreted three UI generations, all served from one WAR:
 
 | Layer | Count | How it talks to the backend | Notes |
 |-------|-------|------------------------------|-------|

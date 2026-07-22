@@ -36,10 +36,10 @@
 <!ATTLIST config uniqueId CDATA #REQUIRED >
 <!ATTLIST config name CDATA #REQUIRED >
 <!ATTLIST config unlimitedEnrollment ( false | true ) #REQUIRED >
-<!-- durationType was introduced in UniTime 4.1, if not present the class duration type defaults to minutes per week -->
+<!-- durationType was introduced in Tymora 4.1, if not present the class duration type defaults to minutes per week -->
 <!-- the value of this field has to match ClassDurationType.reference (one of MIN_PER_WEEK, SEMESTER_MIN, SEMESTER_HRS, MEETING_MIN, MEETING_HRS )-->
 <!ATTLIST config durationType CDATA #IMPLIED >
-<!-- instructionalMethod was introduced in UniTime 4.1, if not present the instructional method will not be set -->
+<!-- instructionalMethod was introduced in Tymora 4.1, if not present the instructional method will not be set -->
 <!-- the value of this field has to match InstructionalMethod.reference -->
 <!ATTLIST config instructionalMethod CDATA #IMPLIED >
 <!ATTLIST config uniqueIdRolledForwardFrom CDATA #IMPLIED >
@@ -282,7 +282,7 @@
 <!ATTLIST pointInTimeData sessionBeginDate CDATA #REQUIRED >
 <!ATTLIST pointInTimeData sessionEndDate CDATA #REQUIRED >
 <!ATTLIST pointInTimeData classesEndDate CDATA #REQUIRED >
-<!-- durationType was introduced in UniTime 4.1, if not present the class duration type defaults to minutes per week -->
+<!-- durationType was introduced in Tymora 4.1, if not present the class duration type defaults to minutes per week -->
 <!-- the value of this field has to match ClassDurationType.reference (one of MIN_PER_WEEK, SEMESTER_MIN, SEMESTER_HRS, MEETING_MIN, MEETING_HRS )-->
 <!ATTLIST pointInTimeData durationType CDATA #IMPLIED >
 <!ATTLIST pointInTimeData pointInTimeName CDATA #REQUIRED >

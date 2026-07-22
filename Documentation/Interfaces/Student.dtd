@@ -18,14 +18,14 @@
  * 
  -->
 
-<!-- Element acadAreaClass is deprecated in UniTime 4.2, use major.academicClass and minor.academicClass instead. -->
+<!-- Element acadAreaClass is deprecated in Tymora 4.2, use major.academicClass and minor.academicClass instead. -->
 <!ELEMENT acadAreaClass EMPTY >
 <!ATTLIST acadAreaClass academicArea CDATA #REQUIRED >
 <!ATTLIST acadAreaClass academicClass CDATA #REQUIRED >
 
 <!ELEMENT major EMPTY >
 <!ATTLIST major academicArea CDATA #REQUIRED >
-<!-- Attribute major.academicClass since UniTime 4.2 -->
+<!-- Attribute major.academicClass since Tymora 4.2 -->
 <!ATTLIST major academicClass CDATA #IMPLIED >
 <!ATTLIST major code CDATA #REQUIRED >
 <!ATTLIST major concentration CDATA #IMPLIED >
@@ -34,7 +34,7 @@
 
 <!ELEMENT minor EMPTY >
 <!ATTLIST minor academicArea CDATA #REQUIRED >
-<!-- Attribute minor.academicClass since UniTime 4.2 -->
+<!-- Attribute minor.academicClass since Tymora 4.2 -->
 <!ATTLIST minor academicClass CDATA #IMPLIED >
 <!ATTLIST minor code CDATA #REQUIRED >
 

@@ -47,7 +47,7 @@ Requesters (instructors, students, other staff) submit event requests. As Event
 Manager you:
 
 1. Review incoming requests in **Events** (filter by status = pending).
-2. Check for conflicts via **Room Availability** — UniTime flags overlaps with
+2. Check for conflicts via **Room Availability** — Tymora flags overlaps with
    classes, exams, and other events.
 3. **Approve**, **reject**, or ask for changes; add notes explaining decisions.
 4. Approved events immediately occupy the room and appear on the room timetable

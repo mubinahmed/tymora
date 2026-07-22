@@ -22,9 +22,9 @@
 <!ATTLIST academicArea abbreviation CDATA #REQUIRED >
 <!ATTLIST academicArea externalId CDATA #IMPLIED >
 <!ATTLIST academicArea title CDATA #REQUIRED >
-<!-- deprecated in UniTime 3.4 -->
+<!-- deprecated in Tymora 3.4 -->
 <!ATTLIST academicArea longTitle CDATA #IMPLIED >
-<!-- deprecated in UniTime 3.4 -->
+<!-- deprecated in Tymora 3.4 -->
 <!ATTLIST academicArea shortTitle CDATA #IMPLIED >
 
 <!ELEMENT academicAreas ( academicArea+ ) >

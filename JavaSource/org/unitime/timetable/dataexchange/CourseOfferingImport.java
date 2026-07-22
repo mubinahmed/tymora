@@ -41,33 +41,33 @@ public class CourseOfferingImport extends BaseCourseOfferingImport {
 	@Override
 	protected boolean handleCustomCourseChildElements(CourseOffering courseOffering,
 			Element courseOfferingElement) {
-		// Core UniTime does not have any child elements for the course offering element
+		// Core Tymora does not have any child elements for the course offering element
 		return(false);
 	}
 
 	@Override
 	protected boolean handleCustomClassChildElements(Element classElement,
 			InstrOfferingConfig ioc, Class_ clazz) {
-		// Core UniTime does not have any child elements for the class element
+		// Core Tymora does not have any child elements for the class element
 		return false;
 	}
 
 	@Override
 	protected void postLoadAction() {
-		// Core UniTime does not implement the post load action
+		// Core Tymora does not implement the post load action
 		
 	}
 
 	@Override
 	protected void preLoadAction() {
-		// Core UniTime does not implement the pre load action
+		// Core Tymora does not implement the pre load action
 	}
 
 	@Override
 	protected boolean handleCustomInstrOffrConfigChildElements(
 			InstrOfferingConfig instrOfferingConfig,
 			Element instrOfferingConfigElement) throws Exception {
-		// Core UniTime does not have any child elements for the instructional offering config element
+		// Core Tymora does not have any child elements for the instructional offering config element
 		return false;
 	}
 

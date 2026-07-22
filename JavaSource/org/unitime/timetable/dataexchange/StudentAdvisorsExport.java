@@ -44,7 +44,7 @@ public class StudentAdvisorsExport extends BaseExport {
 	        root.addAttribute("term", session.getAcademicTerm());
 	        root.addAttribute("created", new Date().toString());
 	        
-	        document.addDocType("studentAdvisors", "-//UniTime//UniTime Student Advisors DTD/EN", "http://www.unitime.org/interface/StudentAdvisors.dtd");
+	        document.addDocType("studentAdvisors", "-//UniTime//Tymora Student Advisors DTD/EN", "http://www.unitime.org/interface/StudentAdvisors.dtd");
 	        
 	        for (Advisor advisor: getHibSession().createQuery(
 	        		"from Advisor a where a.session.uniqueId = :sessionId order by a.lastName, a.firstName, a.externalUniqueId", Advisor.class).setParameter("sessionId", session.getUniqueId()).list()) {

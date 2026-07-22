@@ -63,7 +63,7 @@ public class HQLExportXML implements Exporter {
 				false);
 
 		Document document = DocumentHelper.createDocument();
-		document.addDocType("report", "-//UniTime//UniTime HQL Reports DTD/EN",
+		document.addDocType("report", "-//UniTime//Tymora HQL Reports DTD/EN",
 				"http://www.unitime.org/interface/Reports.dtd");
 		Element reportEl = document.addElement("report");
 		reportEl.addAttribute("name", report.getName());

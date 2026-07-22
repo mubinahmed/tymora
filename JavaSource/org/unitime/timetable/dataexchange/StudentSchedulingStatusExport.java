@@ -51,7 +51,7 @@ public class StudentSchedulingStatusExport extends BaseExport {
             root.addAttribute("timeFormat", sTimeFormat.toPattern());
             root.addAttribute("incremental", "true");
 	        
-	        document.addDocType("studentStatuses", "-//UniTime//UniTime Student Scheduling Statuses DTD/EN", "http://www.unitime.org/interface/StudentStatuses.dtd");
+	        document.addDocType("studentStatuses", "-//UniTime//Tymora Student Scheduling Statuses DTD/EN", "http://www.unitime.org/interface/StudentStatuses.dtd");
 	        
 	        for (StudentSectioningStatus status: getHibSession().createQuery(
 	        		"from StudentSectioningStatus where session is null or session.uniqueId = :sessionId order by reference", StudentSectioningStatus.class

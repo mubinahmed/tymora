@@ -39,7 +39,7 @@ public class ScriptExport extends BaseExport{
 		try {
 			beginTransaction();
 			
-			document.addDocType("scripts", "-//UniTime//UniTime Scripts DTD/EN", "http://www.unitime.org/interface/Script.dtd");
+			document.addDocType("scripts", "-//UniTime//Tymora Scripts DTD/EN", "http://www.unitime.org/interface/Script.dtd");
 			
 			Element root = document.addElement("scripts");
 			root.addAttribute("created", new Date().toString());

@@ -23,7 +23,7 @@
 
 	<!-- department ==> Required:  abbreviation, name, deptCode
 	                    Optional:  externalId
-	                    Optional:  allowEvents (since UniTime 3.4)
+	                    Optional:  allowEvents (since Tymora 3.4)
 	-->
 <departments campus="woebegon" term="Fal" year="2007">
 	<department externalId="0S40041C10XBB1GMZOQF" abbreviation="BSCmpt" name="Business Services Computing" deptCode="1068"/>

@@ -94,13 +94,13 @@ public class UniTimePageLabel implements HasValue<PageNameInterface> {
 
 	@Override
 	public void setValue(PageNameInterface value) {
-		Window.setTitle("UniTime " + CONSTANTS.version() + "| " + value.getName());
+		Window.setTitle("Tymora " + CONSTANTS.version() + "| " + value.getName());
 		iLabel.setValue(value);
 	}
 
 	@Override
 	public void setValue(PageNameInterface value, boolean fireEvents) {
-		Window.setTitle("UniTime " + CONSTANTS.version() + "| " + value.getName());
+		Window.setTitle("Tymora " + CONSTANTS.version() + "| " + value.getName());
 		iLabel.setValue(value, fireEvents);
 	}
 

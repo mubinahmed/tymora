@@ -149,7 +149,7 @@ public class Registration extends BodyTagSupport {
 				reg.setProperty("key", sKey);
 				FileOutputStream out = new FileOutputStream(regFile);
 				try {
-					reg.store(out, "UniTime " + Constants.VERSION + " registration file, please do not delete or modify.");
+					reg.store(out, "Tymora " + Constants.VERSION + " registration file, please do not delete or modify.");
 					out.flush();
 				} finally {
 					out.close();
@@ -208,8 +208,8 @@ public class Registration extends BodyTagSupport {
 						pageContext.getOut().println(
 								"<br><span style=\"font-size: x-small;\">Click <a "+
 								"onMouseOver=\"this.style.cursor='hand';this.style.cursor='pointer';\" " +
-								"onClick=\"showGwtDialog('UniTime " + Constants.VERSION + " Registration', 'https://register.unitime.org?key=" + sKey + "&back=" + backUrl + "', '750px', '75%');\" " +
-								"title='UniTime " + Constants.VERSION + " Registration'>here</a> to " +
+								"onClick=\"showGwtDialog('Tymora " + Constants.VERSION + " Registration', 'https://register.unitime.org?key=" + sKey + "&back=" + backUrl + "', '750px', '75%');\" " +
+								"title='Tymora " + Constants.VERSION + " Registration'>here</a> to " +
 								(sRegistered ? "update the current registration" : "register") + "." +
 								"</span>");
 						switch (obtrusiveness) {
@@ -220,8 +220,8 @@ public class Registration extends BodyTagSupport {
 							pageContext.getOut().println("<script>function gwtOnLoad() { gwtShowMessage(\"" + sMessage +
 									"<br><span style='font-size: x-small;'>Click <a " +
 									"onMouseOver=\\\"this.style.cursor='hand';this.style.cursor='pointer';\\\" " +
-									"onCLick=\\\"showGwtDialog('UniTime " + Constants.VERSION + " Registration', 'https://register.unitime.org?key=" + sKey + "&back=" + backUrl + "', '750px', '75%');\\\" " +
-									"title='UniTime " + Constants.VERSION + " Registration'>here</a> to " +
+									"onCLick=\\\"showGwtDialog('Tymora " + Constants.VERSION + " Registration', 'https://register.unitime.org?key=" + sKey + "&back=" + backUrl + "', '750px', '75%');\\\" " +
+									"title='Tymora " + Constants.VERSION + " Registration'>here</a> to " +
 									(sRegistered ? "update the current registration" : "register") + "." +
 									"</span>\"); }</script>");							
 						}

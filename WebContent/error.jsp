@@ -29,7 +29,7 @@
     <meta charset="UTF-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-	<TITLE>UniTime <%=Constants.VERSION%>| Error</TITLE>
+	<TITLE>Tymora <%=Constants.VERSION%>| Error</TITLE>
 	<link type="text/css" rel="stylesheet" href="unitime/gwt/standard/standard.css">
     <link type="text/css" rel="stylesheet" href="styles/unitime.css">
     <link type="text/css" rel="stylesheet" href="styles/unitime-mobile.css">

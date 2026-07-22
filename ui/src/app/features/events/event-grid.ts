@@ -33,7 +33,7 @@ interface Layout {
 /**
  * Weekly-pattern timetable grid for a set of events. Each event's meetings are
  * collapsed by (day-of-week, start/end slot) into positioned blocks — the
- * standard UniTime "representative week" view. 5-minute slots (min = 5*slot),
+ * standard Tymora "representative week" view. 5-minute slots (min = 5*slot),
  * dayOfWeek 0=Monday..6=Sunday. Overlapping blocks in a day share the width.
  */
 @Component({

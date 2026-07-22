@@ -1,4 +1,4 @@
-# UniTime Glossary & Core Concepts
+# Tymora Glossary & Core Concepts
 
 Read this first if you are new to UniTime. Every persona guide assumes this
 vocabulary. Terms are grouped by theme and ordered roughly the way you meet them.

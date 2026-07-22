@@ -171,10 +171,10 @@ public class PdfReportWriter implements ReportWriter {
 			}
 		});
 		iDocument.addTitle(iTitle);
-		iDocument.addAuthor("UniTime "+Constants.getVersion()+", www.unitime.org");
+		iDocument.addAuthor("Tymora "+Constants.getVersion()+", www.unitime.org");
 		if (iSubject != null)
 			iDocument.addSubject(iSubject);
-		iDocument.addCreator("UniTime "+Constants.getVersion()+", www.unitime.org");
+		iDocument.addCreator("Tymora "+Constants.getVersion()+", www.unitime.org");
 		iDocument.open();
 	}
 	
@@ -194,7 +194,7 @@ public class PdfReportWriter implements ReportWriter {
 		if (iCont != null && !iCont.isEmpty()) {
 			cb.beginText();
 			cb.setFontAndSize(iFont.getBaseFont(), iFont.getSize());
-			cb.showTextAligned(PdfContentByte.ALIGN_LEFT, "UniTime "+Constants.getVersion(), document.left(), document.top() + 24, 0);
+			cb.showTextAligned(PdfContentByte.ALIGN_LEFT, "Tymora "+Constants.getVersion(), document.left(), document.top() + 24, 0);
 			cb.showTextAligned(PdfContentByte.ALIGN_RIGHT, iTitle, document.right(), document.top() + 24, 0);
 			cb.showTextAligned(PdfContentByte.ALIGN_CENTER, iTitle2, (document.left() + document.right()) / 2, document.top() + 24, 0);
 			cb.showTextAligned(PdfContentByte.ALIGN_LEFT, Formats.getDateFormat(Formats.Pattern.DATE_MEETING).format(new Date()), document.left(), document.top() + 16, 0);
@@ -208,7 +208,7 @@ public class PdfReportWriter implements ReportWriter {
 		} else {
 			cb.beginText();
 			cb.setFontAndSize(iFont.getBaseFont(), iFont.getSize());
-			cb.showTextAligned(PdfContentByte.ALIGN_LEFT, "UniTime "+Constants.getVersion(), document.left(), document.top() + 14, 0);
+			cb.showTextAligned(PdfContentByte.ALIGN_LEFT, "Tymora "+Constants.getVersion(), document.left(), document.top() + 14, 0);
 			cb.showTextAligned(PdfContentByte.ALIGN_RIGHT, iTitle, document.right(), document.top() + 14, 0);
 			cb.showTextAligned(PdfContentByte.ALIGN_CENTER, iTitle2, (document.left() + document.right()) / 2, document.top() + 14, 0);
 			cb.showTextAligned(PdfContentByte.ALIGN_LEFT, Formats.getDateFormat(Formats.Pattern.DATE_MEETING).format(new Date()), document.left(), document.top() + 4, 0);

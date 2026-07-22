@@ -3,7 +3,7 @@
 **Role:** *Instructor* (tied to your real person record, often via your
 institution's login/integration).
 
-As an instructor you use UniTime to see what and when you're teaching, tell the
+As an instructor you use Tymora to see what and when you're teaching, tell the
 schedulers when you're available and what you prefer, handle enrollment consent
 where required, and book occasional rooms for course-related activities.
 

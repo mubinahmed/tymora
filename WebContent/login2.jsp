@@ -47,7 +47,7 @@
     	<link rel="stylesheet" type="text/css" href="%tmtbl.custom.css%" />
     </tt:hasProperty>
     <link rel="shortcut icon" href="images/timetabling.ico" />
-	<title>UniTime <%=Constants.VERSION%>| <loc:message name="pageLogIn"/></title>
+	<title>Tymora <%=Constants.VERSION%>| <loc:message name="pageLogIn"/></title>
     <script type="text/javascript" src="scripts/loading.js"></script>
 	<script type="text/javascript" src="scripts/rtt.js"></script>
 	<script type="text/javascript" src="unitime/unitime.nocache.js"></script>

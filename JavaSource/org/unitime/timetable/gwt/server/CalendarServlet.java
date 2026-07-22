@@ -180,9 +180,9 @@ public class CalendarServlet extends HttpServlet {
 		ical.setVersion(ICalVersion.V2_0);
 		ical.setCalendarScale(CalendarScale.gregorian());
 		ical.setMethod(new Method("PUBLISH"));
-		ical.setExperimentalProperty("X-WR-CALNAME", "UniTime Schedule");
+		ical.setExperimentalProperty("X-WR-CALNAME", "Tymora Schedule");
 		ical.setExperimentalProperty("X-WR-TIMEZONE", TimeZone.getDefault().getID());
-		ical.setProductId("-//UniTime LLC/UniTime " + Constants.getVersion() + " Schedule//EN");
+		ical.setProductId("-//Tymora LLC/Tymora " + Constants.getVersion() + " Schedule//EN");
 
 		org.hibernate.Session hibSession = CurriculumDAO.getInstance().getSession();
 		try {

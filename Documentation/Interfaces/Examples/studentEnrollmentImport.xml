@@ -27,17 +27,17 @@
     <class externalId="123124"/>
     <class externalId="123412"/>
     <!-- course (external) id is optional, and only useful for cross-listed courses to import enrollments to a non-controlling course -->
-    <!-- since UniTime 3.3.24 -->
+    <!-- since Tymora 3.3.24 -->
     <class externalId="129854" courseId="12432"/>
   </student>
   
   <!-- otherwise, providing just an external id for a student is enough -->
   <student externalId="1001">
     <!-- if there is no external id on the class, class name can be used instead -->
-    <!-- only in UniTime 3.1.283 or later -->
+    <!-- only in Tymora 3.1.283 or later -->
     <class externalId="PSY 101 Lec 1"/>
     <!-- if external ids are not available, subject, courseNbr, type and suffix can be used instead -->
-    <!-- since UniTime 3.3.24 -->
+    <!-- since Tymora 3.3.24 -->
     <class subject="PSY" courseNbr="101" type="Lec" suffix="1"/>
     <class subject="ECON" courseNbr="101" type="Lec" suffix="1"/>
     <class subject="SOC" courseNbr="101" type="Lec" suffix="2"/>

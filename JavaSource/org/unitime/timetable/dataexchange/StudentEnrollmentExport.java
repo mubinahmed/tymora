@@ -43,7 +43,7 @@ public class StudentEnrollmentExport extends BaseExport {
 	        root.addAttribute("campus", session.getAcademicInitiative());
 	        root.addAttribute("year", session.getAcademicYear());
 	        root.addAttribute("term", session.getAcademicTerm());
-	        document.addDocType("studentEnrollments", "-//UniTime//UniTime Student Enrollments DTD/EN", "http://www.unitime.org/interface/StudentEnrollment.dtd");
+	        document.addDocType("studentEnrollments", "-//UniTime//Tymora Student Enrollments DTD/EN", "http://www.unitime.org/interface/StudentEnrollment.dtd");
 	        
 	        for (Student student: getHibSession().createQuery(
 	        		"select s from Student s where s.session.uniqueId = :sessionId", Student.class)

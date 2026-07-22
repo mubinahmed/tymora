@@ -16,7 +16,7 @@ import com.google.gson.Gson;
 
 /**
  * Standalone, DB-free proof of the Wave 0 facade contract, exercising the REAL
- * compiled UniTime DTO classes and the REAL PageNameBackend command bean.
+ * compiled Tymora DTO classes and the REAL PageNameBackend command bean.
  *
  * It proves the three things the facade actually does (the business logic is
  * already trusted):

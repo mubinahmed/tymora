@@ -35,7 +35,7 @@ import org.unitime.timetable.dataexchange.DataExchangeHelper;
  * 		java -Xmx2g -Dtmtbl.custom.properties=~/Tomcat/conf/unitime.properties -cp timetable.jar \
  * 		     org.unitime.timetable.util.ImportXmlFile fileToImport.xml myExternalId
  * </code>
- * Where tmtbl.custom.properties points to UniTime custom properties (if there are any) and the fileToImport.xml is
+ * Where tmtbl.custom.properties points to Tymora custom properties (if there are any) and the fileToImport.xml is
  * the XML file to import.
  * The second parameter (external id of the timetabling manager under which the import is to be done) is optional.
  *

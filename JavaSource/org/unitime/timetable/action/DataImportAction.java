@@ -272,7 +272,7 @@ public class DataImportAction extends UniTimeAction<DataImportForm> {
                                 "This email was automatically generated at "+
                                 iUrl+
                                 ", by "+
-                                "UniTime "+Constants.getVersion()+
+                                "Tymora "+Constants.getVersion()+
                                 " (Univesity Timetabling Application, http://www.unitime.org).");
                     	mail.addRecipient(address, getOwnerName());
                     	if (ApplicationProperty.EmailNotificationDataExchange.isTrue())

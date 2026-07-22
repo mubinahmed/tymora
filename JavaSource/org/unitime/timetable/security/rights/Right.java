@@ -83,7 +83,7 @@ public enum Right {
 	HasRole,
 	IsAdmin,
 	
-	/** Can register UniTime */
+	/** Can register Tymora */
     Registration,
 
 	/** Individual page rights: Courses Input Data */

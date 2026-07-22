@@ -3217,7 +3217,7 @@ public interface StudentSectioningMessages extends Messages {
 	@DefaultMessage("Property value copied to clipboard.")
 	String changeLogPropertyValueCopiedToClipbard();
 	
-	@DefaultMessage("Your UniTime session may have expired. Click here to log in again.")
+	@DefaultMessage("Your Tymora session may have expired. Click here to log in again.")
 	String sessionExpiredClickToLogin();
 	
 	@DefaultMessage("PIN: {0}")
@@ -3373,7 +3373,7 @@ public interface StudentSectioningMessages extends Messages {
 	@DefaultMessage("- To: ")
 	String propSchedulingPrefDatesTo();
 	
-	@DefaultMessage("The above dates are optional, and it is also possible to put in just the start or the end date. When provided, UniTime is not allowed to select a class that falls outside of the above dates.")
+	@DefaultMessage("The above dates are optional, and it is also possible to put in just the start or the end date. When provided, Tymora is not allowed to select a class that falls outside of the above dates.")
 	String propSchedulingPrefDatesDescription();
 	
 	@DefaultMessage("Class Modality:")
@@ -3382,19 +3382,19 @@ public interface StudentSectioningMessages extends Messages {
 	@DefaultMessage("Prefer Face-to-Face")
 	String itemSchedulingModalityPreferFaceToFace();
 	
-	@DefaultMessage("When possible, UniTime tries to avoid arranged hours and online classes.")
+	@DefaultMessage("When possible, Tymora tries to avoid arranged hours and online classes.")
 	String descSchedulingModalityPreferFaceToFace();
 	
 	@DefaultMessage("Prefer Online")
 	String itemSchedulingModalityPreferOnline();
 	
-	@DefaultMessage("When possible, UniTime tries to avoid face-to-face classes.")
+	@DefaultMessage("When possible, Tymora tries to avoid face-to-face classes.")
 	String descSchedulingModalityPreferOnline();
 	
 	@DefaultMessage("Require Online")
 	String itemSchedulingModalityRequireOnline();
 	
-	@DefaultMessage("UniTime is not allowed to select a class that is not online.")
+	@DefaultMessage("Tymora is not allowed to select a class that is not online.")
 	String descSchedulingModalityRequireOnline();
 	
 	@DefaultMessage("No Preference")
@@ -3415,13 +3415,13 @@ public interface StudentSectioningMessages extends Messages {
 	@DefaultMessage("Prefer Back-to-Backs")
 	String itemSchedulingBackToBackPrefer();
 	
-	@DefaultMessage("When possible, UniTime tries to avoid gaps in the schedule (dense schedule).")
+	@DefaultMessage("When possible, Tymora tries to avoid gaps in the schedule (dense schedule).")
 	String descSchedulingBackToBackPrefer();
 
 	@DefaultMessage("Avoid Back-to-Backs")
 	String itemSchedulingBackToBackDiscourage();
 	
-	@DefaultMessage("When possible, UniTime tries to avoid back-to-back classes (sparse schedule).")
+	@DefaultMessage("When possible, Tymora tries to avoid back-to-back classes (sparse schedule).")
 	String descSchedulingBackToBackDiscourage();
 
 	@DefaultMessage("<u>S</u>ave")

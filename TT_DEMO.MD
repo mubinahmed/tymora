@@ -1,4 +1,4 @@
-# UniTime — Course Timetable Generation Demo: **Marina Bay Institute of Technology**
+# Tymora — Course Timetable Generation Demo: **Marina Bay Institute of Technology**
 
 This document is a **step-by-step runbook** that builds a complete **course timetable**
 from scratch for a worked example: **Marina Bay Institute of Technology (MBIT)** — a
@@ -38,7 +38,7 @@ steps (§4), run the **solver** (§5), optionally run an **examination** pass (�
 
 ## 1. Prerequisites
 
-1. **UniTime running** and reachable. The live instance used while writing this guide is
+1. **Tymora running** and reachable. The live instance used while writing this guide is
    `http://localhost:8080` (deployed Tomcat). If you run the Angular dev server it listens on
    `http://localhost:4200` and proxies `/api` + legacy pages to `:8080` (`ui/proxy.conf.json`).
 2. A **blank** database seeded with schema + reference data (we build MBIT from scratch):
@@ -52,7 +52,7 @@ steps (§4), run the **solver** (§5), optionally run an **examination** pass (�
 
 ## 2. Users & who does what
 
-UniTime is **role-driven**: every action requires a user whose **role** grants the right, and
+Tymora is **role-driven**: every action requires a user whose **role** grants the right, and
 (for department data) whose **assigned department** matches the data. For this demo you use
 three identities.
 
@@ -409,7 +409,7 @@ stand up a *custom* demo university without hand-entering every screen.
 
 ## 8. Suggested 15-minute demo script
 
-1. **Frame it** (1 min) — **[narrator]**: "UniTime builds a conflict-free class timetable for MBIT
+1. **Frame it** (1 min) — **[narrator]**: "Tymora builds a conflict-free class timetable for MBIT
    from courses, rooms, instructors, and preferences." Show the concept table (§0) and the user
    matrix (§2.3).
 2. **The inputs** (4 min) — **[as *Wei Ling*]**: Open **Instructional Offerings** → **CS1010**'s

@@ -3527,7 +3527,7 @@ public interface CourseMessages extends Messages {
     @DefaultMessage("Lookup")
 	String buttonLookup();
 
-	@DefaultMessage("UniTime {0} failed to start up properly, please check the application log for more details.")
+	@DefaultMessage("Tymora {0} failed to start up properly, please check the application log for more details.")
 	String errorUniTimeFailedToStart(String version);
 
 	@DefaultMessage("BACK")
@@ -3836,7 +3836,7 @@ public interface CourseMessages extends Messages {
 	@DefaultMessage("TimeStamp:")
 	String propTimeStamp();
 	
-	@DefaultMessage("UniTime ({0}): {1}")
+	@DefaultMessage("Tymora ({0}): {1}")
 	String emailInquirySubject(String type, String subject);
 	
 	@DefaultMessage("The following inquiry was submitted on your behalf. We will contact you soon. This email was automatically generated, please do not reply.")

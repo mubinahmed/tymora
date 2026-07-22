@@ -1,13 +1,13 @@
-# UniTime Documentation
+# Tymora Documentation
 
-UniTime is a comprehensive **University Timetabling System** — an open-source
+Tymora is a comprehensive **University Timetabling System** — an open-source
 (Apache 2.0, Apereo Foundation) web application for building and managing course
 timetables, examination timetables, campus events, and student class schedules.
 
 - Project site: <https://www.unitime.org>
 - Online help: <https://help.unitime.org>
 - Live demo: <https://demo.unitime.org>
-- This repository: UniTime **4.8**
+- This repository: Tymora **4.8**
 
 ---
 

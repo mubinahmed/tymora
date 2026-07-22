@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <?xml-stylesheet type="text/css" href="Release-Notes.css"?>
-<!DOCTYPE release-history PUBLIC "-//UniTime//UniTime Release Notes DTD/EN" "Release-Notes.dtd">
+<!DOCTYPE release-history PUBLIC "-//UniTime//Tymora Release Notes DTD/EN" "Release-Notes.dtd">
 <!--
  * Licensed to The Apereo Foundation under one or more contributor license
  * agreements. See the NOTICE file distributed with this work for
@@ -23,7 +23,7 @@
 
 <release-history>
 
-<doc-title>UniTime 4.8 Release Notes</doc-title>
+<doc-title>Tymora 4.8 Release Notes</doc-title>
 
 <release>
 	<version>4.8.${build.number}</version>
@@ -462,10 +462,10 @@
 		<item>
 			<name>Scripts: ECMAScript</name>
 			<description>
-				<line>Nashorn is now included in the UniTime distribution.
+				<line>Nashorn is now included in the Tymora distribution.
 					<line>Starting with Java 15, ECMAScript has been removed from JDK.</line>
 				</line>
-				<line>Jython is now included in the UniTime distribution so that Python scripts do work out of the box.</line>
+				<line>Jython is now included in the Tymora distribution so that Python scripts do work out of the box.</line>
 			</description>
 		</item>
 	</category>
@@ -977,7 +977,7 @@
 		<item>
 			<name>Docker Installation</name>
 			<description>
-				<line>Added an ability to install UniTime as a Docker container.</line>
+				<line>Added an ability to install Tymora as a Docker container.</line>
 				<line>See https://help.unitime.org/docker for more details.</line>
 			</description>
 		</item>
@@ -1270,7 +1270,7 @@
 					<line>Enrollment Approval (enrollment requiring a consent has been approved)</line>
 					<line>Course Schedule Change (time or room of one of the classes has changed due to re-scheduling)</line>
 					<line>Course Enrollment Change (an enrollment change was done by wait-listing or re-scheduling)</line>
-					<line>Course Failed Enrollment Change (UniTime failed to make an enrollment change during wait-listing or re-scheduling)</line>
+					<line>Course Failed Enrollment Change (Tymora failed to make an enrollment change during wait-listing or re-scheduling)</line>
 					<line>External Enrollment Change (there has been an enrollment change done externally, outside of UniTime)</line>
 				</line>
 			</description>
@@ -1381,9 +1381,9 @@
 		<item>
 			<name>Hibernate 6.2 / JGroups 5.2</name>
 			<description>
-				<line>UniTime updated to use the latest versions of Hibernate 6.2 and JGroups 5.2.</line>
+				<line>Tymora updated to use the latest versions of Hibernate 6.2 and JGroups 5.2.</line>
 				<line>Infinispan 14 is now used for second level cache and cache replication/invalidation when there are multiple web servers.</line>
-				<line>This, however, requires UniTime to use Java 11 or later (Java 8 is no longer supported).</line>
+				<line>This, however, requires Tymora to use Java 11 or later (Java 8 is no longer supported).</line>
 				<line>Some HQL reports may need to be updated due to the Hibernate upgrade, e.g.,
 					<line>table = id no longer works (e.g., Session = %SESSION% must be changed to Session.uniqueId = %SESSION%)</line>
 					<line>x is true needs to be changed to x = true</line>

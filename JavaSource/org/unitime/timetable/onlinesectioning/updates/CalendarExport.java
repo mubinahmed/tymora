@@ -88,9 +88,9 @@ public class CalendarExport implements OnlineSectioningAction<String>{
 			ical.setVersion(ICalVersion.V2_0);
 			ical.setCalendarScale(CalendarScale.gregorian());
 			ical.setMethod(new Method("PUBLISH"));
-			ical.setExperimentalProperty("X-WR-CALNAME", "UniTime Schedule");
+			ical.setExperimentalProperty("X-WR-CALNAME", "Tymora Schedule");
 			ical.setExperimentalProperty("X-WR-TIMEZONE", TimeZone.getDefault().getID());
-			ical.setProductId("-//UniTime LLC/UniTime " + Constants.getVersion() + " Schedule//EN");
+			ical.setProductId("-//Tymora LLC/Tymora " + Constants.getVersion() + " Schedule//EN");
 
 			if (iClassIds != null && !iClassIds.isEmpty()) {
 	        	for (String classId: iClassIds.split(",")) {
@@ -140,9 +140,9 @@ public class CalendarExport implements OnlineSectioningAction<String>{
 		ical.setVersion(ICalVersion.V2_0);
 		ical.setCalendarScale(CalendarScale.gregorian());
 		ical.setMethod(new Method("PUBLISH"));
-		ical.setExperimentalProperty("X-WR-CALNAME", "UniTime Schedule");
+		ical.setExperimentalProperty("X-WR-CALNAME", "Tymora Schedule");
 		ical.setExperimentalProperty("X-WR-TIMEZONE", TimeZone.getDefault().getID());
-		ical.setProductId("-//UniTime LLC/UniTime " + Constants.getVersion() + " Schedule//EN");
+		ical.setProductId("-//Tymora LLC/Tymora " + Constants.getVersion() + " Schedule//EN");
 
 		for (XRequest request: student.getRequests()) {
 			if (request instanceof XCourseRequest) {

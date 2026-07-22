@@ -3,7 +3,7 @@
 **Role:** *Student* (tied to your real person record, usually via your
 institution's login).
 
-As a student you use UniTime to request the courses you want and get an actual,
+As a student you use Tymora to request the courses you want and get an actual,
 conflict-free class schedule. The two tools you'll use are **Course Requests** and
 the **Scheduling Assistant**.
 

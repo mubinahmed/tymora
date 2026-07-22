@@ -34,7 +34,7 @@
 <!ATTLIST staffMember positionType CDATA #IMPLIED >
 <!ATTLIST staffMember email CDATA #IMPLIED >
 
-<!-- Deprecated in UniTime 3.3 -->
+<!-- Deprecated in Tymora 3.3 -->
 <!ATTLIST staffMember positionCode CDATA #IMPLIED >
 
 

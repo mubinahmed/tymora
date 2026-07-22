@@ -1,6 +1,6 @@
-# UniTime — Developer Onboarding Guide
+# Tymora — Developer Onboarding Guide
 
-Welcome to UniTime 4.8. This guide gets you from a clean checkout to a running,
+Welcome to Tymora 4.8. This guide gets you from a clean checkout to a running,
 modifiable application, and explains how the codebase is organized so you know
 where to make changes.
 

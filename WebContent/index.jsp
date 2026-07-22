@@ -27,7 +27,7 @@
 		<meta http-equiv="Refresh" content="1; url=selectPrimaryRole.action">	
 		<link rel="stylesheet" type="text/css" href="styles/timetabling.css">
 		<link rel="shortcut icon" href="images/timetabling.ico" />
-		<title>UniTime <%=Constants.VERSION%>| University Timetabling Application</title>
+		<title>Tymora <%=Constants.VERSION%>| University Timetabling Application</title>
 	</head>
 	<body>
 	</body>

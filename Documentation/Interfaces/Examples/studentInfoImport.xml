@@ -51,7 +51,7 @@
   </student>
   <student externalId="1002" firstName="Brian" lastName="Student">
   	<!--
-  	  Since UniTime 4.2, it is desired to include academicClass attribute in the major and minor elements rather than using the studentAcadAreaClass element.
+  	  Since Tymora 4.2, it is desired to include academicClass attribute in the major and minor elements rather than using the studentAcadAreaClass element.
   	  Element studentAcadAreaClass is no longer needed and it can be removed (it is left in here for backward compatibility).
   	-->
     <studentAcadAreaClass>

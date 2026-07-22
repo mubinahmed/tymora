@@ -51,7 +51,7 @@ public class StudentExport extends BaseExport {
 	        root.addAttribute("year", session.getAcademicYear());
 	        root.addAttribute("term", session.getAcademicTerm());
 	        
-	        document.addDocType("students", "-//UniTime//UniTime Students DTD/EN", "http://www.unitime.org/interface/Student.dtd");
+	        document.addDocType("students", "-//UniTime//Tymora Students DTD/EN", "http://www.unitime.org/interface/Student.dtd");
 	        
 	        for (Student student: getHibSession().createQuery(
 	        		"select s from Student s where s.session.uniqueId = :sessionId", Student.class)

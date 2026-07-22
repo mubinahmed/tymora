@@ -2,7 +2,7 @@ import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 
 /**
- * UniTime design-system preset (derived from the "Add Event" Claude Design mock).
+ * Tymora design-system preset (derived from the "Add Event" Claude Design mock).
  *
  * Two palettes carry the whole look:
  *  - primary: a navy→sky blue ramp (#042C53 … #378ADD … #E6F1FB) used for actions,

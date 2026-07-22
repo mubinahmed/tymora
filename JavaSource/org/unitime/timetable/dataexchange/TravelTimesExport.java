@@ -49,7 +49,7 @@ public class TravelTimesExport extends BaseExport {
 	        root.addAttribute("term", session.getAcademicTerm());
 	        root.addAttribute("created", new Date().toString());
 	        
-	        document.addDocType("traveltimes", "-//UniTime//UniTime Travel Times DTD/EN", "http://www.unitime.org/interface/TravelTimes.dtd");
+	        document.addDocType("traveltimes", "-//UniTime//Tymora Travel Times DTD/EN", "http://www.unitime.org/interface/TravelTimes.dtd");
 	        
 	        Map<Long, Map<Long, Integer>> matrix = new HashMap<Long, Map<Long,Integer>>();
 	        for (TravelTime travel: getHibSession().createQuery(

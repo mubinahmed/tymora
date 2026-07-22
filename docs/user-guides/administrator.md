@@ -3,7 +3,7 @@
 **Roles:** *System Administrator* (`Sysadmin`) and *Session Administrator*
 (`Administrator`).
 
-You are the person who sets up UniTime and keeps its foundations correct. Nothing
+You are the person who sets up Tymora and keeps its foundations correct. Nothing
 the other personas do is possible until the administrator has created the academic
 session and the reference data it depends on.
 
@@ -58,7 +58,7 @@ Curriculum Managers, Exam Managers, and Event Managers.
 
 ## Managing users and access
 
-UniTime access is role-based (see [Glossary → People & access](glossary.md)).
+Tymora access is role-based (see [Glossary → People & access](glossary.md)).
 
 1. **Timetable Managers** (Administration → Academic Sessions → Managers) — create
    a manager record for each staff member and link them to the department(s) they

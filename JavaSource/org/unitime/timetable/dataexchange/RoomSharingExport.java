@@ -58,7 +58,7 @@ public class RoomSharingExport extends BaseExport {
 			root.addAttribute("timeFormat", "HHmm");
 			
 
-			document.addDocType("roomSharing", "-//UniTime//UniTime Room Sharing DTD/EN", "http://www.unitime.org/interface/RoomSharing.dtd");
+			document.addDocType("roomSharing", "-//UniTime//Tymora Room Sharing DTD/EN", "http://www.unitime.org/interface/RoomSharing.dtd");
 
 			List<Location> locations = Location.findAll(session.getUniqueId());
 			Collections.sort(locations);

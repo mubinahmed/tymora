@@ -93,7 +93,7 @@ public class MenuBackend implements GwtRpcImplementation<MenuRpcRequest, GwtRpcR
 	        SAXReader sax = new SAXReader();
 	        sax.setEntityResolver(new EntityResolver() {
 	        	public InputSource resolveEntity(String publicId, String systemId) {
-	        		if (publicId.equals("-//UniTime//UniTime Menu DTD/EN")) {
+	        		if (publicId.equals("-//UniTime//Tymora Menu DTD/EN")) {
 	        			return new InputSource(ApplicationProperties.class.getClassLoader().getResourceAsStream("menu.dtd"));
 	        		}
 	        		return null;

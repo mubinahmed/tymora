@@ -39,7 +39,7 @@ public class HQLExport extends BaseExport{
 		try {
 			beginTransaction();
 
-			document.addDocType("reports", "-//UniTime//UniTime HQL Reports DTD/EN", "http://www.unitime.org/interface/Reports.dtd");
+			document.addDocType("reports", "-//UniTime//Tymora HQL Reports DTD/EN", "http://www.unitime.org/interface/Reports.dtd");
 
 			Element root = document.addElement("reports");
 			root.addAttribute("created", new Date().toString());
