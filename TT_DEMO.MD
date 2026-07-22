@@ -1,329 +1,487 @@
-# UniTime — Course Timetable Generation Demo: Setup & Run Guide
+# UniTime — Course Timetable Generation Demo: **Marina Bay Institute of Technology**
 
-This document is a **step-by-step runbook** for preparing UniTime and running a
-**course timetabling** demo for a university audience. It covers two paths:
+This document is a **step-by-step runbook** that builds a complete **course timetable**
+from scratch for a worked example: **Marina Bay Institute of Technology (MBIT)** — a
+*fictional* university in Singapore. Every screen below is given with the **exact data to
+enter** and the **user/role that performs it**, so you can reproduce the whole session end
+to end and run the solver on it.
 
-- **Path A — Fast demo** using the shipped **woebegon** sample university (minutes to running).
-- **Path B — Build a session from scratch**, entering/loading the data yourself
-  (the full "how a university sets up a term" story).
+> **MBIT is fictional.** The institution, staff names, and course codes are invented for
+> this demo and do not represent any real Singapore university. Swap in your own data freely.
 
-Then it covers the **solver run** (Load → Solve → Review → Save → **Commit**),
-a suggested **demo script**, and **troubleshooting**.
+The flow: define your **users** (§2), enter the **MBIT dataset** (§3) through the build
+steps (§4), run the **solver** (§5), optionally run an **examination** pass (§6), then a
+**demo script** (§8) and **troubleshooting** (§9).
 
-> Screen and action names below are quoted from `JavaSource/menu.xml`. This build
-> has an in-progress **Angular UI**: many screens are already Angular, the rest fall
-> through to the legacy pages via the same menu — the workflow is identical either way.
-> Deeper background lives in `docs/user-guides/` (esp. `administrator.md`,
-> `department-schedule-manager.md`, `glossary.md`) and `docs/DEVELOPER_ONBOARDING.md`.
+> Screen and action names are quoted from `JavaSource/menu.xml`. This build has an
+> in-progress **Angular UI**: many screens are already Angular, the rest fall through to the
+> legacy pages via the same menu — the workflow is identical either way. Background lives in
+> `docs/user-guides/` (esp. `administrator.md`, `department-schedule-manager.md`, `glossary.md`).
 
 ---
 
-## 0. Key concepts (60-second primer for the demo)
+## 0. Key concepts (60-second primer)
 
 | Term | What it is |
 |---|---|
-| **Academic Session** | One term at one campus, e.g. *2010 Fall, woebegon*. Everything is scoped to a session. |
+| **Academic Session** | One term at one campus, e.g. *2026 Aug, MBIT*. Everything is scoped to a session. |
 | **Session Status** (`DepartmentStatusType`) | A capability gate on the session: whether managers may **edit data**, **run the solver** (`Timetabling`), or **commit** (`Timetable Published`). If a screen is read-only, check the **status** first, not permissions. |
-| **Department → Subject Area** | A department (e.g. `0101`) owns subject areas (e.g. `ALG`, `BIOL`). |
+| **Department → Subject Area** | A department (e.g. School of Computing `0100`) owns subject areas (e.g. `CS`, `IS`, `AI`). |
 | **Solver Group** | The entity that *owns* a course solution. Departments are assigned to a solver group; **the course solver loads and saves one solver group's data**. |
 | **Timetable Manager + Role** | A user account with a role (e.g. *Department Schedule Manager*) whose **rights** allow solving/committing, plus the department(s) they manage. |
-| **Instructional Offering hierarchy** | `Instructional Offering → Course Offering(s) → Configuration → Scheduling Subpart (Lecture/Lab/Recitation) → Class (section)`. |
+| **Instructional Offering hierarchy** | `Instructional Offering → Course Offering(s) → Configuration → Scheduling Subpart (Lecture/Tutorial/Lab) → Class (section)`. |
 | **Preferences** | Required → Strongly Preferred → Preferred → **Neutral** → Discouraged → Strongly Discouraged → Prohibited, applied to time / room / building / feature / group / date pattern / distribution / instructor. |
 | **Solver** | The cpsolver engine. You pick a **Configuration**, **Load** data, **Start** solving, keep the **best** solution, then **Save** and **Commit**. |
-| **Commit** | Makes a saved solution the **official** timetable for the session — feeds public/instructor/student views, student sectioning, and exam/event scheduling. |
+| **Commit** | Makes a saved solution the **official** timetable — feeds public/instructor/student views, student sectioning, and exam/event scheduling. |
 
 ---
 
 ## 1. Prerequisites
 
-1. **UniTime running** and reachable (this instance: `http://localhost:8888`, Angular dev UI proxies to it).
-2. A database seeded with **schema + reference data**:
+1. **UniTime running** and reachable. The live instance used while writing this guide is
+   `http://localhost:8080` (deployed Tomcat). If you run the Angular dev server it listens on
+   `http://localhost:4200` and proxies `/api` + legacy pages to `:8080` (`ui/proxy.conf.json`).
+2. A **blank** database seeded with schema + reference data (we build MBIT from scratch):
    - `Documentation/Database/MySQL/schema.sql` (tables)
-   - `Documentation/Database/MySQL/blank-data.sql` (roles, rights, status types, distribution types, preference levels — the minimum to log in and work), **or**
-   - `Documentation/Database/MySQL/woebegon-data.sql` (a *complete* pre-loaded demo — see Path A).
+   - `Documentation/Database/MySQL/blank-data.sql` (roles, rights, status types, distribution
+     types, preference levels — the minimum to log in and build a session).
 3. **Admin login**: `admin` / `admin` (default for the Docker/demo build).
-4. A modern browser. Have the **menu** open — the whole app is menu-driven.
-
-> Docker shortcut: `Documentation/Docker/docker-compose.yml` stands up MySQL (auto-seeded
-> with `schema.sql` + `woebegon-data.sql`) and Tomcat. This is the quickest way to a running demo.
+4. A modern browser, with the **menu** open — the whole app is menu-driven.
 
 ---
 
-## 2. Path A — Fast demo with the woebegon sample university
+## 2. Users & who does what
 
-Use this when you want a **populated, already-solved** timetable to show immediately.
-The `woebegon-data.sql` dump contains a full session: departments, buildings/rooms,
-offerings, classes, preferences, and a committed solution.
+UniTime is **role-driven**: every action requires a user whose **role** grants the right, and
+(for department data) whose **assigned department** matches the data. For this demo you use
+three identities.
 
-### A.1 Load the dataset
-- If using Docker: it's already loaded — skip to A.2.
-- Otherwise load the dump into a `timetable` MySQL database:
-  ```bash
-  mysql -u root -p timetable < Documentation/Database/MySQL/woebegon-data.sql
-  ```
-  (The script does `use timetable;`, wipes all tables, then inserts the demo.)
+### 2.1 The demo users
+| Login | Name | Role | Scope | Does |
+|---|---|---|---|---|
+| `admin` / `admin` | *System Administrator* | **System Administrator** | Whole system | All global/session **setup**: session, status types, departments, subject areas, solver groups, **manager accounts**, buildings/rooms, room types/features, date/time patterns, distribution types, solver configurations. Also **Switch User** (below) and flipping session status. |
+| `weiling` | *Tan Wei Ling* | **Department Schedule Manager** | Depts **0100 SoC + 0400 SCI** | Course **data entry** (offerings, configs, subparts, classes), **preferences**, distribution preferences, run the **course solver**, review, **Save**, **Commit**. |
+| `priya` | *Priya d/o Menon* | **Examination Manager** | Exam rights for **SoC + SCI** | Create **exams**, exam **distribution preferences**, **room availability**, run the **exam solver**, generate **exam PDF reports**. |
 
-### A.2 Log in and select the session/role
-1. Browse to the app, log in as `admin` / `admin`.
-2. On the **role/session selection** page, pick **System Administrator — 2010 Fall (woebegon)**
-   (or a *Department Schedule Manager* role to tell the scheduler's story).
+> In a small deployment one person may hold both the Schedule Manager and Examination Manager
+> roles — the two personas here just show **which rights each action needs**. The `admin`
+> account creates the other two in **Step 4**.
 
-### A.3 Show the existing timetable (the "after" picture)
-- **Courses → Course Timetabling → Timetable Grid** (`timetableGrid`) — the committed grid.
-- **Courses → Course Timetabling → Assigned Classes** (`assignedClasses`) and
-  **Not-assigned Classes** (`notAssignedClasses`).
-- **Courses → Course Timetabling → Reports** (`solutionReports`) and **Conflict Statistics / CBS** (`cbs`).
-- **Courses → Input Data → Instructional Offerings** (`instructionalOfferingSearch.action`) — the source data.
+### 2.2 Two mechanisms for "acting as the right user"
+- **Change Role** — **Log Out ▸ menu ▸ Change Role** (`selectPrimaryRole.action`). If your
+  account holds several roles (e.g. an Administrator authority per session), pick the **active**
+  one before acting. When `admin` logs in, choose **System Administrator — 2026 Aug (MBIT)**.
+- **Switch User (Chameleon)** — **System Administrator only** (`chameleon.action`, menu
+  *"Switch User"*). Lets the admin **assume a manager's identity** without a separate login —
+  the practical way to demo the manager steps. Switch to *Tan Wei Ling* for §4 Steps 7–9 and
+  §5, to *Priya Menon* for §6, then Switch User back to admin for the session-status flips.
 
-### A.4 (Optional) Re-generate live for the audience
-To *show the solver working*, load the same data into the solver and re-solve:
-- Go to **Courses → Course Timetabling → Solver** (`solver`, type = course) and follow **Section 4** below.
-- You can **Save As New** so you don't disturb the shipped committed solution, then compare.
+> The System Administrator has broad rights and can perform many manager actions directly, but
+> using the **manager roles** mirrors real operations and avoids status/permission surprises
+> (e.g. editing offerings, committing). Each step below names the **acting user**.
 
-That's the fastest possible demo. The rest of this document (Path B + Section 4) is for
-telling the **full setup story** or building a **fresh** session.
+### 2.3 Who does what — quick matrix
+| Activity | Acting user |
+|---|---|
+| Session, status types, departments, subject areas, solver groups, managers | **Administrator** (`admin`) |
+| Buildings, rooms, room types/features/groups, travel times, date/time patterns, distribution types, solver configs | **Administrator** (`admin`) |
+| Instructors, offerings, classes, preferences, distribution preferences | **Schedule Manager** (*Wei Ling*) |
+| Run course solver, review, Save, **Commit** | **Schedule Manager** (*Wei Ling*) |
+| Flip session status (`Input Data Entry` → `Timetabling` → `Timetable Published`) | **Administrator** (`admin`) |
+| Exams: create, distribution prefs, room availability, solve, PDF reports | **Exam Manager** (*Priya*) |
 
 ---
 
-## 3. Path B — Build a session from scratch (full data setup)
+## 3. The MBIT dataset (enter this in §4–§6)
 
-Start from a **blank** database (`schema.sql` + `blank-data.sql`). Perform the steps
-**in this order** — each depends on the ones before it. All setup screens are under the
-**Administration** menu unless noted.
+Everything you need to type is collected here so the section is reusable. AY2026/2027,
+Semester 1 (the Singapore August intake).
 
-> Tip: You can enter data by hand through the screens (good for the demo narrative) **or**
-> bulk-load via **Data Exchange** (Section 6) — the two are interchangeable.
+### 3.1 Academic Session
+| Field | Value |
+|---|---|
+| Academic Initiative (campus) | `MBIT` (Marina Bay) |
+| Academic Year | `2026` |
+| Academic Term | `Aug` (Semester 1) |
+| Session begin (instruction starts) | **2026-08-10** (Mon) |
+| Classes end (last teaching day) | **2026-11-13** (Fri) |
+| Session end | **2026-11-27** |
+| Exam begin | **2026-11-16** |
+| Event begin / Event end | **2026-08-10** / **2026-11-27** |
+| Initial Status | **`Input Data Entry`** |
 
-### Step 1 — Create the Academic Session
-**Administration → Academic Sessions → Academic Sessions** (`sessionList.action`) → **Add**.
+> Singapore Sem 1 shape: 13 teaching weeks with a **recess week (21–27 Sep 2026)** and finals in
+> late November. Model recess/holidays as a **date pattern** that excludes those weeks (§3.6).
 
-Required fields (validated server-side in `SessionCreateBackend`):
-- **Academic Initiative** (campus), **Academic Year** (numeric), **Academic Term** (e.g. `Fal`).
-- **Session begin** date, **Classes end** date, **Session end** date.
-- **Exam begin**, **Event begin**, **Event end** dates.
-- **Status** → choose **`Input Data Entry`** to start (lets managers enter data).
+### 3.2 Departments
+| Code | Name | Abbrev |
+|---|---|---|
+| `0100` | School of Computing | SoC |
+| `0200` | School of Engineering | SoE |
+| `0300` | Business School | BIZ |
+| `0400` | School of Science | SCI |
 
-Date rules enforced: session end after begin; classes end within the session; event end after event begin.
+### 3.3 Subject Areas (→ department)
+| Subject | Title | Department |
+|---|---|---|
+| `CS` | Computer Science | 0100 SoC |
+| `IS` | Information Systems | 0100 SoC |
+| `AI` | Artificial Intelligence | 0100 SoC |
+| `EE` | Electrical Engineering | 0200 SoE |
+| `ME` | Mechanical Engineering | 0200 SoE |
+| `ACC` | Accountancy | 0300 BIZ |
+| `FIN` | Finance | 0300 BIZ |
+| `MA` | Mathematics | 0400 SCI |
+| `PC` | Physics | 0400 SCI |
+
+### 3.4 Solver Group
+| Solver Group | Departments assigned |
+|---|---|
+| **`MBIT-Core`** | **0100 School of Computing** + **0400 School of Science** |
+
+> We timetable Computing and Science together because CS students take `MA`/`PC` courses and the
+> two schools share lecture theatres — putting them in one solver group lets the engine resolve
+> those room/time interactions in a single run. (Engineering/Business can be a second group later.)
+
+### 3.5 Buildings, Rooms, Room Types, Features, Groups
+Room **types**: `Lecture Theatre`, `Seminar Room`, `Tutorial Room`, `Computer Lab`, `Teaching Lab`.
+Room **features**: `Workstations`, `Projector`, `Lab Benches`, `Wheelchair Access`.
+Room **groups**: `Computer Labs`, `Lecture Theatres`.
+
+| Building | Code | Room | Type | Capacity | Features | In group |
+|---|---|---|---|---|---|---|
+| Lecture Theatre Complex | `LT` | `LT-19` | Lecture Theatre | 300 | Projector, Wheelchair Access | Lecture Theatres |
+| Lecture Theatre Complex | `LT` | `LT-27` | Lecture Theatre | 200 | Projector | Lecture Theatres |
+| Computing Block 1 | `COM1` | `COM1-0201` | Seminar Room | 45 | Projector | — |
+| Computing Block 1 | `COM1` | `COM1-0203` | Tutorial Room | 30 | Projector | — |
+| Computing Block 2 | `COM2` | `COM2-0108` | Computer Lab | 30 | Workstations, Projector | Computer Labs |
+| Computing Block 2 | `COM2` | `COM2-0110` | Computer Lab | 30 | Workstations, Projector | Computer Labs |
+| Science Building | `S16` | `S16-0430` | Tutorial Room | 25 | Projector | — |
+| Science Building | `S16` | `S16-0436` | Teaching Lab | 24 | Lab Benches | — |
+
+> **Travel Times** (`traveltimes`): set a walk time between `COM2` (labs) and `LT`/`S16` so the
+> solver spaces back-to-back classes realistically. ~6–8 min is reasonable on a compact campus.
+
+### 3.6 Date Patterns
+| Name | Coverage |
+|---|---|
+| **Full Term** | Teaching weeks 1–13 (Aug 10 → Nov 13), **excluding recess week 21–27 Sep** |
+| First Half | Weeks 1–6 (Aug 10 → Sep 20) |
+| Second Half | Weeks 8–13 (Sep 28 → Nov 13) |
+
+### 3.7 Time Patterns (MBIT teaching grid: Mon–Fri, 08:00–18:00)
+| Name | Shape | Typical use | Preferred start times |
+|---|---|---|---|
+| **Lecture 2h** | 1 meeting × 120 min | Main lectures | Mon/Tue/Wed 09:00 or 14:00 |
+| **Lecture 2×1h** | 2 meetings × 60 min | Twice-weekly lectures | Mon+Thu / Tue+Fri 10:00 |
+| **Tutorial 1h** | 1 × 60 min | Tutorials | Weekday afternoons 13:00–17:00 |
+| **Lab 2h** | 1 × 120 min | Computer / teaching labs | Weekday afternoons 14:00–18:00 |
+| **Seminar 3h** | 1 × 180 min | Seminar-style modules | Tue/Thu 14:00 |
+
+### 3.8 Instructors
+| Name | Subject | Notes / availability |
+|---|---|---|
+| Prof. Lim Cheng Hock | CS | Prefers **no Friday** teaching |
+| Dr. Nurul Aisyah Binte Rahman | CS / AI | Mornings preferred |
+| Assoc. Prof. Rajesh Kumar | MA | — |
+| Dr. Chen Yong Xin | PC | Mornings only (lab prep afternoons) |
+| Dr. Siti Nadiah Bte Osman | IS | — |
+
+### 3.9 Courses (Instructional Offerings → Config → Subparts → Classes)
+All under a single **Standard** configuration each. `itype` = instructional type.
+
+| Course | Title | Subpart (itype) | # Classes | Sec limit | Time pattern | Room requirement | Instructor |
+|---|---|---|---|---|---|---|---|
+| **CS1010** | Programming Methodology | Lecture | 1 | 300 | Lecture 2h | Type = Lecture Theatre (`LT-19`) | Prof. Lim |
+| | | Tutorial | 4 | 30 | Tutorial 1h | Tutorial/Seminar room | — |
+| | | Lab | 4 | 30 | Lab 2h | Feature = **Workstations** (Computer Labs) | — |
+| **CS2040** | Data Structures & Algorithms | Lecture | 1 | 200 | Lecture 2h | Type = Lecture Theatre (`LT-27`) | Dr. Nurul |
+| | | Tutorial | 3 | 30 | Tutorial 1h | Tutorial room | — |
+| | | Lab | 3 | 30 | Lab 2h | Feature = Workstations | — |
+| **CS3243** | Introduction to AI | Lecture | 1 | 120 | Lecture 2h | Lecture Theatre / large Seminar | Dr. Nurul |
+| | | Tutorial | 2 | 45 | Tutorial 1h | Seminar/Tutorial room | — |
+| **MA1521** | Calculus for Computing | Lecture | 1 | 250 | Lecture 2×1h | Type = Lecture Theatre (`LT-19`) | A/P Rajesh |
+| | | Tutorial | 5 | 25 | Tutorial 1h | Tutorial room | — |
+| **PC1201** | Physics for Engineers | Lecture | 1 | 150 | Lecture 2h | Lecture Theatre | Dr. Chen |
+| | | Lab | 4 | 24 | Lab 2h | Feature = **Lab Benches** (`S16-0436`) | — |
+| **IS1103** | Digital Ethics | Seminar | 2 | 45 | Seminar 3h | Seminar Room (`COM1-0201`) | Dr. Siti |
+
+Section numbering suggestion: Tutorials `T01…`, Labs `B01…`, Seminars `S1/S2`.
+
+### 3.10 Preferences to set (soft-first — this is what the solver optimizes)
+- **CS1010 Lecture** — Room type **Required = Lecture Theatre**; **Preferred** time Mon/Wed 09:00;
+  building **COM1 preferred** (near the tutorials). Instructor Prof. Lim → **Prohibited: Friday**.
+- **CS1010 Labs** — Room feature **Required = Workstations**; **Preferred** afternoons.
+- **CS2040 Labs / CS1010 Labs** — Room group **Preferred = Computer Labs**.
+- **PC1201 Labs** — Room feature **Required = Lab Benches** (only `S16-0436` qualifies).
+- **MA1521 Lecture** — **Preferred** morning; date pattern **Full Term**.
+- **Instructor availability** — Dr. Chen **Preferred: mornings** on all `PC` classes.
+
+### 3.11 Distribution Preferences (cross-class rules)
+| Distribution Type | Level | Applies to |
+|---|---|---|
+| **Same Room** | Preferred | The 4 **CS1010 Lab** classes (keep labs in one room) |
+| **Back-To-Back** | Preferred | **CS2040 Lecture** + its Tutorials |
+| **Different Time** (Same Period → Prohibited) | Required | **CS1010 Lecture** ↔ **MA1521 Lecture** (shared cohort must not clash) |
+| **Spread In Time** | Preferred | All **MA1521 Tutorials** |
+
+Set these at **Courses → Input Data → Distribution Preferences** (`distributionPrefs.action`).
+
+### 3.12 (Optional) Examination data
+| Exam | Course | Type | Length | Seating |
+|---|---|---|---|---|
+| CS1010 Final | CS1010 | Final | 120 min | Normal |
+| CS2040 Final | CS2040 | Final | 120 min | Normal |
+| MA1521 Final | MA1521 | Final | 120 min | Exam seating |
+
+Exam periods span **2026-11-16 → 2026-11-27** (§3.1). Exam room availability, distribution
+preferences between exams, and PDF reports are covered in §6.
+
+---
+
+## 4. Build the MBIT session (do the steps in order)
+
+Start from a **blank** database (`schema.sql` + `blank-data.sql`). Each step names its **acting
+user** and depends on the ones before it. You can enter data by hand (good for the narrative)
+**or** bulk-load via **Data Exchange** (§7) — interchangeable.
+
+### Step 1 — Create the Academic Session — **[User: `admin` — System Administrator]**
+Log in as `admin` / `admin`; **Change Role → System Administrator**. Then **Administration →
+Academic Sessions → Academic Sessions** (`sessionList.action`) → **Add**, using **§3.1**. Set
+**Status = `Input Data Entry`**. Date rules enforced: session end after begin; classes end
+within the session; event end after event begin.
 
 > **Session Status controls everything downstream.** Seeded statuses (from `blank-data.sql`):
-> `Initial Data Load` → **`Input Data Entry`** (edit data) → **`Timetabling`** (run the solver)
-> → **`Timetable Published`** (commit + public views) → `Session Finished`. Manage the catalog at
+> `Initial Data Load` → **`Input Data Entry`** (edit) → **`Timetabling`** (solve) →
+> **`Timetable Published`** (commit + public views) → `Session Finished`. Catalog at
 > **Administration → Other → Status Types** (`deptStatusTypeEdit.action`).
 
-### Step 2 — Departments, then Subject Areas
-1. **Academic Sessions → Departments** (`departmentList.action` / Angular `departments`) — create departments (code, abbreviation, name), e.g. `0101 - Instructional Planning`.
-2. **Academic Sessions → Subject Areas** (`subjectList.action` / `admin?type=subjectArea`) — create subject areas (abbreviation, titles) and **assign each to a department**, e.g. `ALG`, `BIOL`.
+### Step 2 — Departments, then Subject Areas — **[User: `admin`]**
+1. **Departments** (`departmentList.action` / Angular `departments`) — create the four departments
+   from **§3.2**.
+2. **Subject Areas** (`subjectList.action` / `admin?type=subjectArea`) — create the nine subject
+   areas from **§3.3** and **assign each to its department**.
 
-### Step 3 — Solver Groups (assign departments)
-**Academic Sessions → Solver Groups** (`solverGroupEdit.action`).
-- Create a solver group and **assign the department(s)** you want timetabled together.
-- **Why:** the course solver loads/saves **per solver group**. No departments in a solver group ⇒ nothing to solve.
+### Step 3 — Solver Group (assign departments) — **[User: `admin`]**
+**Academic Sessions → Solver Groups** (`solverGroupEdit.action`) — create **`MBIT-Core`** and assign
+**School of Computing (0100)** + **School of Science (0400)** (§3.4). *No departments in a solver
+group ⇒ nothing to solve.*
 
-### Step 4 — Timetable Managers & roles
-**Academic Sessions → Managers** (`timetableManagerList.action`).
-- Create/verify a manager account, give it a **role** whose rights include **Solver / Course Timetabling**
-  (e.g. *Department Schedule Manager* or *System Administrator*), and **assign the department(s)**.
-- The chain that makes solving possible: *authenticated user → manager → role with solve rights → assigned departments → those departments' solver group*.
+### Step 4 — Timetable Managers & roles — **[User: `admin`]**
+**Academic Sessions → Managers** (`timetableManagerList.action`). Create the two manager accounts
+from **§2.1** and assign each its role + departments:
+- **Tan Wei Ling** → role *Department Schedule Manager*, departments **0100 + 0400**.
+- **Priya d/o Menon** → role *Examination Manager*, departments **0100 + 0400**.
 
-### Step 5 — Buildings & Rooms (+ types/features/groups)
-1. **Academic Sessions → Buildings** (`buildings`) — create buildings.
-2. **Courses → Input Data → Rooms** (`rooms`) — create rooms with **capacity**, building, and **room type**.
-3. Optional but great for the demo:
-   - **Room Features** (`roomfeatures`) and **Room Groups** (`roomgroups`) — e.g. "has projector", "science labs".
-   - **Administration → Other → Room Types / Room Feature Types** (`admin?type=roomType|featureType`).
-   - **Travel Times** (`traveltimes`) — used by back-to-back distance constraints.
+The chain that makes solving possible: *authenticated user → manager → role with solve rights →
+assigned departments → those departments' solver group*. From here, `admin` can **Switch User**
+(§2.2) into either manager to perform their steps.
 
-### Step 6 — Date Patterns, Time Patterns, Exact Time
+### Step 5 — Buildings & Rooms (+ types / features / groups) — **[User: `admin`]**
+1. **Buildings** (`buildings`) — create `LT`, `COM1`, `COM2`, `S16` (§3.5).
+2. **Administration → Other → Room Types / Room Feature Types** (`admin?type=roomType|featureType`) —
+   ensure the types and features from §3.5 exist.
+3. **Rooms** (`rooms`) — create the 8 rooms with **capacity + building + room type**, then tag their
+   **features** and **groups** (§3.5).
+4. **Travel Times** (`traveltimes`) — add the COM2 ↔ LT/S16 walk time.
+
+### Step 6 — Date Patterns, Time Patterns, Exact Time — **[User: `admin`]**
 **Administration → Academic Sessions →**
-- **Date Patterns** (`datePatternEdit.action`) — which weeks/days a class meets (Full Term, first-half, etc.).
-- **Time Patterns** (`timePatternEdit.action`) — allowed meeting-time shapes (e.g. `3 × 50`, `2 × 75`).
-- **Exact Time** (`exactTimeEdit.action`) — exact-minute meeting rules.
-- These must exist **before** classes can carry time/date preferences.
+- **Date Patterns** (`datePatternEdit.action`) — create **Full Term** (weeks 1–13, exclude recess),
+  **First Half**, **Second Half** (§3.6).
+- **Time Patterns** (`timePatternEdit.action`) — create the five patterns in **§3.7** and tick the
+  preferred start times.
+- **Exact Time** (`exactTimeEdit.action`) — leave defaults unless you need exact-minute rules.
 
-### Step 7 — Academic Areas / Classifications / Majors (only if demoing curricula or students)
-**Administration → Academic Sessions →** `admin?type=area | classification | major | minor | degree | program`.
-Needed for curricula, reservations, and student demand — skip for a pure course-timetabling demo.
+These must exist **before** classes can carry time/date preferences.
 
-### Step 8 — Instructors
-**Courses → Input Data → Instructors** (`instructorSearch.action`) — add instructors you'll assign to classes.
-(*Instructional Types* — Lecture/Recitation/Lab — are seeded reference data at
-**Administration → Other → Instructional Types**, `itypeDescList.action`.)
+### Step 7 — Instructors — **[User: *Wei Ling* — Schedule Manager]** *(admin: Switch User → Tan Wei Ling)*
+**Courses → Input Data → Instructors** (`instructorSearch.action`) — add the five instructors from
+**§3.8** to departments 0100/0400. (*Instructional Types* Lecture/Tutorial/Lab/Seminar are seeded
+reference data the Administrator manages at **Administration → Other → Instructional Types**,
+`itypeDescList.action`.)
 
-### Step 9 — Instructional Offerings, Configurations, Subparts, Classes
-**Courses → Input Data → Instructional Offerings** (`instructionalOfferingSearch.action`).
-For each course:
-1. **Make it offered** for the term, set the **course/offering limit** and coordinator.
-2. Add a **Configuration** (an alternative way to take the course).
-3. Add **Scheduling Subparts**, each with an **instructional type** (Lecture / Recitation / Lab).
-4. Create **Classes** (sections) under each subpart with a **section number** and **limit**.
-5. **Cross-list** courses that share an offering, if any.
+### Step 8 — Instructional Offerings, Configurations, Subparts, Classes — **[User: *Wei Ling*]**
+**Courses → Input Data → Instructional Offerings** (`instructionalOfferingSearch.action`). For each
+course in **§3.9**:
+1. **Make it offered** for the term; set the **course/offering limit** (= sum of section limits) and
+   coordinator.
+2. Add the **Standard Configuration**.
+3. Add **Scheduling Subparts** with the right **instructional type** (Lecture / Tutorial / Lab / Seminar).
+4. Create the **Classes** (sections) with **section number** and **limit** per §3.9.
+5. Assign **instructors** to the lecture/seminar classes.
 
-> "Arrange Hours" classes (no time pattern) won't appear on the grid by time — that's expected.
+> "Arrange Hours" classes (no time pattern) won't appear on the grid by time — expected.
 
-### Step 10 — Preferences (this is what the solver optimizes)
-On each class/subpart (within the Instructional Offerings screen) set as needed:
-- **Time** preferences (preferred/required time patterns), **Room**, **Building**, **Room Feature/Group** preferences, and the **Date Pattern**.
-- **Instructor** assignment (and instructor availability via **Instructor Survey**, `instructorSurvey`).
-
-Cross-class rules:
-- **Courses → Input Data → Distribution Preferences** (`distributionPrefs.action`) — pick a
-  **Distribution Type** (e.g. *Back-To-Back & Same Room*, *Same Instructor*, *Spread*, *Precedence*)
-  + a preference level + the classes it links. Catalog managed at
-  **Administration → Solver → Distribution Types** (`distributionTypeList.action`).
-- **Reservations** (`reservations`) — hold seats for a curriculum/group/course/students.
+### Step 9 — Preferences (§3.10) and Distribution Preferences (§3.11) — **[User: *Wei Ling*]**
+On each class/subpart set **Time / Room / Building / Feature / Group** preferences and the **Date
+Pattern** per §3.10. Then add the cross-class **Distribution Preferences** from §3.11 at
+`distributionPrefs.action` (catalog at **Administration → Solver → Distribution Types**,
+`distributionTypeList.action`, maintained by `admin`).
 
 > **Golden rule for a clean demo:** prefer **soft** preferences (*Preferred / Discouraged*) over
-> **hard** ones (*Required / Prohibited*). Too many hard constraints ⇒ unassigned classes.
+> **hard** ones (*Required / Prohibited*). Too many hard constraints ⇒ unassigned classes. The only
+> hard constraints in this dataset are the room *type/feature* requirements and the CS1010↔MA1521
+> no-clash rule — all well justified.
 
-### Step 11 — Flip the session to `Timetabling`
-**Administration → Academic Sessions → Academic Sessions** → edit your session →
-set **Status = `Timetabling`**. This unlocks the solver (`canTimetable()`).
-
-You are now ready to solve → **Section 4**.
-
----
-
-## 4. Run the solver (Load → Solve → Review → Save → Commit)
-
-**Courses → Course Timetabling → Solver** (`solver`, parameter `type=course`).
-Backed by `SolverPageBackend` + `CourseTimetablingSolverService` (engine: `TimetableSolver`, wraps cpsolver).
-
-### 4.1 Pick a Configuration
-Choose a solver **Configuration** (basic settings preset). Course presets seeded by the demo include
-**`Interactive`**, **`Check`**, and **`Default`**. Configurations are administered at
-**Administration → Solver → Configurations** (`solverSettings.action`); parameter defs/groups at
-`admin?type=solverParamDef | solverParamGroup`.
-
-### 4.2 Load and Start
-- **Load** — load the solver group's data into the solver without optimizing (inspect first), **or**
-- **Start** — load **and** begin optimizing (`General.StartSolver = true`).
-
-Watch the **progress bar** and the live objective/quality indicators as it runs.
-
-### 4.3 Control while solving
-- **Stop** — pause optimization.
-- **Save Best** / **Restore Best** — keep or recall the best solution found so far.
-- **Reload** — reload data (e.g. after a preference change) with a chosen configuration.
-
-### 4.4 Review the solution (before committing)
-From **Courses → Course Timetabling**:
-- **Timetable Grid** (`timetableGrid`) — the visual room/time grid.
-- **Assigned Classes** (`assignedClasses`) / **Not-assigned Classes** (`notAssignedClasses`).
-- **Conflict Statistics / CBS** (`cbs`) — what's driving the cost, and why classes are unassigned.
-- **Solver Log** (`solverlog?type=course`), **Reports** (`solutionReports`),
-  **Changes** (`solutionChanges`), **History** (`assignmentHistory`).
-
-### 4.5 Save
-Save the solution to the database:
-- **Save** — persist to the current solution.
-- **Save As New** — persist as a new solution (keeps prior ones for comparison — ideal in a demo).
-
-### 4.6 Commit (publish the official timetable)
-Committing marks a solution as the session's **official** timetable (uncommitting any previous one for
-that solver group). Do it either directly from the solver (**Save & Commit** / **Save As New & Commit**)
-or from **Courses → Course Timetabling → Saved Timetables** (`listSolutions`) → select the solution →
-**Commit** (`SolutionOperation.COMMIT` in `ListSolutionsBackend`).
-
-> **Commit requires** the session status to allow it (`DepartmentStatusType.canCommit()`, e.g.
-> `Timetable Published`). After committing, the timetable appears in public/instructor/student views and
-> becomes the basis for **student sectioning** and **exam/event** scheduling. You can **Uncommit** and
-> re-commit while the status permits.
-
-### 4.7 (Optional) Publish
-Set the session **Status = `Timetable Published`** to expose the committed timetable to everyone.
+### Step 10 — Flip the session to `Timetabling` — **[User: `admin`]** *(Switch User back to admin)*
+**Academic Sessions → Academic Sessions** → edit MBIT → **Status = `Timetabling`**. This unlocks the
+solver (`canTimetable()`) for the managers. You're ready to solve → **§5**.
 
 ---
 
-## 5. Suggested 15-minute demo script
+## 5. Run the solver (Load → Solve → Review → Save → Commit) — **[User: *Wei Ling* — Schedule Manager]**
 
-1. **Frame it** (1 min): "UniTime builds a conflict-free class timetable from courses, rooms,
-   instructors, and preferences." Show the concept table (Section 0).
-2. **The inputs** (4 min): Open **Instructional Offerings** — show an offering's
-   Configuration → Subparts → Classes. Open one class's **preferences** (time/room). Open
-   **Distribution Preferences** for a back-to-back rule. Show **Rooms** with capacities/features.
-3. **The engine** (5 min): Go to **Solver**, pick **Default**, **Start**. Narrate the progress bar
-   and objective dropping. **Save Best** when it settles.
-4. **The result** (3 min): **Timetable Grid** (conflict-free), **Not-assigned Classes** (ideally empty),
-   **CBS** to explain trade-offs, **Reports** for a summary.
-5. **Publish** (2 min): **Save As New & Commit**, then flip status to **Timetable Published** and show a
-   public/instructor view. Mention downstream: student sectioning + exams/events build on this.
+*(admin: Switch User → Tan Wei Ling.)* **Courses → Course Timetabling → Solver** (`solver`,
+parameter `type=course`). Backed by `SolverPageBackend` + `CourseTimetablingSolverService`
+(engine: `TimetableSolver`, cpsolver).
 
-Have the **woebegon** session loaded as a fallback so you always have a populated system to show.
+1. **Pick a Configuration** — start with **`Default`** (seeded presets: `Interactive`, `Check`,
+   `Default`; administered by `admin` at `solverSettings.action`).
+2. **Load** (inspect first) **or Start** (load **and** optimize, `General.StartSolver=true`). Select
+   solver group **`MBIT-Core`**. Watch the **progress bar** and objective drop.
+3. **Control while solving:** **Stop** (pause), **Save Best** / **Restore Best**, **Reload** (after a
+   preference change).
+4. **Review before committing** (from **Courses → Course Timetabling**):
+   - **Timetable Grid** (`timetableGrid`) — the room/time grid.
+   - **Assigned / Not-assigned Classes** (`assignedClasses` / `notAssignedClasses`) — aim for zero unassigned.
+   - **Conflict Statistics / CBS** (`cbs`) — what drives the cost and why classes are unassigned.
+   - **Solver Log** (`solverlog?type=course`), **Reports** (`solutionReports`), **Changes**
+     (`solutionChanges`), **History** (`assignmentHistory`).
+5. **Save** — **Save** (current) or **Save As New** (keeps prior solutions for comparison — ideal in a demo).
+6. **Commit** — **Save & Commit** / **Save As New & Commit** from the solver, or **Courses → Course
+   Timetabling → Saved Timetables** (`listSolutions`) → select → **Commit**. Commit requires a status
+   that allows it (`DepartmentStatusType.canCommit()`).
+7. **Publish** — **[User: `admin`]** set **Status = `Timetable Published`** to expose the committed
+   timetable to everyone and enable downstream student sectioning + exams/events.
 
----
-
-## 6. Bulk-load data via Data Exchange (optional, for larger demos)
-
-**Administration → Academic Sessions → Data Exchange** (`dataImport.action`) imports XML.
-The importer is chosen by the XML **root element** (`DataExchangeHelper`). Ready-to-use examples and
-DTDs live in `Documentation/Interfaces/Examples/` and `Documentation/Interfaces/`.
-
-Recommended load order (root element → example file):
-1. `session` / `sessionSetup` → `sessionImport.xml` / `sessionSetup.xml` (create session + reference data)
-2. `departments` → `departmentImport.xml`
-3. `subjectAreas` → `subjectAreaImport.xml`
-4. `academicAreas`, `academicClassifications`, `posMajors`, `posMinors` → the matching `*Import.xml`
-5. `buildingsRooms` → `buildingRoomImport.xml`
-6. `offerings` → `courseOfferingsWithMeetings.xml`
-7. `preferences` → `preferences.xml`
-8. `curricula`, `reservations`, `roomSharing`, `traveltimes` → matching examples
-9. `students` / `studentEnrollments` → `woebegonStudents.xml` (student demand)
-10. `timetable` (root; `coursett`) → `courseTimetableImport.xml` — import an **already-solved** timetable
-
-This is the fastest way to stand up a *custom* demo university without hand-entering every screen.
+**Sanity check for MBIT:** with the §3 dataset every class should assign. If CS1010 labs pile onto one
+room, confirm both `COM2-0108` and `COM2-0110` carry the **Workstations** feature; if MA1521 and
+CS1010 lectures fight for `LT-19`, that's the **Different Time** rule working — give one a soft
+building/time nudge or a second theatre.
 
 ---
 
-## 7. Troubleshooting
+## 6. (Optional) Examination timetabling — **[User: *Priya* — Examination Manager]**
+
+*(admin: Switch User → Priya Menon.)* Once the course timetable is committed, the same session can
+drive **examinations**. These screens are now Angular (verified against `:8080`):
+
+1. **Create exams** — **Examinations → Examinations** (`examList.action` → `/examinations-list`): add
+   the exams from **§3.12** (course, **Final** type, **120 min**, seating). Detail/edit at
+   `/exam-detail/:id` and `/exam-edit/:id`.
+2. **Exam distribution preferences** — **`examDistributionPrefs.action` → `/exam-distribution-prefs`**:
+   group exams that must share/avoid a period, e.g. *Same Period → Prohibited* between **CS1010 Final**
+   and **MA1521 Final** (shared cohort). Full add/edit/delete with a subject→course→exam picker.
+3. **Room availability** — **`roomAvailability.action` → `/exam-room-availability`**: check which rooms
+   are free during the exam periods (availability + compare-with-assignments modes).
+4. **Solve exams** — the exam **Solver** (`solver?type=exam`) assigns periods/rooms; review with the
+   exam grid / assigned / unassigned screens.
+5. **PDF reports** — **`examPdfReport.action` → `/exam-pdf-reports`**: pick reports (Schedule by
+   Course/Period/Room, conflict reports, verification), an output format (PDF/CSV/XLS), the exam type
+   and subject scope, then **Generate**. The job runs asynchronously; download the output from the
+   queue table when it finishes.
+
+> Enabling the exam period and exam status on the session is an **Administrator** action
+> (session/status setup); running the exam workflow above is the **Examination Manager**'s.
+
+---
+
+## 7. Bulk-load MBIT via Data Exchange (optional) — **[User: `admin`]**
+
+**Administration → Academic Sessions → Data Exchange** (`dataImport.action`) imports XML; the importer
+is chosen by the XML **root element** (`DataExchangeHelper`). DTDs and ready-to-adapt examples live in
+`Documentation/Interfaces/` and `Documentation/Interfaces/Examples/`. Recommended load order:
+
+1. `session` / `sessionSetup` → create the session + reference data (statuses, patterns)
+2. `departments` → the four MBIT departments
+3. `subjectAreas` → the nine subject areas
+4. `buildingsRooms` → buildings, rooms, types, features, groups
+5. `offerings` → `courseOfferingsWithMeetings.xml` — the six courses, configs, subparts, classes
+6. `preferences` → time/room/distribution preferences
+7. `traveltimes`, `roomSharing` → the COM2↔LT walk time, sharing
+8. `timetable` (root `coursett`) → import an **already-solved** timetable to skip the solve
+
+Copy an example file, retarget it to the MBIT codes in §3, and import. This is the fastest way to
+stand up a *custom* demo university without hand-entering every screen.
+
+---
+
+## 8. Suggested 15-minute demo script
+
+1. **Frame it** (1 min) — **[narrator]**: "UniTime builds a conflict-free class timetable for MBIT
+   from courses, rooms, instructors, and preferences." Show the concept table (§0) and the user
+   matrix (§2.3).
+2. **The inputs** (4 min) — **[as *Wei Ling*]**: Open **Instructional Offerings** → **CS1010**'s
+   Config → Subparts → Classes. Show the **Lab** classes' **Workstations** requirement and the
+   **Distribution Preference** (CS1010 ↔ MA1521 must not clash). Show **Rooms** with
+   capacities/features (§3.5).
+3. **The engine** (5 min) — **[as *Wei Ling*]**: **Solver** → **Default** → **Start** on
+   **MBIT-Core**. Narrate the progress bar and objective dropping. **Save Best** when it settles.
+4. **The result** (3 min) — **[as *Wei Ling*]**: **Timetable Grid** (conflict-free), **Not-assigned
+   Classes** (empty), **CBS** to explain trade-offs, **Reports** for a summary.
+5. **Publish + exams** (2 min): **Save As New & Commit** (*Wei Ling*), then **[as `admin`]** flip to
+   **Timetable Published** and show a public view; mention the exam pass (§6, *Priya*) builds on the
+   committed timetable.
+
+---
+
+## 9. Troubleshooting
 
 | Symptom | Cause / fix |
 |---|---|
-| A data screen is **read-only** | The **session status** doesn't allow editing. Set it to `Input Data Entry` (or a status with the edit flag). Not a permissions problem. |
-| **Solver menu / Load disabled** | Session status must allow timetabling — set to **`Timetabling`**. Also confirm your role has the `Solver`/`CourseTimetabling` right. |
-| **"Nothing to load" / empty solver** | The department(s) aren't in a **Solver Group**, or your manager isn't assigned those departments. Fix Steps 3–4. |
-| **Many Not-assigned Classes** | Too many **hard** (Required/Prohibited) preferences, or rooms too small/scarce. Relax to soft preferences; check room capacities; read **CBS** for the binding constraints. |
-| **Can't Commit** | Session status lacks the **Commit** capability. Move toward **`Timetable Published`**. |
+| A data screen is **read-only** | The **session status** doesn't allow editing (`admin` sets it to `Input Data Entry`), **or** you're acting as the wrong user — use **Switch User** to the manager who owns that department. |
+| **Solver menu / Load disabled** | Session status must be **`Timetabling`** (`admin`); confirm you're acting as *Wei Ling* whose role has the `Solver`/`CourseTimetabling` right. |
+| **"Nothing to load" / empty solver** | Departments 0100/0400 aren't in solver group **MBIT-Core**, or *Wei Ling* isn't assigned them. Fix Steps 3–4. |
+| **Access denied on an action** | Wrong active role — **Change Role**, or (as admin) **Switch User** into the manager the action needs (§2.3 matrix). |
+| **Many Not-assigned Classes** | Too many **hard** (Required/Prohibited) preferences, or rooms too small/scarce. Relax to soft; check capacities (CS1010 lecture needs a 300-seat theatre = `LT-19`); read **CBS**. |
+| **CS1010 labs won't place** | Both `COM2-0108` and `COM2-0110` must carry the **Workstations** feature and be in the **Computer Labs** group; the Lab subpart needs the feature as **Required**. |
+| **CS1010 & MA1521 lectures clash** | That's the **Different Time / Same Period-Prohibited** rule (§3.11). Give one lecture a soft time/building nudge, or add a second theatre. |
+| **Can't Commit** | Session status lacks the **Commit** capability — `admin` moves it toward **`Timetable Published`**. |
 | **Classes missing from the grid** | "Arrange Hours" classes have no time pattern — expected; they don't show by time. |
-| **Committed timetable not visible to students** | Publish the session (**`Timetable Published`**) and ensure student sectioning/status is enabled. |
 
 ---
 
-## 8. Quick reference — screens & actions
+## 10. Quick reference — screens, actions & who runs them
 
-| Task | Menu path | Action / page |
-|---|---|---|
-| Academic Sessions | Administration → Academic Sessions | `sessionList.action` |
-| Status Types | Administration → Other | `deptStatusTypeEdit.action` |
-| Departments | Administration → Academic Sessions | `departmentList.action` / `departments` |
-| Subject Areas | Administration → Academic Sessions | `subjectList.action` / `admin?type=subjectArea` |
-| Solver Groups | Administration → Academic Sessions | `solverGroupEdit.action` |
-| Managers | Administration → Academic Sessions | `timetableManagerList.action` |
-| Buildings | Administration → Academic Sessions | `buildings` |
-| Rooms / Features / Groups | Courses → Input Data | `rooms` / `roomfeatures` / `roomgroups` |
-| Date / Time / Exact Time | Administration → Academic Sessions | `datePatternEdit.action` / `timePatternEdit.action` / `exactTimeEdit.action` |
-| Instructors | Courses → Input Data | `instructorSearch.action` |
-| Instructional Types | Administration → Other | `itypeDescList.action` |
-| Instructional Offerings | Courses → Input Data | `instructionalOfferingSearch.action` |
-| Classes | Courses → Input Data | `classSearch.action` |
-| Distribution Preferences | Courses → Input Data | `distributionPrefs.action` |
-| Distribution Types | Administration → Solver | `distributionTypeList.action` |
-| Reservations | Courses → Input Data | `reservations` |
-| Solver | Courses → Course Timetabling | `solver?type=course` |
-| Solver Configurations | Administration → Solver | `solverSettings.action` |
-| Manage Solvers | Administration → Solver | `manageSolvers.action` |
-| Saved Timetables (Commit) | Courses → Course Timetabling | `listSolutions` |
-| Timetable Grid | Courses → Course Timetabling | `timetableGrid` |
-| Assigned / Not-assigned | Courses → Course Timetabling | `assignedClasses` / `notAssignedClasses` |
-| Conflict Statistics (CBS) | Courses → Course Timetabling | `cbs` |
-| Solution Reports | Courses → Course Timetabling | `solutionReports` |
-| Data Exchange (bulk load) | Administration → Academic Sessions | `dataImport.action` |
+| Task | Menu path | Action / page | Who |
+|---|---|---|---|
+| Academic Sessions | Administration → Academic Sessions | `sessionList.action` | `admin` |
+| Status Types | Administration → Other | `deptStatusTypeEdit.action` | `admin` |
+| Departments | Administration → Academic Sessions | `departmentList.action` / `departments` | `admin` |
+| Subject Areas | Administration → Academic Sessions | `subjectList.action` / `admin?type=subjectArea` | `admin` |
+| Solver Groups | Administration → Academic Sessions | `solverGroupEdit.action` | `admin` |
+| Managers | Administration → Academic Sessions | `timetableManagerList.action` | `admin` |
+| Switch User (Chameleon) | (top bar) Switch User | `chameleon.action` | `admin` |
+| Change Role | Log Out ▸ Change Role | `selectPrimaryRole.action` | any |
+| Buildings | Administration → Academic Sessions | `buildings` | `admin` |
+| Rooms / Features / Groups | Courses → Input Data | `rooms` / `roomfeatures` / `roomgroups` | `admin` |
+| Date / Time / Exact Time | Administration → Academic Sessions | `datePatternEdit.action` / `timePatternEdit.action` / `exactTimeEdit.action` | `admin` |
+| Instructional Types | Administration → Other | `itypeDescList.action` | `admin` |
+| Distribution Types | Administration → Solver | `distributionTypeList.action` | `admin` |
+| Solver Configurations | Administration → Solver | `solverSettings.action` | `admin` |
+| Instructors | Courses → Input Data | `instructorSearch.action` | *Wei Ling* |
+| Instructional Offerings | Courses → Input Data | `instructionalOfferingSearch.action` | *Wei Ling* |
+| Classes | Courses → Input Data | `classSearch.action` | *Wei Ling* |
+| Distribution Preferences | Courses → Input Data | `distributionPrefs.action` | *Wei Ling* |
+| Reservations | Courses → Input Data | `reservations` | *Wei Ling* |
+| Solver (course) | Courses → Course Timetabling | `solver?type=course` | *Wei Ling* |
+| Saved Timetables (Commit) | Courses → Course Timetabling | `listSolutions` | *Wei Ling* |
+| Timetable Grid | Courses → Course Timetabling | `timetableGrid` | *Wei Ling* |
+| Assigned / Not-assigned | Courses → Course Timetabling | `assignedClasses` / `notAssignedClasses` | *Wei Ling* |
+| Conflict Statistics (CBS) | Courses → Course Timetabling | `cbs` | *Wei Ling* |
+| Solution Reports | Courses → Course Timetabling | `solutionReports` | *Wei Ling* |
+| Examinations list | Examinations | `examList.action` → `/examinations-list` | *Priya* |
+| Exam Distribution Prefs | Examinations | `examDistributionPrefs.action` → `/exam-distribution-prefs` | *Priya* |
+| Exam Room Availability | Examinations | `roomAvailability.action` → `/exam-room-availability` | *Priya* |
+| Exam PDF Reports | Examinations | `examPdfReport.action` → `/exam-pdf-reports` | *Priya* |
+| Data Exchange (bulk load) | Administration → Academic Sessions | `dataImport.action` | `admin` |
 
 ---
 
-## 9. Related docs in this repo
+## 11. Related docs in this repo
 - `docs/user-guides/administrator.md` — standing up a new session (authoritative ordering).
-- `docs/user-guides/department-schedule-manager.md` — the set-up → preferences → solve → review → commit flow.
+- `docs/user-guides/department-schedule-manager.md` — set-up → preferences → solve → review → commit.
 - `docs/user-guides/glossary.md` — every core concept.
 - `docs/DEVELOPER_ONBOARDING.md` — stack, DB seed files, auth model, how to run (Docker/Maven).
-- `Documentation/Docker/README.md` — one-command demo stack (login `admin`/`admin`, seeds woebegon).
 - `Documentation/Interfaces/` — Data Exchange DTDs and `Examples/` for every import format.

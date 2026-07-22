@@ -38,6 +38,9 @@
 
       <div class="detail-actions">
         <p-button label="Back to Instructors" icon="pi pi-arrow-left" (onClick)="back()" [text]="true" />
+        <span style="flex:1"></span>
+        <p-button label="New instructor" icon="pi pi-plus" severity="secondary" (onClick)="addNew()" />
+        <p-button label="Edit" icon="pi pi-pencil" (onClick)="edit()" />
       </div>
     </p-card>
   }

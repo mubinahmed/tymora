@@ -340,6 +340,33 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/examinations/exam-grid').then((m) => m.ExamGrid),
   },
+  {
+    path: 'exam-room-availability',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/examinations/exam-room-availability').then((m) => m.ExamRoomAvailability),
+  },
+  {
+    path: 'exam-distribution-prefs',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/examinations/exam-distribution-prefs').then((m) => m.ExamDistributionPrefs),
+  },
+  {
+    path: 'exam-pdf-reports',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-pdf-report').then((m) => m.ExamPdfReport),
+  },
+  {
+    path: 'exam-detail/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-detail').then((m) => m.ExamDetail),
+  },
+  {
+    path: 'exam-edit/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/examinations/exam-edit').then((m) => m.ExamEdit),
+  },
   // ---- Wave 7: remaining legacy pages ----
   {
     path: 'change-log',
@@ -355,6 +382,17 @@ export const routes: Routes = [
     path: 'instructor-detail/:id',
     canActivate: [authGuard],
     loadComponent: () => import('./features/instructors/instructor-detail').then((m) => m.InstructorDetail),
+  },
+  {
+    // 'instructor-add' must precede 'instructor-edit/:id' semantics; distinct paths.
+    path: 'instructor-add',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/instructors/instructor-edit').then((m) => m.InstructorEdit),
+  },
+  {
+    path: 'instructor-edit/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/instructors/instructor-edit').then((m) => m.InstructorEdit),
   },
   {
     path: 'class-assignments',
@@ -426,6 +464,86 @@ export const routes: Routes = [
     path: 'application-config-edit',
     canActivate: [authGuard],
     loadComponent: () => import('./features/admin/application-config-edit').then((m) => m.ApplicationConfigEdit),
+  },
+  // ---- Wave 4 (offerings/classes detail & edit): Angular UI shells; backend
+  //      command beans to follow. Reached by id from the offerings search + each
+  //      other (offering detail is the hub of the tree).
+  {
+    path: 'offering-detail/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/offering-detail').then((m) => m.OfferingDetail),
+  },
+  {
+    path: 'offering-modify/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/offering-modify').then((m) => m.OfferingModify),
+  },
+  {
+    path: 'multiple-class-setup/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/multiple-class-setup').then((m) => m.MultipleClassSetup),
+  },
+  {
+    path: 'instructional-offering-config/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/instructional-offering-config').then((m) => m.InstructionalOfferingConfig),
+  },
+  {
+    path: 'cross-lists/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/cross-lists').then((m) => m.CrossLists),
+  },
+  {
+    path: 'class-detail/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/class-detail').then((m) => m.ClassDetail),
+  },
+  {
+    path: 'class-edit/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/class-edit').then((m) => m.ClassEdit),
+  },
+  {
+    path: 'class-instructor-assignment/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/courses/class-instructor-assignment').then((m) => m.ClassInstructorAssignment),
+  },
+  {
+    path: 'subpart-detail/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/subpart-detail').then((m) => m.SchedulingSubpartDetail),
+  },
+  {
+    path: 'subpart-edit/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/subpart-edit').then((m) => m.SchedulingSubpartEdit),
+  },
+  {
+    path: 'date-pattern/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/courses/date-pattern').then((m) => m.DatePatternDisplay),
+  },
+  {
+    path: 'distribution-types',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/distribution-types').then((m) => m.DistributionTypes),
+  },
+  {
+    path: 'solver-settings',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/solver/solver-settings').then((m) => m.SolverSettings),
+  },
+  {
+    path: 'users',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/user-edit').then((m) => m.UserEdit),
+  },
+  {
+    path: 'enrollment-audit-report',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/reports/enrollment-audit-report').then((m) => m.EnrollmentAuditReport),
   },
   { path: '**', redirectTo: 'home' },
 ];

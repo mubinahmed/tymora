@@ -109,4 +109,12 @@ export class InstructorDetail implements OnInit {
   back(): void {
     this.router.navigate(['/list', 'instructors']);
   }
+
+  edit(): void {
+    this.router.navigate(['/instructor-edit', this.route.snapshot.paramMap.get('id')]);
+  }
+
+  addNew(): void {
+    this.router.navigate(['/instructor-add']);
+  }
 }

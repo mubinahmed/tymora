@@ -3,32 +3,43 @@
 @if (authenticated()) {
   <div class="app-shell">
     <header class="app-topbar">
+      <img class="brand-logo" src="assets/logo-mark-dark.svg" width="34" height="34" alt="UniTime" />
       <div class="brand">
-        <i class="pi pi-calendar"></i>
         <span class="brand-name">UniTime</span>
-        @if (page.title()) {
-          <span class="page-title">/ {{ page.title() }}</span>
-        }
-        @if (page.helpUrl()) {
-          <a class="help" [href]="page.helpUrl()" target="_blank" rel="noopener" title="Help">
-            <i class="pi pi-question-circle"></i>
-          </a>
-        }
+        <span class="brand-sub">{{ subtitle() }}</span>
       </div>
-      <div class="topbar-right">
-        @if (session()?.session) {
-          <span class="session" title="Academic session">{{ session()!.session }}</span>
-        }
-        <button
-          type="button"
-          class="user-btn"
-          (click)="userAction()"
-          [title]="user()?.chameleon ? 'Masquerade as another user' : 'Change role'"
-        >
-          {{ userLabel() }}
-        </button>
-        <p-button icon="pi pi-sign-out" [text]="true" severity="contrast" title="Sign out" (onClick)="logout()" />
-      </div>
+
+      <div class="topbar-spacer"></div>
+
+      @if (page.helpUrl()) {
+        <a class="help" [href]="page.helpUrl()" target="_blank" rel="noopener" title="Help">
+          <i class="pi pi-question-circle"></i>
+        </a>
+      }
+
+      @if (session()?.session) {
+        <div class="session-pill" title="Academic session">
+          <i class="pi pi-calendar"></i>
+          <span>{{ session()!.session }}</span>
+        </div>
+      }
+
+      <button
+        type="button"
+        class="user-chip"
+        (click)="userAction()"
+        [title]="user()?.chameleon ? 'Masquerade as another user' : 'Change role'"
+      >
+        <span class="avatar">{{ initials() }}</span>
+        <span class="user-meta">
+          <span class="user-name">{{ user()?.name }}</span>
+          @if (user()?.role) {
+            <span class="user-role">{{ user()!.role }}</span>
+          }
+        </span>
+      </button>
+
+      <p-button icon="pi pi-sign-out" [text]="true" severity="contrast" title="Sign out" (onClick)="logout()" />
     </header>
 
     <div class="app-body">
@@ -41,6 +52,13 @@
       </nav>
 
       <main class="app-content">
+        @if (page.title()) {
+          <div class="content-crumb">
+            <span class="crumb-home">UniTime</span>
+            <i class="pi pi-angle-right"></i>
+            <span class="crumb-current">{{ page.title() }}</span>
+          </div>
+        }
         <router-outlet />
       </main>
     </div>

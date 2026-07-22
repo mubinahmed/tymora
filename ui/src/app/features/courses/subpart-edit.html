@@ -1,0 +1,76 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back" icon="pi pi-arrow-left" routerLink="/offerings" /></div>
+} @else if (data(); as d) {
+  <form class="form-page building-form" [formGroup]="form" (ngSubmit)="save()">
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-sitemap"></i></span>
+        <div>
+          <h2>{{ d.courseName }} · {{ d.instructionalTypeLabel }}</h2>
+          <p>{{ d.subjectArea }} {{ d.courseNbr }} — {{ d.managingDept || 'managing department' }}</p>
+        </div>
+        @if (d.unlimited) {
+          <span class="head-spacer"></span>
+        }
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="se-itype">Instructional Type</label>
+          <p-select inputId="se-itype" formControlName="instructionalType" [options]="itypeOptions()"
+            optionLabel="name" optionValue="id" [filter]="true" filterBy="name" appendTo="body" />
+        </div>
+        <div class="field">
+          <label for="se-dp">Date Pattern</label>
+          <p-select inputId="se-dp" formControlName="datePatternId" [options]="datePatternOptions()"
+            optionLabel="name" optionValue="id" appendTo="body" />
+          @if (!d.datePatternEditable) { <small class="hint">Date pattern is locked (configuration has enrollment).</small> }
+        </div>
+      </div>
+
+      <div class="checks" style="display:flex; flex-direction:column; gap:0.6rem; margin-top:1rem;">
+        <div class="field-check" style="display:flex; align-items:center; gap:0.5rem;">
+          <p-checkbox inputId="se-spread" formControlName="autoSpreadInTime" [binary]="true" />
+          <label for="se-spread" style="text-transform:none; letter-spacing:normal; font-weight:400;">Automatic spread in time</label>
+        </div>
+        <div class="field-check" style="display:flex; align-items:center; gap:0.5rem;">
+          <p-checkbox inputId="se-overlap" formControlName="studentAllowOverlap" [binary]="true" />
+          <label for="se-overlap" style="text-transform:none; letter-spacing:normal; font-weight:400;">Allow student overlaps</label>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-info-circle"></i></span>
+        <div>
+          <h2>Read-only</h2>
+          <p>Credit and preferences are managed on their own screens.</p>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div><div class="dt">Minutes per week</div><div class="dd">{{ d.minutesPerWeek ?? '—' }}</div></div>
+        <div><div class="dt">Credit</div><div class="dd">{{ d.creditText || '—' }}</div></div>
+        <div>
+          <div class="dt">Parent subpart</div>
+          <div class="dd">
+            @if (d.parentSubpartId) {
+              <a class="link" [routerLink]="['/subpart-detail', d.parentSubpartId]">{{ d.parentSubpartLabel }}</a>
+            } @else { {{ d.parentSubpartLabel || '—' }} }
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <p-button label="Cancel" severity="secondary" [text]="true" icon="pi pi-arrow-left" type="button"
+        [routerLink]="['/subpart-detail', d.subpartId]" [disabled]="saving()" />
+      <span class="spacer"></span>
+      <p-button label="Save" icon="pi pi-check" type="submit" [loading]="saving()" />
+    </div>
+  </form>
+}

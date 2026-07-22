@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -49,6 +50,7 @@ interface ExamListRequest {
   selector: 'app-exams-list',
   imports: [
     FormsModule,
+    RouterLink,
     TableModule,
     ButtonModule,
     InputTextModule,

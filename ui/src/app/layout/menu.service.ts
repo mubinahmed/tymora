@@ -69,11 +69,17 @@ export class MenuService {
     'instructionalOfferingSearch.action': '/offerings',
     // Read-only admin listings via the new SimpleListBackend command bean.
     'sessionList.action': '/list/sessions',
-    'itypeDescList.action': '/list/instructionalTypes',
-    'distributionTypeList.action': '/list/distributionTypes',
+    // Instructional types are now editable via the additive `itype` SimpleEdit admin table.
+    'itypeDescList.action': '/admin/itype',
+    'distributionTypeList.action': '/distribution-types',
+    'roleList.action': '/admin/roles',
+    'solverSettings.action': '/solver-settings',
+    'userEdit.action': '/users',
+    'enrollmentAuditPdfReport.action': '/enrollment-audit-report',
     'datePatternEdit.action': '/pattern-edit',
     'timePatternEdit.action': '/pattern-edit',
     'instructorSearch.action': '/list/instructors',
+    'instructorAdd.action': '/instructor-add',
     // Wave 5: search + create/edit screens (supersede the read-only listings where they exist)
     'classSearch.action': '/classes',
     'examList.action': '/examinations-list',
@@ -81,6 +87,9 @@ export class MenuService {
     'unassignedExams.action': '/unassigned-exams',
     'examAssignmentReport.action': '/exam-assignment-report',
     'examGrid.action': '/exam-grid',
+    'roomAvailability.action': '/exam-room-availability',
+    'examDistributionPrefs.action': '/exam-distribution-prefs',
+    'examPdfReport.action': '/exam-pdf-reports',
     // Wave 7 (instructorDetail.action omitted: it is a by-id route, /instructor-detail/:id)
     'lastChanges.action': '/change-log',
     'manageSolvers.action': '/manage-solvers',

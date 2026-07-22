@@ -1,0 +1,70 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back to offerings" icon="pi pi-arrow-left" routerLink="/offerings" /></div>
+} @else if (data(); as d) {
+  <form class="form-page building-form">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-sitemap"></i></span>
+        <div>
+          <h2>Configurations</h2>
+          <p>{{ d.offeringName }} — edit each configuration's name and limit.</p>
+        </div>
+      </div>
+
+      @for (cfg of configs(); track cfg.configId) {
+        <div class="config-block">
+          <div class="field-row">
+            <div class="field">
+              <label>Configuration name</label>
+              <input pInputText [(ngModel)]="cfg.name" [ngModelOptions]="{ standalone: true }" />
+            </div>
+            <div class="field">
+              <label>Limit</label>
+              @if (cfg.unlimited) {
+                <p-tag value="Unlimited" severity="info" [rounded]="true" />
+              } @else {
+                <p-inputNumber [(ngModel)]="cfg.limit" [ngModelOptions]="{ standalone: true }"
+                  [useGrouping]="false" [min]="0" />
+              }
+            </div>
+            <div class="field" style="align-self:end; flex:0; flex-direction:row; gap:0.25rem;">
+              <p-button label="Config setup" icon="pi pi-sitemap" severity="secondary" [text]="true" type="button"
+                [routerLink]="['/instructional-offering-config', cfg.configId]" />
+              <p-button label="Class setup" icon="pi pi-table" severity="secondary" [text]="true" type="button"
+                [routerLink]="['/multiple-class-setup', cfg.configId]" />
+            </div>
+          </div>
+          @if (cfg.subparts?.length) {
+            <div style="margin-top:0.75rem;">
+              <div class="dt" style="font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ut-muted);margin-bottom:5px;">Subparts</div>
+              <div class="ro-chips">
+                @for (sp of cfg.subparts; track $index) {
+                  <span class="ro-chip">{{ sp }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @empty {
+        <div class="empty-state">This offering has no configurations.</div>
+      }
+
+      <div class="wip-banner" style="margin-top:1.25rem;">
+        <i class="pi pi-info-circle"></i>
+        <div>Rename configurations and adjust their limits here. Use <b>Config setup</b> to edit the
+          subpart structure (types, class counts, minutes/week) and <b>Class setup</b> for per-class
+          limits, rooms and date patterns.</div>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <p-button label="Back to offering" severity="secondary" [text]="true" icon="pi pi-arrow-left" type="button"
+        [routerLink]="['/offering-detail', d.offeringId]" [disabled]="saving()" />
+      <span class="spacer"></span>
+      <p-button label="Save" icon="pi pi-check" type="button" (onClick)="save()" [loading]="saving()" />
+    </div>
+  </form>
+}

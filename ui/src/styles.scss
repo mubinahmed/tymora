@@ -1,20 +1,292 @@
 /* Global styles */
 @use 'primeicons/primeicons.css';
 
+/* ---- UniTime design tokens (from the "Add Event" design system) ---- */
+:root {
+  --ut-navy: #042c53;
+  --ut-navy-hover: #0a3b6d;
+  --ut-blue: #378add;
+  --ut-blue-strong: #185fa5;
+  --ut-blue-soft: #85b7eb;
+  --ut-blue-pale: #e6f1fb;
+
+  --ut-cream: #e9e7df;
+  --ut-canvas: #f5f4ef; /* content / form scroller background */
+  --ut-surface: #faf9f4; /* subtle raised surface */
+  --ut-card: #ffffff;
+
+  --ut-border: #e8e6de;
+  --ut-border-strong: #dcdad2;
+  --ut-border-soft: #edebe4;
+
+  --ut-ink: #042c53; /* headings */
+  --ut-text: #4a4944; /* body */
+  --ut-muted: #888780; /* labels / secondary */
+  --ut-faint: #b4b2a9; /* placeholders */
+
+  --ut-radius: 12px;
+  --ut-radius-sm: 6px;
+  --ut-shadow-card: 0 1px 2px rgba(4, 44, 83, 0.05);
+  --ut-shadow-pop: 0 18px 44px rgba(4, 44, 83, 0.14);
+  --ut-font: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --ut-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+
 * { box-sizing: border-box; }
 
 html,
 body {
   margin: 0;
   height: 100%;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
+  font-family: var(--ut-font);
+  color: var(--ut-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---- shared form field styling (uppercase micro-labels from the design) ---- */
+.building-form,
+.room-form,
+.login-form,
+.ra-filter,
+.solver-controls {
+  .field > label,
+  .field label:first-child {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ut-muted);
+  }
+}
+
+/* section fieldsets rendered as the design's white cards with a heading rule */
+fieldset.section {
+  border: 1px solid var(--ut-border-soft);
+  border-radius: var(--ut-radius);
+  background: var(--ut-card);
+  box-shadow: var(--ut-shadow-card);
+  padding: 1.5rem 1.75rem 1.75rem;
+  margin: 0;
+
+  legend {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ut-ink);
+    padding: 0 0.4rem;
+    margin-left: -0.4rem;
+  }
+}
+
+/* card section header: pale-blue icon badge + title + one-line description */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 1.4rem;
+
+  .section-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: var(--ut-blue-pale);
+    color: var(--ut-blue);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    font-size: 1.05rem;
+  }
+  h2 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--ut-ink); }
+  p { margin: 3px 0 0; font-size: 0.8rem; color: var(--ut-muted); }
+  .head-spacer { flex: 1; }
+}
+
+/* stacked section cards on the cream canvas + sticky-feeling action bar */
+.form-page {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 66rem;
+}
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.25rem 0.25rem 0;
+  .note { font-size: 0.8rem; color: var(--ut-muted); }
+  .spacer { flex: 1; }
+}
+
+/* dashed placeholder used by empty lists (e.g. no meetings yet) */
+.empty-state {
+  margin-top: 1rem;
+  padding: 1.4rem;
+  text-align: center;
+  border: 1px dashed var(--ut-border-strong);
+  border-radius: 10px;
+  color: var(--ut-muted);
+  font-size: 0.85rem;
+}
+
+/* scaffold notice on migrated-but-not-yet-backed screens */
+.wip-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #b9d9f5;
+  background: var(--ut-blue-pale);
+  border-radius: 10px;
+  color: var(--ut-ink);
+  font-size: 0.85rem;
+  line-height: 1.45;
+
+  .pi { color: var(--ut-blue); margin-top: 1px; }
+  code {
+    font-family: var(--ut-mono);
+    font-size: 0.78rem;
+    background: rgba(4, 44, 83, 0.06);
+    padding: 0.05rem 0.35rem;
+    border-radius: 4px;
+  }
+}
+
+/* read-only detail: label/value definition rows inside a section card */
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem 1.75rem;
+
+  .dt {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ut-muted);
+    margin-bottom: 3px;
+  }
+  .dd {
+    font-size: 0.9rem;
+    color: var(--ut-ink);
+    &.muted { color: var(--ut-faint); }
+  }
+}
+
+/* chip row used for cross-links / related pages */
+.link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* date pattern: month calendars with active days highlighted */
+.dp-months {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 1.4rem;
+}
+.dp-month {
+  width: 15rem;
+  border: 1px solid var(--ut-border-soft);
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: var(--ut-surface);
+
+  .dp-month-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ut-ink);
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+  .dp-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+  .dp-dow {
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--ut-muted);
+    padding-bottom: 2px;
+  }
+  .dp-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    color: var(--ut-text);
+    border-radius: 5px;
+  }
+  .dp-day.active {
+    background: var(--ut-navy);
+    color: #fff;
+    font-weight: 600;
+  }
+  .dp-day.blank { visibility: hidden; }
+}
+
+/* class instructor assignment: editable instructor grid */
+.aci-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ut-muted);
+    padding: 0 0.5rem 0.5rem;
+    border-bottom: 1px solid var(--ut-border-soft);
+  }
+  td { padding: 0.4rem 0.5rem; vertical-align: middle; }
+  tbody tr + tr td { border-top: 1px solid var(--ut-border-soft); }
+  tr.aci-error td { background: rgba(194, 74, 58, 0.06); }
+  .aci-num { width: 100%; text-align: right; }
+  .aci-select { width: 100%; }
+}
+.aci-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--ut-text);
+}
+
+/* offering detail: configuration -> subpart -> class tree */
+.config-block {
+  border: 1px solid var(--ut-border-soft);
+  border-radius: 10px;
+  padding: 1rem 1.1rem 1.1rem;
+  margin-top: 1rem;
+  background: var(--ut-surface);
+
+  &:first-of-type { margin-top: 0.25rem; }
+
+  .config-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+  }
+  .config-name { font-size: 0.95rem; font-weight: 600; color: var(--ut-ink); }
+
+  .subpart { margin-top: 0.9rem; }
+  .subpart-type {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
 }
 
 /* small layout helpers used by feature templates */
@@ -34,7 +306,7 @@ body {
 
 .row-actions { text-align: right; white-space: nowrap; }
 tr.clickable { cursor: pointer; }
-a.link { color: var(--p-primary-color, #0b5fff); text-decoration: none; cursor: pointer; }
+a.link { color: var(--ut-blue-strong); text-decoration: none; cursor: pointer; }
 a.link:hover { text-decoration: underline; }
 
 .home {
@@ -177,7 +449,9 @@ a.link:hover { text-decoration: underline; }
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: linear-gradient(135deg, #0b5fff 0%, #073bb3 100%);
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(55, 138, 221, 0.55), transparent 60%),
+    linear-gradient(135deg, #042c53 0%, #0a3b6d 55%, #185fa5 100%);
 
   .login-card { width: 22rem; }
   .login-brand {

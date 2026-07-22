@@ -1,0 +1,66 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back to examinations" icon="pi pi-arrow-left" routerLink="/examinations-list" /></div>
+} @else if (data(); as d) {
+  <form class="form-page building-form" [formGroup]="form" (ngSubmit)="save()">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-pencil"></i></span>
+        <div>
+          <h2>{{ d.label || 'Examination' }}</h2>
+          <p>{{ d.examTypeLabel }} examination — owners, preferences and instructors are edited on their own screens.</p>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field" style="flex:2;">
+          <label for="ee-name">Name</label>
+          <input pInputText id="ee-name" formControlName="name" autocomplete="off"
+            placeholder="Leave blank for the default generated name" />
+        </div>
+        <div class="field">
+          <label for="ee-len">Length (minutes) *</label>
+          <p-inputNumber inputId="ee-len" formControlName="length" [useGrouping]="false" [min]="1" />
+          @if (form.controls.length.invalid && form.controls.length.touched) {
+            <p-message severity="error" text="Length is required" />
+          }
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="ee-seat">Seating Type</label>
+          <p-select inputId="ee-seat" formControlName="seatingType" [options]="seatingOptions()"
+            optionLabel="name" optionValue="id" appendTo="body" />
+        </div>
+        <div class="field">
+          <label for="ee-size">Size</label>
+          <p-inputNumber inputId="ee-size" formControlName="examSize" [useGrouping]="false" [min]="0" />
+          <small class="hint">Blank = computed from examined objects ({{ d.sizeText }}).</small>
+        </div>
+        <div class="field">
+          <label for="ee-max">Maximum Rooms</label>
+          <p-inputNumber inputId="ee-max" formControlName="maxNbrRooms" [useGrouping]="false" [min]="0" />
+        </div>
+        <div class="field">
+          <label for="ee-off">Print Offset</label>
+          <p-inputNumber inputId="ee-off" formControlName="printOffset" [useGrouping]="false" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="ee-note">Note</label>
+        <textarea pTextarea id="ee-note" formControlName="note" rows="3"></textarea>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <p-button label="Cancel" severity="secondary" [text]="true" icon="pi pi-arrow-left" type="button"
+        [routerLink]="['/exam-detail', id()]" [disabled]="saving()" />
+      <span class="spacer"></span>
+      <p-button label="Save" icon="pi pi-check" type="submit" [loading]="saving()" />
+    </div>
+  </form>
+}
