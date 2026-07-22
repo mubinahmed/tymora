@@ -1,0 +1,73 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="groups()"
+    [paginator]="true"
+    [rows]="15"
+    [rowsPerPageOptions]="[15, 30, 50]"
+    [globalFilterFields]="['abbv', 'label', 'description']"
+    sortField="label"
+    [sortOrder]="1"
+    dataKey="id"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ groups().length }} group(s)</span>
+        <span class="spacer"></span>
+        <input pInputText type="text" placeholder="Search…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+        <p-button label="New" icon="pi pi-plus" (onClick)="openCreate()" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="abbv">Abbreviation <p-sortIcon field="abbv" /></th>
+        <th pSortableColumn="label">Name <p-sortIcon field="label" /></th>
+        <th>Scope</th>
+        <th>Description</th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-g>
+      <tr>
+        <td>{{ g.abbv }}</td>
+        <td>{{ g.label }}</td>
+        <td><p-tag [value]="scope(g)" [severity]="g.default ? 'success' : g.department ? 'info' : 'secondary'" /></td>
+        <td>{{ g.description }}</td>
+        <td class="row-actions">
+          @if (g.canEdit) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="openEdit(g)" />
+          }
+          @if (g.canDelete) {
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(g)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="5">No room groups found.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <app-room-property-dialog
+    kind="group"
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [item]="editing()"
+    [departments]="props.departments()"
+    [futureSessions]="props.futureSessions()"
+    [sessionId]="props.sessionId()"
+    (saved)="onSaved()"
+  />
+
+  <p-confirmDialog />
+}

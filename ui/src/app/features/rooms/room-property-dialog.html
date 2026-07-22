@@ -1,0 +1,135 @@
+<p-dialog
+  [header]="heading()"
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  [modal]="true"
+  [style]="{ width: '52rem' }"
+  [draggable]="false"
+  [dismissableMask]="true"
+>
+  <form [formGroup]="form" class="building-form" (ngSubmit)="submit()">
+    <div class="field-row">
+      <div class="field">
+        <label for="rp-abbv">Abbreviation *</label>
+        <input pInputText id="rp-abbv" formControlName="abbv" autocomplete="off" />
+        @if (form.controls.abbv.invalid && form.controls.abbv.touched) {
+          <p-message severity="error" text="Abbreviation is required" />
+        }
+      </div>
+      <div class="field">
+        <label for="rp-label">Name *</label>
+        <input pInputText id="rp-label" formControlName="label" autocomplete="off" />
+        @if (form.controls.label.invalid && form.controls.label.touched) {
+          <p-message severity="error" text="Name is required" />
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="rp-desc">Description</label>
+      <textarea pTextarea id="rp-desc" formControlName="description" rows="2"></textarea>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="rp-scope">Scope</label>
+        <p-select
+          inputId="rp-scope"
+          formControlName="department"
+          [options]="departments()"
+          optionLabel="label"
+          optionValue="id"
+          placeholder="Global (all departments)"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="label,code"
+          appendTo="body"
+          (onChange)="onScopeChange($event.value)"
+          (onClear)="onScopeChange(null)"
+        >
+          <ng-template let-d pTemplate="selectedItem">{{ d.code }} — {{ d.label }}</ng-template>
+          <ng-template let-d pTemplate="item">{{ d.code }} — {{ d.label }}</ng-template>
+        </p-select>
+      </div>
+
+      @if (!isGroup()) {
+        <div class="field">
+          <label for="rp-type">Type</label>
+          <p-select
+            inputId="rp-type"
+            formControlName="type"
+            [options]="featureTypes()"
+            optionLabel="label"
+            optionValue="id"
+            placeholder="(none)"
+            [showClear]="true"
+            appendTo="body"
+          />
+        </div>
+      }
+    </div>
+
+    @if (isGroup() && scopeDeptId() == null) {
+      <div class="field-check">
+        <p-checkbox inputId="rp-default" formControlName="default" [binary]="true" />
+        <label for="rp-default">Default group (applies to all departments)</label>
+      </div>
+    }
+
+    @if (futureSessions().length) {
+      <div class="field">
+        <label for="rp-future">Also apply to future sessions</label>
+        <p-multiSelect
+          inputId="rp-future"
+          formControlName="futureSessions"
+          [options]="futureSessions()"
+          optionLabel="label"
+          optionValue="id"
+          placeholder="None"
+          display="chip"
+          appendTo="body"
+        />
+      </div>
+    }
+  </form>
+
+  <div class="membership">
+    <label class="membership-label">Rooms</label>
+    @if (loadingRooms()) {
+      <div class="center"><p-progressSpinner strokeWidth="4" styleClass="small-spinner" /></div>
+    } @else if (roomsError()) {
+      <p-message severity="warn" [text]="'Could not load rooms: ' + roomsError()" />
+    } @else {
+      <p-pickList
+        [source]="available()"
+        [target]="members()"
+        dataKey="uniqueId"
+        sourceHeader="Available"
+        targetHeader="In this {{ isGroup() ? 'group' : 'feature' }}"
+        [showSourceControls]="false"
+        [showTargetControls]="false"
+        [dragdrop]="true"
+        filterBy="name,abbv"
+        sourceFilterPlaceholder="Search rooms"
+        targetFilterPlaceholder="Search rooms"
+        [responsive]="true"
+        breakpoint="1000px"
+        scrollHeight="16rem"
+      >
+        <ng-template let-room pTemplate="item">
+          <span>{{ room.name }}</span>
+        </ng-template>
+      </p-pickList>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" [disabled]="saving()" />
+    <p-button
+      [label]="isEdit() ? 'Save' : 'Create'"
+      icon="pi pi-check"
+      (onClick)="submit()"
+      [loading]="saving()"
+    />
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,118 @@
+<p-confirmDialog />
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+} @else if (editData(); as d) {
+  <!-- Edit one configuration -->
+  <div class="form-page building-form" style="max-width: 74rem;">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-cog"></i></span>
+        <div>
+          <h2>{{ d.name }}</h2>
+          <p>{{ d.appearanceLabel }} configuration</p>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="ss-name">Reference *</label>
+          <input pInputText id="ss-name" [(ngModel)]="d.name" autocomplete="off" />
+        </div>
+        <div class="field" style="flex:2;">
+          <label for="ss-desc">Name</label>
+          <input pInputText id="ss-desc" [(ngModel)]="d.description" autocomplete="off" />
+        </div>
+      </div>
+    </fieldset>
+
+    @for (g of d.groups; track $index) {
+      <fieldset class="section">
+        <div class="section-head">
+          <span class="section-icon"><i class="pi pi-sliders-h"></i></span>
+          <div>
+            <h2>{{ g.name }}</h2>
+            @if (g.description) { <p [innerHTML]="g.description"></p> }
+          </div>
+        </div>
+        <table class="aci-grid">
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th style="width:5rem;">Default</th>
+              <th style="width:20rem;">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of g.params; track p.defId) {
+              <tr>
+                <td>
+                  <div style="font-weight:500; color:var(--ut-ink);">{{ p.name }}</div>
+                  @if (p.description) { <div class="muted" style="font-size:0.78rem;" [innerHTML]="p.description"></div> }
+                </td>
+                <td style="text-align:center;">
+                  <p-checkbox [ngModel]="p.useDefault" (ngModelChange)="p.useDefault = $event"
+                    [ngModelOptions]="{ standalone: true }" [binary]="true" title="Use default" />
+                </td>
+                <td>
+                  @if (p.type === 'boolean') {
+                    <p-checkbox [ngModel]="boolValue(p)" (ngModelChange)="setBool(p, $event)"
+                      [ngModelOptions]="{ standalone: true }" [binary]="true" [disabled]="!!p.useDefault" />
+                  } @else {
+                    <input pInputText [(ngModel)]="p.value" [ngModelOptions]="{ standalone: true }"
+                      [disabled]="!!p.useDefault" [placeholder]="p.defaultValue || ''" class="aci-select"
+                      style="width:100%;" />
+                  }
+                  <small class="muted" style="font-size:0.72rem;"> default: {{ p.defaultValue || '—' }} · {{ p.type }}</small>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </fieldset>
+    }
+
+    <div class="form-actions">
+      <p-button label="Back to list" severity="secondary" [text]="true" icon="pi pi-arrow-left" (onClick)="backToList()" [disabled]="saving()" />
+      <span class="spacer"></span>
+      <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+    </div>
+  </div>
+} @else {
+  <!-- List -->
+  <div class="form-page" style="max-width: 64rem;">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-cog"></i></span>
+        <div>
+          <h2>Solver configurations</h2>
+          <p>Predefined solver parameter sets. Adding new configurations stays on the classic screen.</p>
+        </div>
+      </div>
+      <p-table [value]="settings()" styleClass="p-datatable-sm p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Reference</th>
+            <th>Name</th>
+            <th>Appearance</th>
+            <th class="col-actions"></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-s>
+          <tr>
+            <td>{{ s.name }}</td>
+            <td>{{ s.description || '—' }}</td>
+            <td><p-tag [value]="s.appearanceLabel" severity="info" [rounded]="true" /></td>
+            <td class="row-actions">
+              <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="edit(s)" />
+              <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="askDelete(s)" />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="4">No solver configurations.</td></tr>
+        </ng-template>
+      </p-table>
+    </fieldset>
+  </div>
+}

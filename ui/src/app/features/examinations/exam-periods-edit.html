@@ -1,0 +1,128 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="records()"
+    [paginator]="records().length > 25"
+    [rows]="25"
+    [rowsPerPageOptions]="[25, 50, 100]"
+    dataKey="id"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <p-select
+          [options]="examTypeFilterOptions()"
+          [(ngModel)]="examTypeId"
+          (onChange)="onExamTypeFilterChange()"
+          placeholder="Examination type"
+          [style]="{ minWidth: '14rem' }"
+        />
+        <span class="spacer"></span>
+        <span>{{ records().length }} period(s)</span>
+        <input
+          pInputText
+          type="text"
+          placeholder="Search…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+        />
+        <p-button label="Add Examination Period" icon="pi pi-plus" [disabled]="!addable()" (onClick)="add()" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="examTypeLabel">Type <p-sortIcon field="examTypeLabel" /></th>
+        <th pSortableColumn="dateLabel">Date <p-sortIcon field="dateLabel" /></th>
+        <th>Start Time</th>
+        <th>End Time</th>
+        <th>Exam Length</th>
+        <th>Event Start Offset</th>
+        <th>Event Stop Offset</th>
+        <th>Preference</th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-r>
+      <tr class="clickable" (click)="r.editable && edit(r)">
+        <td>{{ r.examTypeLabel }}</td>
+        <td>{{ r.dateLabel }}</td>
+        <td>{{ r.startLabel }}</td>
+        <td>{{ r.endLabel }}</td>
+        <td>{{ r.length }}</td>
+        <td>{{ r.startOffset }}</td>
+        <td>{{ r.stopOffset }}</td>
+        <td>{{ r.prefName }}</td>
+        <td class="row-actions" (click)="$event.stopPropagation()">
+          @if (r.editable) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="edit(r)" />
+          } @else if (r.used) {
+            <span title="Assigned to exams — edit on the legacy page" class="pi pi-lock"></span>
+          }
+          @if (deletable() && !r.used) {
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(r)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="9">No examination periods defined.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <p-confirmDialog />
+
+  <p-dialog
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [modal]="true"
+    [style]="{ width: '38rem' }"
+    [header]="editing.id != null ? 'Edit Examination Period' : 'Add Examination Period'"
+  >
+    <div class="form-grid">
+      <label for="ep-type">Examination Type</label>
+      <p-select
+        inputId="ep-type"
+        [options]="examTypeOptions()"
+        [(ngModel)]="editing.examTypeId"
+        placeholder="Select type"
+        [style]="{ width: '100%' }"
+      />
+
+      <label for="ep-date">Date</label>
+      <input id="ep-date" pInputText [(ngModel)]="editing.date" placeholder="mm/dd/yyyy" />
+
+      <label for="ep-start">Start Time (hhmm)</label>
+      <p-inputNumber inputId="ep-start" [(ngModel)]="editing.start" [useGrouping]="false" [min]="0" [max]="2359" />
+
+      <label for="ep-length">Length (minutes)</label>
+      <p-inputNumber inputId="ep-length" [(ngModel)]="editing.length" [showButtons]="true" [min]="0" [step]="5" />
+
+      <label for="ep-soff">Event Start Offset (minutes)</label>
+      <p-inputNumber inputId="ep-soff" [(ngModel)]="editing.startOffset" [showButtons]="true" [min]="0" [step]="5" />
+
+      <label for="ep-eoff">Event Stop Offset (minutes)</label>
+      <p-inputNumber inputId="ep-eoff" [(ngModel)]="editing.stopOffset" [showButtons]="true" [min]="0" [step]="5" />
+
+      <label for="ep-pref">Preference</label>
+      <p-select
+        inputId="ep-pref"
+        [options]="prefOptions()"
+        [(ngModel)]="editing.prefLevelId"
+        placeholder="Preference"
+        [style]="{ width: '100%' }"
+      />
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" />
+      <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="submit()" />
+    </ng-template>
+  </p-dialog>
+}

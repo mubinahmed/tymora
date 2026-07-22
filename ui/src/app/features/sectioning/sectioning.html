@@ -1,0 +1,272 @@
+<p-confirmDialog />
+
+<div class="sa-page">
+  <div class="search-bar">
+    @if (sessions().length) {
+      <p-select
+        [options]="sessionOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="sessionId"
+        (onChange)="onSessionChange()"
+        [filter]="sessions().length > 8"
+        filterBy="label"
+        appendTo="body"
+        placeholder="Select academic session"
+        styleClass="sa-select"
+      />
+    }
+    <p-button label="Reload" icon="pi pi-refresh" (onClick)="load()"
+      [disabled]="sessionId == null || loadingData()" [loading]="loadingData()" />
+    @if (pinRequired()) {
+      <p-button label="Enter PIN" icon="pi pi-key" severity="secondary" (onClick)="openPin()" />
+    }
+    @if (showEditor() && canDegreePlans()) {
+      <p-button label="Degree Plans" icon="pi pi-sitemap" severity="secondary"
+        (onClick)="openDegreePlans()" [disabled]="busy()" />
+    }
+    @if (loading()) {
+      <p-progressSpinner strokeWidth="4" styleClass="inline-spin" />
+    }
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" styleClass="sa-inline-msg" />
+  }
+  @if (eligibility()?.message) {
+    <p-message severity="warn" [text]="eligibility()!.message!" styleClass="sa-inline-msg" />
+  }
+  @if (noStudent() && !eligibility()?.message) {
+    <p-message severity="info" styleClass="sa-inline-msg"
+      text="No student record is associated with your account for the selected session." />
+  }
+  @if (searched() && !noStudent() && !canUseAssistant() && !canRegister()) {
+    <p-message severity="warn" styleClass="sa-inline-msg"
+      text="You are not currently eligible to use the scheduling assistant for this session." />
+  }
+
+  @if (loadingData()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (showEditor()) {
+    <!-- COURSE REQUESTS ------------------------------------------------------ -->
+    <p-card styleClass="sa-card">
+      <ng-template pTemplate="header">
+        <div class="sa-card-head">Course Requests</div>
+      </ng-template>
+
+      <div class="req-list">
+        <div class="req-head">
+          <span class="col-pri">Priority</span>
+          <span class="col-courses">Course(s) — type a course, or a free time like "Free MWF 7:30-8:20"</span>
+          @if (canWaitList()) { <span class="col-wl">Wait-List</span> }
+          <span class="col-act"></span>
+        </div>
+
+        @for (line of primary(); track line.id; let i = $index) {
+          <div class="req-row">
+            <span class="col-pri">{{ priorityLabel('primary', i) }}</span>
+            <div class="col-courses">
+              @for (item of line.courses; track $index) {
+                <div class="course-item">
+                  @if ($index > 0) { <span class="or">or</span> }
+                  <p-autoComplete
+                    [(ngModel)]="item.value"
+                    [suggestions]="suggestions()"
+                    (completeMethod)="search($event)"
+                    (onSelect)="onItemChange('primary')"
+                    (onClear)="onItemChange('primary')"
+                    optionLabel="label"
+                    [forceSelection]="false"
+                    [delay]="300"
+                    [minLength]="1"
+                    appendTo="body"
+                    placeholder="Course or free time"
+                    styleClass="sa-ac"
+                  />
+                  @if (line.courses.length > 1) {
+                    <p-button icon="pi pi-times" severity="secondary" [text]="true" size="small"
+                      pTooltip="Remove this choice" (onClick)="removeCourseItem(line, $index)" />
+                  }
+                </div>
+              }
+              <button type="button" class="add-alt" (click)="addAlternative(line)">+ add alternative (or)</button>
+            </div>
+            @if (canWaitList()) {
+              <span class="col-wl"><p-checkbox [(ngModel)]="line.waitList" [binary]="true" /></span>
+            }
+            <span class="col-act">
+              <p-button icon="pi pi-arrow-up" severity="secondary" [text]="true" size="small"
+                [disabled]="i === 0" (onClick)="moveLine('primary', i, -1)" />
+              <p-button icon="pi pi-arrow-down" severity="secondary" [text]="true" size="small"
+                [disabled]="i >= primary().length - 1" (onClick)="moveLine('primary', i, 1)" />
+              <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small"
+                (onClick)="removeLine('primary', i)" />
+            </span>
+          </div>
+        }
+      </div>
+
+      <div class="req-sub">Alternate Courses</div>
+      <div class="req-list">
+        @for (line of alternatives(); track line.id; let i = $index) {
+          <div class="req-row">
+            <span class="col-pri">{{ priorityLabel('alternatives', i) }}</span>
+            <div class="col-courses">
+              @for (item of line.courses; track $index) {
+                <div class="course-item">
+                  @if ($index > 0) { <span class="or">or</span> }
+                  <p-autoComplete
+                    [(ngModel)]="item.value"
+                    [suggestions]="suggestions()"
+                    (completeMethod)="search($event)"
+                    (onSelect)="onItemChange('alternatives')"
+                    (onClear)="onItemChange('alternatives')"
+                    optionLabel="label"
+                    [forceSelection]="false"
+                    [delay]="300"
+                    [minLength]="1"
+                    appendTo="body"
+                    placeholder="Course or free time"
+                    styleClass="sa-ac"
+                  />
+                  @if (line.courses.length > 1) {
+                    <p-button icon="pi pi-times" severity="secondary" [text]="true" size="small"
+                      (onClick)="removeCourseItem(line, $index)" />
+                  }
+                </div>
+              }
+              <button type="button" class="add-alt" (click)="addAlternative(line)">+ add alternative (or)</button>
+            </div>
+            @if (canWaitList()) {
+              <span class="col-wl"><p-checkbox [(ngModel)]="line.waitList" [binary]="true" /></span>
+            }
+            <span class="col-act">
+              <p-button icon="pi pi-arrow-up" severity="secondary" [text]="true" size="small"
+                [disabled]="i === 0" (onClick)="moveLine('alternatives', i, -1)" />
+              <p-button icon="pi pi-arrow-down" severity="secondary" [text]="true" size="small"
+                [disabled]="i >= alternatives().length - 1" (onClick)="moveLine('alternatives', i, 1)" />
+              <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small"
+                (onClick)="removeLine('alternatives', i)" />
+            </span>
+          </div>
+        }
+      </div>
+
+      <!-- ACTIONS ------------------------------------------------------------- -->
+      <div class="actions">
+        <p-button label="Build Schedule" icon="pi pi-cog" (onClick)="build()"
+          [disabled]="busy()" [loading]="busy() && busyLabel().startsWith('Building')" />
+        <p-button label="Validate" icon="pi pi-check" severity="secondary" (onClick)="validate()"
+          [disabled]="busy()" />
+        @if (canRegister()) {
+          <p-button label="Save Requests" icon="pi pi-save" severity="secondary" (onClick)="save()"
+            [disabled]="busy()" />
+        }
+        @if (canWaitList()) {
+          <p-button label="Check Wait-List" icon="pi pi-clock" severity="secondary" (onClick)="checkWaitList()"
+            [disabled]="busy()" />
+        }
+        <p-button label="Enroll" icon="pi pi-send" severity="success" (onClick)="enroll()"
+          [disabled]="busy() || !canEnroll()" pTooltip="Register into the built schedule" />
+        <p-button label="Start Over" icon="pi pi-refresh" severity="danger" [outlined]="true"
+          (onClick)="startOver()" [disabled]="busy()" />
+        @if (busy()) {
+          <span class="busy"><p-progressSpinner strokeWidth="5" styleClass="inline-spin" /> {{ busyLabel() }}</span>
+        }
+      </div>
+
+      <!-- CHECK MESSAGES ------------------------------------------------------ -->
+      @if (checkResponse()) {
+        @if (checkResponse()!.errorMessage) {
+          <p-message severity="error" [text]="checkResponse()!.errorMessage!" styleClass="sa-inline-msg" />
+        }
+        @for (m of checkErrors(); track $index) {
+          <p-message severity="error" styleClass="sa-inline-msg"
+            [text]="(m.course ? m.course + ': ' : '') + (m.message ?? '')" />
+        }
+        @for (m of checkWarnings(); track $index) {
+          <p-message severity="warn" styleClass="sa-inline-msg"
+            [text]="(m.course ? m.course + ': ' : '') + (m.message ?? '')" />
+        }
+        @if (checkResponse()!.creditWarning) {
+          <p-message severity="warn" [text]="checkResponse()!.creditWarning!" styleClass="sa-inline-msg" />
+        }
+      }
+    </p-card>
+
+    <!-- SCHEDULE -------------------------------------------------------------- -->
+    <p-card styleClass="sa-card">
+      <ng-template pTemplate="header">
+        <div class="sa-card-head">
+          <span>Schedule</span>
+          <span class="head-spacer"></span>
+          <p-button [label]="showGrid() ? 'Table view' : 'Grid view'"
+            [icon]="showGrid() ? 'pi pi-table' : 'pi pi-calendar'"
+            severity="secondary" [text]="true" size="small" (onClick)="showGrid.set(!showGrid())" />
+        </div>
+      </ng-template>
+
+      @for (m of scheduleErrors(); track $index) {
+        <p-message severity="error" [text]="m" styleClass="sa-inline-msg" />
+      }
+      @for (m of scheduleMessages(); track $index) {
+        <p-message severity="info" [text]="m" styleClass="sa-inline-msg" />
+      }
+
+      @if (showGrid()) {
+        <app-sectioning-grid [items]="gridItems()" />
+      } @else {
+        <p-table [value]="scheduleRows()" styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Course</th>
+              <th>Title</th>
+              <th>Type</th>
+              <th>Section</th>
+              <th>Days &amp; Times</th>
+              <th>Room</th>
+              <th>Instructor</th>
+              <th>Credit</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-r>
+            <tr [class.row-error]="r.error">
+              <td>{{ r.course }}</td>
+              <td>{{ r.title }}</td>
+              <td>{{ r.subpart }}</td>
+              <td>{{ r.section }}</td>
+              <td>{{ r.time }}</td>
+              <td>{{ r.room }}</td>
+              <td>{{ r.instructor }}</td>
+              <td>{{ r.credit }}</td>
+            </tr>
+            @if (r.error) {
+              <tr class="row-error-msg"><td colspan="8">{{ r.error }}</td></tr>
+            }
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td colspan="8">No schedule yet — add courses and click "Build Schedule".</td></tr>
+          </ng-template>
+        </p-table>
+      }
+    </p-card>
+  } @else if (!loading() && !eligibility()) {
+    <p class="hint">Select an academic session to begin.</p>
+  }
+</div>
+
+<!-- PIN DIALOG -------------------------------------------------------------- -->
+<p-dialog [visible]="pinDialog()" (visibleChange)="pinDialog.set($event)" [modal]="true"
+  header="Authentication PIN" [style]="{ width: '24rem' }" [dismissableMask]="true">
+  <p class="pin-hint">A PIN is required to access the scheduling assistant for this session.</p>
+  <input pInputText type="password" [(ngModel)]="pinInput" class="pin-input"
+    placeholder="Enter PIN" (keyup.enter)="submitPin()" />
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" (onClick)="pinDialog.set(false)" />
+    <p-button label="Submit" icon="pi pi-key" [disabled]="!pinInput.trim()" (onClick)="submitPin()" />
+  </ng-template>
+</p-dialog>
+
+<!-- DEGREE PLANS ------------------------------------------------------------ -->
+<app-degree-plan-dialog [visible]="degreeDialog()" (visibleChange)="degreeDialog.set($event)"
+  [plans]="degreePlans()" (picked)="onDegreeCoursesPicked($event)" />

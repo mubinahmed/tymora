@@ -1,0 +1,123 @@
+<div class="pitd-reports">
+  @if (loading()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else {
+    <p-card>
+      <div class="filter">
+        <div class="field">
+          <label>Report</label>
+          <p-select
+            [options]="reportOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="reportId"
+            (onChange)="onReportChange()"
+            placeholder="Select a report"
+            [filter]="true"
+            filterBy="label"
+            appendTo="body"
+            styleClass="pitd-select"
+          />
+        </div>
+
+        @if (selectedReport()?.description) {
+          <div class="field description" [innerHTML]="selectedReport()!.description"></div>
+        }
+
+        @for (p of visibleParameters(); track p.type) {
+          <div class="field">
+            <label>{{ p.name }}</label>
+            @if (p.textField) {
+              <input pInputText type="text" [(ngModel)]="paramValues[p.type!]" />
+            } @else if (p.multiSelect) {
+              <p-multiSelect
+                [options]="optionsFor(p)"
+                optionLabel="label"
+                optionValue="value"
+                [(ngModel)]="paramValues[p.type!]"
+                appendTo="body"
+                [filter]="true"
+                filterBy="label"
+                placeholder="Select"
+                styleClass="pitd-select"
+              />
+            } @else {
+              <p-select
+                [options]="optionsFor(p)"
+                optionLabel="label"
+                optionValue="value"
+                [(ngModel)]="paramValues[p.type!]"
+                appendTo="body"
+                [filter]="true"
+                filterBy="label"
+                placeholder="Select"
+                styleClass="pitd-select"
+              />
+            }
+          </div>
+        }
+
+        <div class="actions">
+          <p-button
+            label="Execute"
+            icon="pi pi-play"
+            (onClick)="execute()"
+            [disabled]="!reportId"
+            [loading]="executing()"
+          />
+          <p-button
+            label="CSV"
+            icon="pi pi-download"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="exportServer()"
+            [disabled]="!table()"
+          />
+        </div>
+      </div>
+
+      @if (error()) {
+        <p-message severity="error" [text]="error()!" />
+      }
+    </p-card>
+
+    @if (executing()) {
+      <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+    } @else if (resultsMessage() && !table()) {
+      <p-message severity="info" [text]="resultsMessage()!" />
+    } @else if (table()) {
+      <p-table
+        [value]="rows()"
+        [columns]="cols()"
+        [paginator]="rows().length > 50"
+        [rows]="50"
+        [rowsPerPageOptions]="[50, 100, 200]"
+        styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines"
+      >
+        <ng-template pTemplate="caption">
+          <div class="tbl-caption">
+            <span>{{ selectedReport()?.name || 'Results' }}</span>
+            <span class="spacer"></span>
+            <span>{{ resultsMessage() }}</span>
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="header" let-columns>
+          <tr>
+            @for (c of columns; track c.index) {
+              <th [pSortableColumn]="c.field">{{ c.label }}<p-sortIcon [field]="c.field" /></th>
+            }
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-row let-columns="columns">
+          <tr>
+            @for (c of columns; track c.index) {
+              <td [innerHTML]="cell(row, c.index)"></td>
+            }
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  }
+</div>

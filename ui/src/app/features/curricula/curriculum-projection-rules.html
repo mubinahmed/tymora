@@ -1,0 +1,69 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="rows()"
+    [paginator]="true"
+    [rows]="25"
+    [rowsPerPageOptions]="[25, 50, 100]"
+    [globalFilterFields]="['academicAreaCode', 'academicAreaLabel', 'majorCode', 'majorLabel', 'classificationCode', 'classificationLabel']"
+    sortMode="multiple"
+    styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ count() }} rule row(s)</span>
+        <span class="spacer"></span>
+        <input pInputText type="text" placeholder="Search…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+        @if (editable()) {
+          <p-button label="Save" icon="pi pi-save" [loading]="saving()" (onClick)="save()" />
+        }
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="academicAreaCode">Academic Area <p-sortIcon field="academicAreaCode" /></th>
+        <th pSortableColumn="majorLabel">Major <p-sortIcon field="majorLabel" /></th>
+        <th pSortableColumn="classificationCode">Classification <p-sortIcon field="classificationCode" /></th>
+        <th pSortableColumn="enrollment" class="num">Last-like Enrollment <p-sortIcon field="enrollment" /></th>
+        <th class="num">Projection %</th>
+        <th class="num">Projected</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-r>
+      <tr>
+        <td [title]="r.academicAreaLabel">{{ r.academicAreaCode }}</td>
+        <td>{{ majorDisplay(r) }}</td>
+        <td [title]="r.classificationLabel">{{ r.classificationCode }} — {{ r.classificationLabel }}</td>
+        <td class="num">{{ r.enrollment }}</td>
+        <td class="num">
+          @if (editable()) {
+            <p-inputNumber
+              [(ngModel)]="r.projectionPercent"
+              [minFractionDigits]="0"
+              [maxFractionDigits]="2"
+              [min]="0"
+              suffix=" %"
+              [showButtons]="false"
+              inputStyleClass="proj-input"
+            />
+          } @else {
+            {{ r.projectionPercent == null ? '—' : (r.projectionPercent + ' %') }}
+          }
+        </td>
+        <td class="num">{{ projected(r) ?? '—' }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="6">No curriculum projection rules found for this academic session.</td></tr>
+    </ng-template>
+  </p-table>
+}

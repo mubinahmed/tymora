@@ -1,0 +1,172 @@
+<p-confirmDialog />
+
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else if (data(); as d) {
+  <p-table
+    [value]="rows()"
+    [paginator]="rows().length > 25"
+    [rows]="25"
+    [rowsPerPageOptions]="[25, 50, 100]"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <p-select
+          [options]="examTypeOptions()"
+          [(ngModel)]="examTypeId"
+          (onChange)="onExamTypeChange()"
+          placeholder="Examination type"
+          [style]="{ minWidth: '12rem' }"
+        />
+        <p-select
+          [options]="subjectAreaOptions()"
+          [(ngModel)]="subjectAreaId"
+          (onChange)="onSubjectAreaChange()"
+          placeholder="Subject area"
+          [style]="{ minWidth: '10rem' }"
+        />
+        <span class="spacer"></span>
+        <span>{{ rows().length }} pref(s)</span>
+        <input
+          pInputText
+          type="text"
+          placeholder="Filter…"
+          [value]="filter()"
+          (input)="filter.set($any($event.target).value)"
+        />
+        @if (d.canAdd) {
+          <p-button label="Add" icon="pi pi-plus" (onClick)="add()" />
+        }
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        @for (col of columns(); track $index) {
+          <th>{{ col }}</th>
+        }
+        <th style="width: 7rem;"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-row>
+      <tr>
+        @for (col of columns(); track $index) {
+          <td>{{ row.cells?.[$index] ?? '' }}</td>
+        }
+        <td>
+          <div class="row-actions">
+            @if (canEdit(row)) {
+              <p-button icon="pi pi-pencil" severity="secondary" [text]="true" (onClick)="edit(row)" pTooltip="Edit" />
+            }
+            @if (canDelete(row)) {
+              <p-button icon="pi pi-trash" severity="danger" [text]="true" (onClick)="confirmDelete(row)" pTooltip="Delete" />
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td [attr.colspan]="columns().length + 1">No distribution preferences.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <p-dialog
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [modal]="true"
+    [style]="{ width: '46rem' }"
+    [header]="editId == null ? 'Add Distribution Preference' : 'Edit Distribution Preference'"
+  >
+    <div class="field-row">
+      <div class="field" style="flex: 1;">
+        <label for="edp-type">Distribution type</label>
+        <p-select
+          inputId="edp-type"
+          [options]="typeOptions()"
+          [(ngModel)]="editTypeId"
+          (onChange)="onTypeChange()"
+          placeholder="Select type"
+          appendTo="body"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="field" style="width: 14rem;">
+        <label for="edp-level">Preference</label>
+        <p-select
+          inputId="edp-level"
+          [options]="levelOptions()"
+          [(ngModel)]="editLevelId"
+          placeholder="Select preference"
+          appendTo="body"
+          styleClass="w-full"
+        />
+      </div>
+    </div>
+
+    @if (typeDescription()) {
+      <p class="hint">{{ typeDescription() }}</p>
+    }
+
+    <div class="field">
+      <label>Examinations</label>
+      <table style="border-collapse: separate; border-spacing: 0 0.35rem;">
+        <tbody>
+          @for (line of editLines; track $index) {
+            <tr>
+              <td>
+                <p-select
+                  [options]="cascadeSubjectOptions()"
+                  [(ngModel)]="line.subjectAreaId"
+                  (onChange)="onLineSubjectChange(line)"
+                  placeholder="Subject"
+                  appendTo="body"
+                  [style]="{ width: '9rem' }"
+                  [filter]="true"
+                />
+              </td>
+              <td>
+                <p-select
+                  [options]="line.courseOptions"
+                  [(ngModel)]="line.courseId"
+                  (onChange)="onLineCourseChange(line)"
+                  placeholder="Course"
+                  appendTo="body"
+                  [style]="{ width: '13rem' }"
+                  [filter]="true"
+                  [disabled]="line.subjectAreaId == null"
+                />
+              </td>
+              <td>
+                <p-select
+                  [options]="line.examOptions"
+                  [(ngModel)]="line.examId"
+                  placeholder="Examination"
+                  appendTo="body"
+                  [style]="{ width: '13rem' }"
+                  [disabled]="line.courseId == null"
+                />
+              </td>
+              <td>
+                <p-button icon="pi pi-times" severity="danger" [text]="true" (onClick)="removeLine($index)" pTooltip="Remove" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <p-button label="Add examination" icon="pi pi-plus" severity="secondary" [text]="true" (onClick)="addLine()" />
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" [disabled]="saving()" />
+      <p-button label="Save" icon="pi pi-check" (onClick)="submit()" [loading]="saving()" />
+    </ng-template>
+  </p-dialog>
+}

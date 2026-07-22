@@ -1,0 +1,126 @@
+@if (grid(); as g) {
+  <div class="rs-toolbar">
+    @if (modeOptions().length > 1) {
+      <p-select
+        [options]="modeOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="modeIdx()"
+        (ngModelChange)="setMode($event)"
+        [ngModelOptions]="{ standalone: true }"
+        appendTo="body"
+      />
+    }
+    <span class="spacer"></span>
+    <label class="rs-horiz">
+      <p-checkbox [binary]="true" [ngModel]="horizontal()" (ngModelChange)="toggleHorizontal($event)" [ngModelOptions]="{ standalone: true }" />
+      Rooms horizontally
+    </label>
+  </div>
+
+  <div class="rs-scroll">
+    <table class="rs-grid">
+      <thead>
+        <tr>
+          <th class="rs-corner" [class.rs-click]="modelEditable()" (click)="paintAll()">Time \ Day</th>
+          @for (c of g.cols; track c.key) {
+            <th
+              class="rs-head"
+              [class.rs-click]="modelEditable()"
+              (click)="g.horizontal ? paintTime(c.key) : paintDay(c.key)"
+            >
+              {{ c.label }}
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of g.rows; track r.key) {
+          <tr>
+            <th
+              class="rs-rowhead"
+              [class.rs-click]="modelEditable()"
+              (click)="g.horizontal ? paintDay(r.key) : paintTime(r.key)"
+            >
+              {{ r.label }}
+            </th>
+            @for (c of g.cols; track c.key) {
+              @if (g.horizontal) {
+                <td
+                  class="rs-cell"
+                  [class.rs-click]="editableCell(r.key, c.key)"
+                  [style.background-color]="cellColor(r.key, c.key)"
+                  [title]="cellTitle(r.key, c.key)"
+                  (click)="paint(r.key, c.key)"
+                >
+                  {{ cellCode(r.key, c.key) }}
+                </td>
+              } @else {
+                <td
+                  class="rs-cell"
+                  [class.rs-click]="editableCell(c.key, r.key)"
+                  [style.background-color]="cellColor(c.key, r.key)"
+                  [title]="cellTitle(c.key, r.key)"
+                  (click)="paint(c.key, r.key)"
+                >
+                  {{ cellCode(c.key, r.key) }}
+                </td>
+              }
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rs-legend">
+    @for (o of options(); track o.id) {
+      <div class="rs-opt" [class.rs-opt-sel]="o.id === selectedId()">
+        <span
+          class="rs-swatch"
+          [class.rs-click]="modelEditable() && o.editable"
+          [style.background-color]="o.color || 'transparent'"
+          (click)="selectOption(o.id)"
+          >{{ o.code }}</span
+        >
+        <span class="rs-opt-name" [class.rs-click]="modelEditable() && o.editable" (click)="selectOption(o.id)">{{ o.name }}</span>
+        @if (o.preferenceId != null && preferences().length) {
+          <p-select
+            class="rs-pref"
+            [options]="preferences()"
+            optionLabel="name"
+            optionValue="id"
+            [ngModel]="o.preferenceId"
+            (ngModelChange)="setPreference(o, $event)"
+            [ngModelOptions]="{ standalone: true }"
+            appendTo="body"
+          />
+        }
+        @if (removable(o)) {
+          <button type="button" class="rs-x" title="Remove" (click)="removeOption(o)">×</button>
+        }
+      </div>
+    }
+
+    @if (modelEditable() && additionalOptions().length) {
+      <div class="rs-add-title">Add department:</div>
+      <div class="rs-add">
+        @for (o of additionalOptions(); track o.id) {
+          <button type="button" class="rs-add-opt" (click)="addOption(o)">
+            <span class="rs-swatch" [style.background-color]="o.color || 'transparent'">{{ o.code }}</span>
+            {{ o.name }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (modelEditable() && includeNote() && model().noteEditable) {
+    <div class="field rs-note">
+      <label>Availability Note</label>
+      <textarea pTextarea rows="3" [ngModel]="model().note ?? ''" (ngModelChange)="onNote($event)" [ngModelOptions]="{ standalone: true }"></textarea>
+    </div>
+  } @else if (model().note) {
+    <div class="rs-note-ro"><span class="membership-label">Availability Note</span> {{ model().note }}</div>
+  }
+}

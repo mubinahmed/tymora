@@ -1,0 +1,23 @@
+<div class="home">
+  <p-card header="Angular front-end — Wave 0 skeleton">
+    <p>
+      This shell talks to the existing UniTime backend through the additive JSON facade
+      (<code>/api/rpc/*</code>) — no GWT code changed. The top bar, side menu, and footer below
+      are all populated from real RPC commands.
+    </p>
+    @if (user()?.name) {
+      <p>Signed in as <strong>{{ user()!.name }}</strong>@if (user()!.role) { — {{ user()!.role }} }.</p>
+    } @else {
+      <p>You are not signed in; data screens will redirect to the UniTime login.</p>
+    }
+    @if (session()?.session) {
+      <p>Academic session: <strong>{{ session()!.session }}</strong>.</p>
+    }
+  </p-card>
+
+  <p-card header="Pilot screen (Wave 1)">
+    <p>The Buildings list is the first migrated screen, rendered from
+      <code>GetBuildingsRequest</code> in a PrimeNG table.</p>
+    <p-button label="Open Buildings" icon="pi pi-building" routerLink="/buildings" />
+  </p-card>
+</div>

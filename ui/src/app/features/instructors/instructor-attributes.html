@@ -1,0 +1,97 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else {
+  <div class="offering-search">
+    <div class="search-bar">
+      <p-select
+        [options]="departments()"
+        optionValue="id"
+        [(ngModel)]="departmentId"
+        (onChange)="loadAttributes()"
+        placeholder="Select department"
+        [filter]="true"
+        filterBy="code,label"
+        appendTo="body"
+        styleClass="sa-select"
+      >
+        <ng-template let-d pTemplate="selectedItem">{{ d.code }} — {{ d.label }}</ng-template>
+        <ng-template let-d pTemplate="item">{{ d.code }} — {{ d.label }}</ng-template>
+      </p-select>
+      <span class="spacer"></span>
+      <p-button label="New" icon="pi pi-plus" [disabled]="departmentId == null" (onClick)="openCreate()" />
+    </div>
+
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" />
+    }
+
+    @if (loadingList()) {
+      <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+    } @else {
+      <p-table
+        #dt
+        [value]="attributes()"
+        [paginator]="attributes().length > 25"
+        [rows]="25"
+        [globalFilterFields]="['code', 'name']"
+        sortField="code"
+        [sortOrder]="1"
+        dataKey="id"
+        styleClass="p-datatable-sm p-datatable-striped"
+      >
+        <ng-template pTemplate="caption">
+          <div class="tbl-caption">
+            <span>{{ attributes().length }} attribute(s)</span>
+            <span class="spacer"></span>
+            <input pInputText type="text" placeholder="Search…"
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="code">Code <p-sortIcon field="code" /></th>
+            <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+            <th>Type</th>
+            <th>Scope</th>
+            <th class="col-actions"></th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-a>
+          <tr>
+            <td>{{ a.code }}</td>
+            <td>{{ a.name }}</td>
+            <td>{{ a.type?.label ?? a.type?.abbv }}</td>
+            <td>
+              <p-tag [value]="a.department?.code ?? 'Global'" [severity]="a.department ? 'info' : 'secondary'" />
+            </td>
+            <td class="row-actions">
+              @if (a.canEdit) {
+                <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="openEdit(a)" />
+              }
+              @if (a.canDelete) {
+                <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(a)" />
+              }
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="5">No attributes in this department.</td></tr>
+        </ng-template>
+      </p-table>
+    }
+  </div>
+
+  <app-attribute-dialog
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [item]="editing()"
+    [types]="types()"
+    [departmentId]="departmentId"
+    (saved)="onSaved()"
+  />
+
+  <p-confirmDialog />
+}

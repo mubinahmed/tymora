@@ -1,0 +1,164 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back to Events" icon="pi pi-arrow-left" (onClick)="back()" /></div>
+} @else if (event(); as ev) {
+  <div class="ed-detail">
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="ed-header">
+          <div>
+            <h2>{{ ev.eventName }}</h2>
+            <p-tag [value]="typeLabel()" severity="info" />
+          </div>
+          <div class="ed-actions">
+            @if (canApprove()) {
+              <p-button label="Approve" icon="pi pi-check" severity="success" (onClick)="approve()" [loading]="acting()" />
+              <p-button label="Reject" icon="pi pi-times" severity="danger" [outlined]="true" (onClick)="reject()" [disabled]="acting()" />
+            }
+            @if (canCancel()) {
+              <p-button label="Cancel Event" icon="pi pi-ban" severity="warn" [outlined]="true" (onClick)="cancel()" [disabled]="acting()" />
+            }
+            <p-button label="Back" icon="pi pi-arrow-left" [text]="true" (onClick)="back()" />
+          </div>
+        </div>
+      </ng-template>
+
+      <!-- summary properties -->
+      <div class="ed-props">
+        <div class="ed-prop"><span class="k">Type</span><span class="v">{{ typeLabel() }}</span></div>
+        @if (ev.sponsor?.name) {
+          <div class="ed-prop"><span class="k">Sponsoring Organization</span><span class="v">{{ ev.sponsor?.name }}</span></div>
+        }
+        @if (ev.eventEmail) {
+          <div class="ed-prop"><span class="k">Additional Emails</span><span class="v">{{ ev.eventEmail }}</span></div>
+        }
+        @if (ev.enrollment != null) {
+          <div class="ed-prop"><span class="k">Enrollment</span><span class="v">{{ ev.enrollment }}</span></div>
+        }
+        @if (ev.maxCapacity != null) {
+          <div class="ed-prop"><span class="k">Attendance / Capacity</span><span class="v">{{ ev.maxCapacity }}</span></div>
+        }
+        @if (ev.expirationDate) {
+          <div class="ed-prop"><span class="k">Expiration Date</span><span class="v">{{ ev.expirationDate }}</span></div>
+        }
+        @if (ev.lastChange) {
+          <div class="ed-prop"><span class="k">Last Change</span><span class="v">{{ ev.lastChange }}</span></div>
+        }
+      </div>
+
+      <!-- contacts -->
+      @if (contacts().length) {
+        <h3>Contacts</h3>
+        <p-table [value]="contacts()" styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr><th>Role</th><th>Name</th><th>Email</th><th>Phone</th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-c>
+            <tr>
+              <td>{{ c.role }}</td>
+              <td>{{ c.name }}</td>
+              <td>{{ c.email }}</td>
+              <td>{{ c.phone }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+
+      <!-- meetings timetable -->
+      @if (gridEvents().length) {
+        <h3>Meetings</h3>
+        <app-event-grid [events]="gridEvents()" />
+      }
+
+      <!-- meetings table -->
+      @if (meetingRows().length) {
+        <p-table [value]="meetingRows()" [paginator]="meetingRows().length > 25" [rows]="25"
+          styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr><th>Date</th><th>Time</th><th>Room</th><th>Approval</th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-m>
+            <tr [class.ed-past]="m.past">
+              <td>{{ m.date }}</td>
+              <td>{{ m.time }}</td>
+              <td>{{ m.room }}</td>
+              <td><p-tag [value]="m.status" [severity]="statusSeverity(m.status)" /></td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td colspan="4">No meetings.</td></tr>
+          </ng-template>
+        </p-table>
+      }
+
+      <!-- optional note attached to approve/reject/cancel -->
+      @if (canApprove() || canCancel()) {
+        <h3>Action Note</h3>
+        <textarea pTextarea [(ngModel)]="actionNote" rows="2"
+          placeholder="Optional note included with approve / reject / cancel" class="ed-note"></textarea>
+      }
+
+      <!-- related objects -->
+      @if (owners().length) {
+        <h3>Relates To</h3>
+        <p-table [value]="owners()" styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr><th>Course</th><th>Section</th><th>Type</th><th>Date</th><th>Time</th><th>Location</th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-o>
+            <tr>
+              <td>{{ o.course }}</td>
+              <td>{{ o.section }}</td>
+              <td>{{ o.type }}</td>
+              <td>{{ o.date }}</td>
+              <td>{{ o.time }}</td>
+              <td>{{ o.location }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+
+      <!-- notes -->
+      @if (notes().length) {
+        <h3>Notes</h3>
+        <p-table [value]="notes()" styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr><th>Date</th><th>User</th><th>Action</th><th>Meetings</th><th>Note</th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-n>
+            <tr>
+              <td>{{ n.date }}</td>
+              <td>{{ n.user }}</td>
+              <td>{{ n.type }}</td>
+              <td>{{ n.meetings }}</td>
+              <td class="ed-notetext">{{ n.note }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+
+      <!-- conflicts -->
+      @if (conflicts().length) {
+        <h3>Conflicts</h3>
+        <p-table [value]="conflicts()" styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr><th>Event</th><th>Type</th><th>Meetings</th><th>Dates</th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-c>
+            <tr>
+              <td>{{ c.name }}</td>
+              <td>{{ c.type }}</td>
+              <td>{{ c.meetings }}</td>
+              <td>{{ c.dates }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    </p-card>
+  </div>
+} @else {
+  <p-message severity="warn" text="Event not found." />
+  <div class="mt"><p-button label="Back to Events" icon="pi pi-arrow-left" (onClick)="back()" /></div>
+}

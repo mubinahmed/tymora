@@ -1,0 +1,328 @@
+<p-confirmDialog />
+
+<div class="acr-page">
+  <div class="search-bar">
+    <input
+      pInputText
+      type="text"
+      placeholder="Student external id"
+      [(ngModel)]="studentId"
+      (keyup.enter)="lookup()"
+    />
+    <p-button label="Look Up" icon="pi pi-search" (onClick)="lookup()"
+      [disabled]="!studentId.trim() || loading()" [loading]="loading()" />
+
+    @if (sessions().length) {
+      <p-select
+        [options]="sessionOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="sessionId"
+        (onChange)="onSessionChange()"
+        [filter]="sessions().length > 8"
+        filterBy="label"
+        appendTo="body"
+        placeholder="Select academic session"
+        styleClass="acr-select"
+      />
+    }
+    @if (searched() && canUpdate() && canDegreePlans()) {
+      <p-button label="Degree Plans" icon="pi pi-sitemap" severity="secondary"
+        (onClick)="openDegreePlans()" [disabled]="busy()" />
+    }
+    @if (loading()) {
+      <p-progressSpinner strokeWidth="4" styleClass="inline-spin" />
+    }
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" styleClass="acr-inline-msg" />
+  }
+  @if (noStudent()) {
+    <p-message severity="info" styleClass="acr-inline-msg"
+      text="No student record was found for this external id in the selected session." />
+  }
+
+  @if (loadingData()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (searched() && !noStudent() && details(); as d) {
+    <!-- STUDENT INFO -------------------------------------------------------- -->
+    <p-card>
+      <div class="student-info">
+        <div><span class="lbl">Student</span> {{ d.studentName || '—' }}</div>
+        <div><span class="lbl">External Id</span> {{ d.studentExternalId || '—' }}</div>
+        <div><span class="lbl">Email</span> {{ d.studentEmail || '—' }}</div>
+        <div><span class="lbl">Session</span> {{ d.sessionName || '—' }}</div>
+        <div><span class="lbl">Advisor Email</span> {{ d.advisorEmail || '—' }}</div>
+        <div><span class="lbl">Status</span> {{ d.currentStatus?.label || '—' }}</div>
+      </div>
+      @if (canUpdate() && statusOptions().length) {
+        <div class="status-row">
+          <span class="lbl">Set Status</span>
+          <p-select
+            [options]="statusOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="statusRef"
+            appendTo="body"
+            placeholder="Student status"
+            styleClass="acr-select"
+          />
+        </div>
+      }
+    </p-card>
+
+    <!-- ADVISOR RECOMMENDATIONS ------------------------------------------------ -->
+    <p-card header="Advisor Recommendations">
+      @if (canUpdate()) {
+        <div class="req-list">
+          <div class="req-head">
+            <span class="col-pri">Priority</span>
+            <span class="col-courses">Course(s) — type a course, or a free time like "Free MWF 7:30-8:20"</span>
+            <span>Credit</span>
+            <span class="col-act"></span>
+          </div>
+
+          @for (line of primary(); track line.id; let i = $index) {
+            <div class="req-row">
+              <span class="col-pri">{{ priorityLabel('primary', i) }}</span>
+              <div class="col-courses">
+                @for (item of line.courses; track $index) {
+                  <div class="course-item">
+                    @if ($index > 0) { <span class="or">or</span> }
+                    <p-autoComplete
+                      [(ngModel)]="item.value"
+                      [suggestions]="suggestions()"
+                      (completeMethod)="search($event)"
+                      (onSelect)="onItemChange('primary')"
+                      (onClear)="onItemChange('primary')"
+                      optionLabel="label"
+                      [forceSelection]="false"
+                      [delay]="300"
+                      [minLength]="1"
+                      appendTo="body"
+                      placeholder="Course or free time"
+                      styleClass="acr-ac"
+                    />
+                    @if (line.courses.length > 1) {
+                      <p-button icon="pi pi-times" severity="secondary" [text]="true" size="small"
+                        pTooltip="Remove this choice" (onClick)="removeCourseItem(line, $index)" />
+                    }
+                  </div>
+                }
+                <button type="button" class="add-alt" (click)="addAlternative(line)">+ add alternative (or)</button>
+                <div class="line-extra">
+                  <input pInputText type="text" class="note" placeholder="Advisor note"
+                    [(ngModel)]="line.advisorNote" />
+                  @if (showWaitList()) {
+                    <label><p-checkbox [(ngModel)]="line.waitList" [binary]="true" /> Wait-List</label>
+                  }
+                  @if (showCritical()) {
+                    <label><p-checkbox [(ngModel)]="line.critical" [binary]="true" /> {{ criticalLabelText() }}</label>
+                  }
+                </div>
+              </div>
+              <span><input pInputText type="text" class="cr" placeholder="Cr" [(ngModel)]="line.advisorCredit" /></span>
+              <span class="col-act">
+                <p-button icon="pi pi-arrow-up" severity="secondary" [text]="true" size="small"
+                  [disabled]="i === 0" (onClick)="moveLine('primary', i, -1)" />
+                <p-button icon="pi pi-arrow-down" severity="secondary" [text]="true" size="small"
+                  [disabled]="i >= primary().length - 1" (onClick)="moveLine('primary', i, 1)" />
+                <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small"
+                  (onClick)="removeLine('primary', i)" />
+              </span>
+            </div>
+          }
+
+          <div class="req-head" style="margin-top: 1rem">
+            <span class="col-pri">Alternates</span>
+            <span class="col-courses"></span>
+            <span>Credit</span>
+            <span class="col-act"></span>
+          </div>
+          @for (line of alternatives(); track line.id; let i = $index) {
+            <div class="req-row">
+              <span class="col-pri">{{ priorityLabel('alternatives', i) }}</span>
+              <div class="col-courses">
+                @for (item of line.courses; track $index) {
+                  <div class="course-item">
+                    @if ($index > 0) { <span class="or">or</span> }
+                    <p-autoComplete
+                      [(ngModel)]="item.value"
+                      [suggestions]="suggestions()"
+                      (completeMethod)="search($event)"
+                      (onSelect)="onItemChange('alternatives')"
+                      (onClear)="onItemChange('alternatives')"
+                      optionLabel="label"
+                      [forceSelection]="false"
+                      [delay]="300"
+                      [minLength]="1"
+                      appendTo="body"
+                      placeholder="Course or free time"
+                      styleClass="acr-ac"
+                    />
+                    @if (line.courses.length > 1) {
+                      <p-button icon="pi pi-times" severity="secondary" [text]="true" size="small"
+                        (onClick)="removeCourseItem(line, $index)" />
+                    }
+                  </div>
+                }
+                <button type="button" class="add-alt" (click)="addAlternative(line)">+ add alternative (or)</button>
+                <div class="line-extra">
+                  <input pInputText type="text" class="note" placeholder="Advisor note"
+                    [(ngModel)]="line.advisorNote" />
+                  @if (showWaitList()) {
+                    <label><p-checkbox [(ngModel)]="line.waitList" [binary]="true" /> Wait-List</label>
+                  }
+                  @if (showCritical()) {
+                    <label><p-checkbox [(ngModel)]="line.critical" [binary]="true" /> {{ criticalLabelText() }}</label>
+                  }
+                </div>
+              </div>
+              <span><input pInputText type="text" class="cr" placeholder="Cr" [(ngModel)]="line.advisorCredit" /></span>
+              <span class="col-act">
+                <p-button icon="pi pi-arrow-up" severity="secondary" [text]="true" size="small"
+                  [disabled]="i === 0" (onClick)="moveLine('alternatives', i, -1)" />
+                <p-button icon="pi pi-arrow-down" severity="secondary" [text]="true" size="small"
+                  [disabled]="i >= alternatives().length - 1" (onClick)="moveLine('alternatives', i, 1)" />
+                <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small"
+                  (onClick)="removeLine('alternatives', i)" />
+              </span>
+            </div>
+          }
+        </div>
+
+        <div style="margin-top: 1rem">
+          <span class="lbl">Advisor Notes</span>
+          <textarea pTextarea rows="3" class="notes-area" maxlength="2048"
+            placeholder="Notes to the student / registrar" [(ngModel)]="advisorNote"></textarea>
+          @if (lastNotes().length) {
+            <div style="margin-top: 0.35rem; display: flex; gap: 0.35rem; flex-wrap: wrap; align-items: center">
+              <span class="hint">Recent notes:</span>
+              @for (n of lastNotes(); track $index) {
+                <p-button [label]="n.displayString || n.replaceString || 'note'" severity="secondary"
+                  [text]="true" size="small" (onClick)="applyNoteSuggestion(n)"
+                  pTooltip="Click to use this note" />
+              }
+            </div>
+          }
+        </div>
+
+        <!-- ACTIONS ----------------------------------------------------------- -->
+        <div class="actions">
+          <p-button label="Validate" icon="pi pi-check" severity="secondary" (onClick)="validate()"
+            [disabled]="busy()" [loading]="busy() && busyLabel().startsWith('Validating')" />
+          @if (canEmail()) {
+            <label style="display: inline-flex; align-items: center; gap: 0.3rem">
+              <p-checkbox [(ngModel)]="emailStudent" [binary]="true" />
+              {{ details()?.emailOptionalToggleCaption || 'Send email confirmation to the student' }}
+            </label>
+          }
+          <p-button label="Submit" icon="pi pi-send" severity="success" (onClick)="submit()"
+            [disabled]="busy()" [loading]="busy() && busyLabel().startsWith('Submitting')" />
+          @if (busy()) {
+            <span class="busy"><p-progressSpinner strokeWidth="5" styleClass="inline-spin" /> {{ busyLabel() }}</span>
+          }
+        </div>
+      } @else {
+        <!-- READ-ONLY advisor recommendations -->
+        <p-table [value]="studentRowsFromAdvisor()" styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 6rem">Priority</th>
+              <th>Course(s)</th>
+              <th style="width: 7rem">Credit</th>
+              @if (showWaitList()) { <th style="width: 7rem">Wait-List</th> }
+              <th>Note</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-r>
+            <tr>
+              <td>{{ r.priority }}</td>
+              <td>{{ r.courses }}</td>
+              <td>{{ r.credit }}</td>
+              @if (showWaitList()) {
+                <td>@if (r.waitList) { <p-tag value="Wait-List" severity="info" /> }</td>
+              }
+              <td>{{ r.note }}</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td [attr.colspan]="showWaitList() ? 5 : 4">No advisor recommendations on file.</td></tr>
+          </ng-template>
+        </p-table>
+        <div class="actions">
+          <p-button label="Export PDF" icon="pi pi-file-pdf" severity="secondary" (onClick)="submit()"
+            [disabled]="busy()" [loading]="busy()" />
+          @if (busy()) {
+            <span class="busy"><p-progressSpinner strokeWidth="5" styleClass="inline-spin" /> {{ busyLabel() }}</span>
+          }
+        </div>
+      }
+
+      <!-- CHECK MESSAGES ------------------------------------------------------ -->
+      @if (checkResponse()) {
+        @if (checkResponse()!.errorMessage) {
+          <p-message severity="error" [text]="checkResponse()!.errorMessage!" styleClass="acr-inline-msg" />
+        }
+        @for (m of checkErrors(); track $index) {
+          <p-message severity="error" styleClass="acr-inline-msg"
+            [text]="(m.course ? m.course + ': ' : '') + (m.message ?? '')" />
+        }
+        @for (m of checkWarnings(); track $index) {
+          <p-message severity="warn" styleClass="acr-inline-msg"
+            [text]="(m.course ? m.course + ': ' : '') + (m.message ?? '')" />
+        }
+        @if (checkResponse()!.creditWarning) {
+          <p-message severity="warn" [text]="checkResponse()!.creditWarning!" styleClass="acr-inline-msg" />
+        }
+      }
+
+      <!-- SUBMISSION RESULT --------------------------------------------------- -->
+      @if (submission(); as sub) {
+        <div class="submit-result">
+          @if (sub.updated) {
+            <p-message severity="success" styleClass="acr-inline-msg" text="Recommendations saved." />
+          }
+          @if (sub.link) {
+            <p-message severity="info" styleClass="acr-inline-msg"
+              [text]="'A document is available: ' + (sub.name || sub.link)" />
+          }
+        </div>
+      }
+    </p-card>
+
+    <!-- STUDENT COURSE REQUESTS -------------------------------------------------- -->
+    <p-card header="Student Course Requests">
+      <p-table [value]="studentRows()" styleClass="p-datatable-sm p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 6rem">Priority</th>
+            <th>Course(s)</th>
+            <th style="width: 7rem">Credit</th>
+            <th style="width: 7rem">Wait-List</th>
+            <th style="width: 12rem">Status</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-r>
+          <tr>
+            <td>{{ r.priority }}</td>
+            <td>{{ r.courses }}</td>
+            <td>{{ r.credit }}</td>
+            <td>@if (r.waitList) { <p-tag value="Wait-List" severity="info" /> }</td>
+            <td>{{ r.status }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="5">No student course requests on file.</td></tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  } @else if (!loading() && !searched()) {
+    <p class="hint">Enter a student's external id and look them up to view and edit their advising record.</p>
+  }
+</div>
+
+<!-- DEGREE PLANS ------------------------------------------------------------ -->
+<app-degree-plan-dialog [visible]="degreeDialog()" (visibleChange)="degreeDialog.set($event)"
+  [plans]="degreePlans()" (picked)="onDegreeCoursesPicked($event)" />

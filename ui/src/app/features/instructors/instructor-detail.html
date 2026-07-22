@@ -1,0 +1,47 @@
+<div class="detail-page">
+  @if (loading()) {
+    <div class="detail-center">
+      <p-progressSpinner strokeWidth="4" />
+    </div>
+  } @else if (error()) {
+    <p-message severity="error" [text]="error()!" />
+    <div class="detail-actions">
+      <p-button label="Back to Instructors" icon="pi pi-arrow-left" (onClick)="back()" [text]="true" />
+    </div>
+  } @else if (instructor(); as inst) {
+    <p-card [header]="inst.name || 'Instructor Detail'">
+      <dl class="detail-grid">
+        <dt>External Id</dt>
+        <dd>{{ inst.externalId || '-' }}</dd>
+
+        <dt>Account Name</dt>
+        <dd>{{ inst.accountName || '-' }}</dd>
+
+        <dt>Email</dt>
+        <dd>{{ inst.email || '-' }}</dd>
+
+        <dt>Department</dt>
+        <dd>{{ inst.deptName || inst.deptCode || '-' }}</dd>
+
+        <dt>Position</dt>
+        <dd>{{ inst.position || '-' }}</dd>
+
+        <dt>Academic Title</dt>
+        <dd>{{ inst.academicTitle || '-' }}</dd>
+
+        <dt>Assigned Classes</dt>
+        <dd>{{ inst.assignedClasses ?? 0 }}</dd>
+
+        <dt>Note</dt>
+        <dd>{{ inst.note || '-' }}</dd>
+      </dl>
+
+      <div class="detail-actions">
+        <p-button label="Back to Instructors" icon="pi pi-arrow-left" (onClick)="back()" [text]="true" />
+        <span style="flex:1"></span>
+        <p-button label="New instructor" icon="pi pi-plus" severity="secondary" (onClick)="addNew()" />
+        <p-button label="Edit" icon="pi pi-pencil" (onClick)="edit()" />
+      </div>
+    </p-card>
+  }
+</div>

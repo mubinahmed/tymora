@@ -1,0 +1,49 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="load()" /></div>
+} @else {
+  <div class="mt" style="display:flex; justify-content:flex-end;">
+    <p-button label="Refresh" icon="pi pi-refresh" [outlined]="true" (onClick)="load()" />
+  </div>
+
+  @for (m of messages(); track $index) {
+    <div class="mt">
+      <p-message [severity]="severity(m)" [text]="m.message ?? ''" />
+    </div>
+  }
+
+  @if (tables().length === 0) {
+    <div class="mt">
+      <p-message severity="info" text="No solution reports are available. Load or generate a course timetabling solution first." />
+    </div>
+  } @else {
+    @for (t of tables(); track $index) {
+      <p-card class="mt" [header]="t.name ?? ''">
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-bottom:0.5rem;">
+          <p-button
+            label="PDF"
+            icon="pi pi-file-pdf"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="exportServer(t, 'pdf')"
+            [disabled]="!t.tableId || rowCount(t) === 0"
+          />
+          <p-button
+            label="CSV"
+            icon="pi pi-download"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="exportServer(t, 'csv')"
+            [disabled]="!t.tableId || rowCount(t) === 0"
+          />
+        </div>
+        @if (t.errorMessage) {
+          <p-message severity="error" [text]="t.errorMessage" />
+        }
+        <app-rpc-table [table]="t" />
+      </p-card>
+    }
+  }
+}

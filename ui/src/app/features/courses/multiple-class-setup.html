@@ -1,0 +1,131 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back to offerings" icon="pi pi-arrow-left" routerLink="/offerings" /></div>
+} @else if (data(); as d) {
+  <div class="form-page" style="max-width: 80rem;">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-table"></i></span>
+        <div>
+          <h2>{{ d.name }}</h2>
+          <p>Set the classes of each scheduling subpart — limits, rooms, date pattern and department.</p>
+        </div>
+        <span class="head-spacer"></span>
+        <p-tag [value]="d.unlimited ? 'Unlimited' : ('Config limit ' + (d.limit ?? '—'))" severity="info" [rounded]="true" />
+      </div>
+
+      @for (g of groups(); track g.subpart.id) {
+        <div class="config-block">
+          <div class="config-head">
+            <span class="config-name">{{ g.subpart.label }}</span>
+            <span class="head-spacer" style="flex:1"></span>
+            <p-button label="Add class" icon="pi pi-plus" severity="secondary" [text]="true" (onClick)="addClass(g)" />
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="aci-grid">
+              <thead>
+                <tr>
+                  <th style="min-width:8rem;">Class</th>
+                  <th style="width:6rem;">Limit</th>
+                  @if (d.displayOptionForMaxLimit) { <th style="width:6rem;">Max</th> }
+                  <th style="width:5rem;">Rooms</th>
+                  <th style="width:6rem;">Ratio</th>
+                  <th style="width:4rem;">Split</th>
+                  @if (d.displayInstructors) { <th style="width:4.5rem;">Instr.</th> }
+                  @if (d.displayEnabledForStudentScheduling) { <th style="width:4.5rem;">Sched.</th> }
+                  <th style="width:12rem;">Date pattern</th>
+                  <th style="width:12rem;">Department</th>
+                  <th style="width:3rem;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of g.lines; track $index) {
+                  <tr [class.aci-error]="!!line.error">
+                    <td>
+                      <span [style.padding-left.px]="(line.indent || 0) * 14">{{ line.label }}</span>
+                      @if (line.cancelled) { <p-tag value="Cancelled" severity="danger" [rounded]="true" /> }
+                    </td>
+                    <td>
+                      @if (line.editable) {
+                        <p-inputNumber [(ngModel)]="line.minClassLimit" [ngModelOptions]="{ standalone: true }"
+                          [useGrouping]="false" [min]="0" styleClass="aci-select" />
+                      } @else { <span class="muted">{{ line.minClassLimit }}</span> }
+                    </td>
+                    @if (d.displayOptionForMaxLimit) {
+                      <td>
+                        @if (line.editable) {
+                          <p-inputNumber [(ngModel)]="line.maxClassLimit" [ngModelOptions]="{ standalone: true }"
+                            [useGrouping]="false" [min]="0" styleClass="aci-select" />
+                        } @else { <span class="muted">{{ line.maxClassLimit }}</span> }
+                      </td>
+                    }
+                    <td>
+                      @if (line.editable) {
+                        <p-inputNumber [(ngModel)]="line.numberOfRooms" [ngModelOptions]="{ standalone: true }"
+                          [useGrouping]="false" [min]="0" styleClass="aci-select" />
+                      } @else { <span class="muted">{{ line.numberOfRooms }}</span> }
+                    </td>
+                    <td>
+                      @if (line.editable) {
+                        <p-inputNumber [(ngModel)]="line.roomRatio" [ngModelOptions]="{ standalone: true }"
+                          [minFractionDigits]="1" [maxFractionDigits]="2" [min]="0" styleClass="aci-select" />
+                      } @else { <span class="muted">{{ line.roomRatio }}</span> }
+                    </td>
+                    <td style="text-align:center;">
+                      <p-checkbox [(ngModel)]="line.splitAttendance" [ngModelOptions]="{ standalone: true }"
+                        [binary]="true" [disabled]="!line.editable || (line.numberOfRooms || 0) <= 1" />
+                    </td>
+                    @if (d.displayInstructors) {
+                      <td style="text-align:center;">
+                        <p-checkbox [(ngModel)]="line.displayInstructors" [ngModelOptions]="{ standalone: true }"
+                          [binary]="true" [disabled]="!line.editable" />
+                      </td>
+                    }
+                    @if (d.displayEnabledForStudentScheduling) {
+                      <td style="text-align:center;">
+                        <p-checkbox [(ngModel)]="line.enabledForStudentScheduling" [ngModelOptions]="{ standalone: true }"
+                          [binary]="true" [disabled]="!line.editable" />
+                      </td>
+                    }
+                    <td>
+                      @if (line.editable && line.editableDatePattern) {
+                        <p-select [options]="dpOptions()" optionLabel="label" optionValue="id"
+                          [(ngModel)]="line.datePatternId" [ngModelOptions]="{ standalone: true }"
+                          appendTo="body" styleClass="aci-select" />
+                      } @else { <span class="muted">{{ line.date || '—' }}</span> }
+                    </td>
+                    <td>
+                      @if (line.editable) {
+                        <p-select [options]="deptOptions()" optionLabel="label" optionValue="id"
+                          [(ngModel)]="line.departmentId" [ngModelOptions]="{ standalone: true }"
+                          appendTo="body" styleClass="aci-select" />
+                      } @else { <span class="muted">—</span> }
+                    </td>
+                    <td style="text-align:center;">
+                      @if (line.canDelete) {
+                        <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Remove class"
+                          (onClick)="deleteClass(g, line)" />
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">This configuration has no scheduling subparts.</div>
+      }
+    </fieldset>
+
+    <div class="form-actions">
+      <p-button label="Back to offering" severity="secondary" [text]="true" icon="pi pi-arrow-left"
+        [routerLink]="offeringId() ? ['/offering-detail', offeringId()] : ['/offerings']" [disabled]="saving()" />
+      <span class="spacer"></span>
+      <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+    </div>
+  </div>
+}

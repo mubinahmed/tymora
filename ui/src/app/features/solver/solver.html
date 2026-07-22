@@ -1,0 +1,119 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else {
+  <div class="solver-page">
+    <div class="search-bar">
+      <p-select
+        [options]="solverTypes"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="type"
+        (onChange)="onTypeChange()"
+        styleClass="sa-select"
+      />
+      @if (working()) {
+        <p-tag value="Working" severity="warn" icon="pi pi-spin pi-spinner" />
+      } @else if (resp()?.solverStatus) {
+        <p-tag [value]="resp()!.solverStatus!" severity="info" />
+      }
+      <span class="spacer"></span>
+      <p-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true" (onClick)="refresh()" />
+    </div>
+
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" />
+    }
+
+    <div class="solver-controls">
+      <div class="field">
+        <label>Problem(s)</label>
+        <p-multiSelect
+          [options]="resp()?.solverOwners ?? []"
+          optionLabel="name"
+          optionValue="id"
+          [(ngModel)]="ownerIds"
+          display="chip"
+          placeholder="Select solver group(s)"
+          appendTo="body"
+          [disabled]="busy() || working()"
+        />
+      </div>
+      <div class="field">
+        <label>Configuration</label>
+        <p-select
+          [options]="resp()?.configurations ?? []"
+          optionLabel="name"
+          optionValue="id"
+          [(ngModel)]="configurationId"
+          appendTo="body"
+          [disabled]="busy() || working()"
+        />
+      </div>
+      <div class="solver-actions">
+        <p-button label="Start" icon="pi pi-play" (onClick)="start()"
+          [disabled]="busy() || working() || !ownerIds.length" [loading]="busy()" />
+        <p-button label="Reload" icon="pi pi-sync" severity="secondary" (onClick)="reload()"
+          [disabled]="busy() || working()" />
+        <p-button label="Stop" icon="pi pi-stop" severity="danger" (onClick)="stop()"
+          [disabled]="busy() || !working()" />
+      </div>
+    </div>
+
+    @if (resp()?.solverProgress) {
+      <div class="solver-progress">
+        <span class="phase">{{ resp()!.solverProgress }}</span>
+      </div>
+    }
+
+    @if (hasSolution()) {
+      <div class="solver-actions solution-ops">
+        <span class="ops-label">Solution:</span>
+        <p-button label="Save" icon="pi pi-save" severity="secondary" [disabled]="busy() || working()"
+          (onClick)="operation('SAVE', 'Save')" />
+        <p-button label="Save as New" icon="pi pi-copy" severity="secondary" [disabled]="busy() || working()"
+          (onClick)="operation('SAVE_AS_NEW', 'Save as New')" />
+        <p-button label="Save &amp; Commit" icon="pi pi-check-circle" severity="secondary" [disabled]="busy() || working()"
+          (onClick)="operation('SAVE_COMMIT', 'Save & Commit', 'Commit this solution? Committed assignments become the official timetable.')" />
+        <p-button label="Restore Best" icon="pi pi-history" severity="secondary" [disabled]="busy()"
+          (onClick)="operation('RESTORE_BEST', 'Restore Best')" />
+        <p-button label="Unload" icon="pi pi-times" severity="danger" [text]="true" [disabled]="busy() || working()"
+          (onClick)="operation('UNLOAD', 'Unload', 'Unload the solver? Unsaved changes are lost.')" />
+      </div>
+    }
+
+    <div class="solver-solutions">
+      @if (resp()?.currentSolution?.pairs?.length) {
+        <p-card header="Current solution">
+          <div class="info-grid">
+            @for (p of resp()!.currentSolution!.pairs!; track p.name) {
+              <div class="info-row"><span class="k">{{ p.name }}</span><span class="v">{{ p.value }}</span></div>
+            }
+          </div>
+        </p-card>
+      }
+      @if (resp()?.bestSolution?.pairs?.length) {
+        <p-card header="Best solution">
+          <div class="info-grid">
+            @for (p of resp()!.bestSolution!.pairs!; track p.name) {
+              <div class="info-row"><span class="k">{{ p.name }}</span><span class="v">{{ p.value }}</span></div>
+            }
+          </div>
+        </p-card>
+      }
+    </div>
+
+    @if (logTail().length) {
+      <p-card header="Log">
+        <div class="solver-log">
+          @for (m of logTail(); track $index) {
+            <div class="log-line" [class]="'lvl-' + (m.level ?? 'INFO').toLowerCase()">
+              <span class="log-msg">{{ m.message }}</span>
+            </div>
+          }
+        </div>
+      </p-card>
+    }
+  </div>
+
+  <p-confirmDialog />
+}

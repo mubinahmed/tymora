@@ -1,0 +1,81 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else {
+  <div class="offering-search">
+    <div class="search-bar">
+      <p-select
+        [options]="departments()"
+        optionValue="id"
+        [(ngModel)]="departmentId"
+        (onChange)="loadAssignments()"
+        placeholder="Select department"
+        [filter]="true"
+        filterBy="code,label"
+        appendTo="body"
+        styleClass="sa-select"
+      >
+        <ng-template let-d pTemplate="selectedItem">{{ d.code }} — {{ d.label }}</ng-template>
+        <ng-template let-d pTemplate="item">{{ d.code }} — {{ d.label }}</ng-template>
+      </p-select>
+    </div>
+
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" />
+    }
+
+    @if (loadingList()) {
+      <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+    } @else if (searched()) {
+      <p-table
+        #dt
+        [value]="instructors()"
+        [paginator]="instructors().length > 25"
+        [rows]="25"
+        [globalFilterFields]="['name']"
+        sortField="name"
+        [sortOrder]="1"
+        dataKey="instructorId"
+        styleClass="p-datatable-sm p-datatable-striped"
+      >
+        <ng-template pTemplate="caption">
+          <div class="tbl-caption">
+            <span>{{ instructors().length }} instructor(s)</span>
+            <span class="spacer"></span>
+            <input pInputText type="text" placeholder="Filter…"
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="name">Instructor <p-sortIcon field="name" /></th>
+            <th>Preference</th>
+            <th pSortableColumn="assignedLoad">Load <p-sortIcon field="assignedLoad" /></th>
+            <th>Requests</th>
+            <th>Courses</th>
+            <th></th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-i>
+          <tr [class.conflict-row]="i.conflict">
+            <td>{{ i.name }}</td>
+            <td>{{ i.teachingPreference }}</td>
+            <td><span [class.under]="over(i)">{{ i.assignedLoad ?? 0 }} / {{ i.maxLoad ?? 0 }}</span></td>
+            <td>{{ i.assignedRequests?.length ?? 0 }}</td>
+            <td>{{ courses(i) }}</td>
+            <td>
+              @if (i.conflict) { <p-tag value="Conflict" severity="danger" /> }
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="6">No instructors in this department.</td></tr>
+        </ng-template>
+      </p-table>
+    } @else {
+      <p class="hint">Select a department to view its instructors' teaching assignments.</p>
+    }
+  </div>
+}

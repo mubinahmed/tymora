@@ -1,0 +1,157 @@
+<div class="manage-solvers">
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" styleClass="ms-msg" />
+  }
+
+  @if (loading()) {
+    <div class="ms-loading">
+      <p-progressSpinner strokeWidth="4" />
+    </div>
+  }
+
+  <div class="ms-toolbar" style="display:flex; gap:.5rem; margin-bottom:.75rem;">
+    <p-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true"
+      [disabled]="busy()" (onClick)="load()" />
+    <p-button label="Deselect" icon="pi pi-times" severity="secondary"
+      [disabled]="busy()" (onClick)="deselect()" />
+  </div>
+
+  <!-- Active solver instances -->
+  <p-card styleClass="ms-card">
+    <ng-template pTemplate="title">Solver Instances</ng-template>
+    <p-table [value]="solvers()" [rowHover]="true" styleClass="p-datatable-sm" [scrollable]="true">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Type</th>
+          <th>Owner</th>
+          <th>Session</th>
+          <th>Host</th>
+          <th>Configuration</th>
+          <th>Status</th>
+          <th>Progress</th>
+          <th>Created</th>
+          <th>Last Used</th>
+          <th>Operations</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ typeLabel(row) }}</td>
+          <td [innerHTML]="row.owner"></td>
+          <td>{{ row.session }}</td>
+          <td>{{ row.host }}</td>
+          <td>{{ row.configuration }}</td>
+          <td>
+            @if (row.working) {
+              <p-tag severity="info" [value]="row.status || 'Working'" />
+            } @else if (row.passivated) {
+              <p-tag severity="secondary" [value]="row.status || 'Passivated'" />
+            } @else {
+              <p-tag severity="success" [value]="row.status || 'Idle'" />
+            }
+          </td>
+          <td>{{ progressLabel(row) }}</td>
+          <td>{{ row.created }}</td>
+          <td>{{ row.lastUsed }}</td>
+          <td>
+            <div style="display:flex; gap:.35rem; flex-wrap:wrap;">
+              @if (row.onlineId != null) {
+                <p-button label="Reload" icon="pi pi-refresh" size="small" [text]="true"
+                  [disabled]="busy()" (onClick)="reloadOnline(row)" />
+                <p-button label="Unload" icon="pi pi-trash" size="small" severity="danger" [text]="true"
+                  [disabled]="busy()" (onClick)="unloadOnline(row)" />
+              } @else {
+                @if (canSelect(row)) {
+                  <p-button label="Select" icon="pi pi-check" size="small" [text]="true"
+                    [disabled]="busy()" (onClick)="select(row)" />
+                  <p-button label="Unload" icon="pi pi-trash" size="small" severity="danger" [text]="true"
+                    [disabled]="busy()" (onClick)="unloadSolver(row)" />
+                }
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="10"><i>No solver is running.</i></td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <!-- Available servers -->
+  <p-card styleClass="ms-card">
+    <ng-template pTemplate="title">Available Servers</ng-template>
+    <p-table [value]="servers()" [rowHover]="true" styleClass="p-datatable-sm" [scrollable]="true">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Host</th>
+          <th>Version</th>
+          <th>Started</th>
+          <th>Available Memory</th>
+          <th>Cores</th>
+          <th>Usage</th>
+          <th>Active</th>
+          <th>Working</th>
+          <th>Passivated</th>
+          <th>Operations</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>
+            {{ row.host }}
+            @if (row.local) { <p-tag value="Tomcat" severity="info" styleClass="ml" /> }
+            @if (row.coordinator) { <p-tag value="Coordinator" severity="success" styleClass="ml" /> }
+            @if (row.active && !row.available) { <p-tag value="Unavailable" severity="warn" styleClass="ml" /> }
+          </td>
+          @if (row.active) {
+            <td>{{ row.version }}</td>
+            <td>{{ row.started }}</td>
+            <td>{{ memory(row.availableMemory) }}</td>
+            <td>{{ row.cores }}</td>
+            <td>{{ row.usage }}</td>
+            <td>{{ row.activeInstances }}</td>
+            <td>{{ row.workingInstances }}</td>
+            <td>{{ row.passivatedInstances }}</td>
+            <td>
+              <div style="display:flex; gap:.35rem; flex-wrap:wrap;">
+                @if ((row.usage ?? 0) >= 1000) {
+                  <p-button label="Enable" icon="pi pi-play" size="small" [text]="true"
+                    [disabled]="busy()" (onClick)="enable(row)" />
+                } @else {
+                  <p-button label="Disable" icon="pi pi-ban" size="small" severity="danger" [text]="true"
+                    [disabled]="busy()" (onClick)="disable(row)" />
+                }
+                @if (row.coordinator) {
+                  <p-button label="Reset" icon="pi pi-replay" size="small" severity="danger" [text]="true"
+                    [disabled]="busy()" (onClick)="reset(row)" />
+                }
+                @if (clusterEnabled()) {
+                  <p-button label="Reconnect" icon="pi pi-link" size="small" severity="danger" [text]="true"
+                    [disabled]="busy()" (onClick)="reconnect(row)" />
+                }
+                <p-button label="Reconnect Hibernate" icon="pi pi-database" size="small" severity="danger" [text]="true"
+                  [disabled]="busy()" (onClick)="hibernate(row)" />
+                @if (!row.local) {
+                  <p-button label="Shutdown" icon="pi pi-power-off" size="small" severity="danger" [text]="true"
+                    [disabled]="busy()" (onClick)="shutdown(row)" />
+                }
+              </div>
+            </td>
+          } @else {
+            <td colspan="9"><i>Inactive</i></td>
+          }
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="10"><i>No server is available.</i></td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <p-confirmDialog />
+</div>

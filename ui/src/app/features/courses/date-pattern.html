@@ -1,0 +1,54 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Close" icon="pi pi-arrow-left" (onClick)="close()" /></div>
+} @else if (data(); as d) {
+  <div class="form-page" style="max-width: 60rem;">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-calendar"></i></span>
+        <div>
+          <h2>{{ d.name }}</h2>
+          <p>Highlighted days are active for this date pattern.</p>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div><div class="dt">Number of weeks</div><div class="dd">{{ d.numberOfWeeks ?? '—' }}</div></div>
+        <div><div class="dt">Start date</div><div class="dd">{{ d.startDate || '—' }}</div></div>
+        <div><div class="dt">End date</div><div class="dd">{{ d.endDate || '—' }}</div></div>
+        <div><div class="dt">Active days</div><div class="dd">{{ d.activeDates?.length ?? 0 }}</div></div>
+      </div>
+
+      @if (months().length) {
+        <div class="dp-months">
+          @for (mo of months(); track mo.label) {
+            <div class="dp-month">
+              <div class="dp-month-label">{{ mo.label }}</div>
+              <div class="dp-grid">
+                @for (dow of DOW; track $index) {
+                  <div class="dp-dow">{{ dow }}</div>
+                }
+                @for (wk of mo.weeks; track $index) {
+                  @for (cell of wk; track $index) {
+                    <div class="dp-day" [class.active]="cell.active" [class.blank]="cell.day === null">
+                      {{ cell.day }}
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">This date pattern has no calendar range.</div>
+      }
+    </fieldset>
+
+    <div class="form-actions">
+      <span class="spacer"></span>
+      <p-button label="Close" severity="secondary" icon="pi pi-arrow-left" (onClick)="close()" />
+    </div>
+  </div>
+}

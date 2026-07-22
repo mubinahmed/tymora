@@ -1,0 +1,72 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+} @else {
+  <div class="form-page" style="max-width: 56rem;">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-file-pdf"></i></span>
+        <div>
+          <h2>Enrollment Audit PDF Reports</h2>
+          <p>Generate audit reports for the current academic session. E-mail delivery stays on the classic screen.</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Reports *</label>
+        <div class="checks" style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.4rem;">
+          @for (r of reportOptions(); track r.value) {
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <p-checkbox [(ngModel)]="selectedReports" [value]="r.value" [inputId]="'rep-' + r.value" />
+              <label [for]="'rep-' + r.value" style="margin:0; font-weight:normal;">{{ r.label }}</label>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="ear-mode">Output format</label>
+          <p-select inputId="ear-mode" [options]="modeOptions()" optionLabel="label" optionValue="value"
+            [(ngModel)]="mode" appendTo="body" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Scope</label>
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.4rem;">
+          <p-checkbox [(ngModel)]="all" [binary]="true" inputId="ear-all" />
+          <label for="ear-all">All subject areas in the session</label>
+        </div>
+      </div>
+
+      @if (!all) {
+        <div class="field">
+          <label for="ear-subjects">Subject areas *</label>
+          <p-multiSelect inputId="ear-subjects" [options]="subjectAreas()" optionLabel="abbreviation"
+            optionValue="id" [(ngModel)]="selectedSubjects" [filter]="true" filterBy="abbreviation,title"
+            display="chip" placeholder="Select subject areas" appendTo="body" styleClass="w-full" />
+        </div>
+      }
+
+      <div class="field">
+        <label>Student identification</label>
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.4rem;">
+          <p-checkbox [(ngModel)]="showExternalId" [binary]="true" inputId="ear-eid" />
+          <label for="ear-eid">Show student external id</label>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.4rem;">
+          <p-checkbox [(ngModel)]="showStudentName" [binary]="true" inputId="ear-sname" />
+          <label for="ear-sname">Show student name</label>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <span class="spacer"></span>
+      <p-button label="Generate report" icon="pi pi-download" (onClick)="generate()"
+        [loading]="generating()" [disabled]="!canGenerate()" />
+    </div>
+  </div>
+}

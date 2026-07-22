@@ -1,0 +1,43 @@
+@if (table()?.errorMessage) {
+  <p-message severity="warn" [text]="table()!.errorMessage!" />
+} @else if (!rows().length) {
+  <p-message severity="info" text="No rows." />
+} @else {
+  <p-table
+    #dt
+    [value]="rows()"
+    [paginator]="rows().length > 50"
+    [rows]="50"
+    [rowsPerPageOptions]="[50, 100, 200]"
+    styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ table()?.name || 'Results' }}</span>
+        <span class="spacer"></span>
+        <span>{{ rows().length }} row(s)</span>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        @for (c of cols(); track c.index) {
+          <th [style.text-align]="c.align">{{ c.name }}</th>
+        }
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-row>
+      <tr>
+        @for (c of cols(); track c.index) {
+          <td
+            [style.text-align]="c.align"
+            [style.color]="row.cells?.[c.index]?.color"
+            [title]="row.cells?.[c.index]?.title || ''"
+            [innerHTML]="row.cells?.[c.index]?.formattedValue"
+          ></td>
+        }
+      </tr>
+    </ng-template>
+  </p-table>
+}

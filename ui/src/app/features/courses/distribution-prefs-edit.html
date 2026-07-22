@@ -1,0 +1,114 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else if (data(); as d) {
+  <p-table
+    [value]="rows()"
+    [paginator]="rows().length > 25"
+    [rows]="25"
+    [rowsPerPageOptions]="[25, 50, 100]"
+    dataKey="id"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <p-select
+          [options]="subjectAreaOptions()"
+          [(ngModel)]="subjectAreaId"
+          (onChange)="onSubjectAreaChange()"
+          placeholder="Subject area"
+          [style]="{ minWidth: '14rem' }"
+        />
+        <span class="spacer"></span>
+        <span>{{ rows().length }} preference(s)</span>
+        <input
+          pInputText
+          type="text"
+          placeholder="Filter…"
+          [value]="filter()"
+          (input)="filter.set($any($event.target).value)"
+        />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        @for (col of columns(); track $index) {
+          <th>{{ col }}</th>
+        }
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-row>
+      <tr>
+        @for (col of columns(); track $index) {
+          <td>{{ row.cells?.[$index] ?? '' }}</td>
+        }
+        <td class="row-actions">
+          @if (editable()) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="edit(row)" />
+          }
+          @if (deletable()) {
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(row)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td [attr.colspan]="(columns().length || 1) + 1">No matching distribution preferences.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <p-confirmDialog />
+
+  @if (editing; as e) {
+    <p-dialog
+      [visible]="dialogVisible()"
+      (visibleChange)="dialogVisible.set($event)"
+      [modal]="true"
+      [style]="{ width: '42rem' }"
+      header="Edit Distribution Preference"
+    >
+      <div class="form-grid">
+        <label>Owner</label>
+        <span>{{ e.ownerLabel || '—' }}</span>
+
+        <label>Applies To</label>
+        <span>{{ e.appliesTo || '—' }}</span>
+
+        <label for="dp-type">Distribution Type</label>
+        <p-select
+          inputId="dp-type"
+          [options]="typeOptions()"
+          [(ngModel)]="e.distributionTypeId"
+          (onChange)="onTypeChange()"
+          placeholder="Select distribution type"
+          [filter]="true"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+        />
+
+        <label for="dp-level">Preference</label>
+        <p-select
+          inputId="dp-level"
+          [options]="levelOptions()"
+          [(ngModel)]="e.prefLevelId"
+          placeholder="Select preference level"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+        />
+      </div>
+
+      <ng-template pTemplate="footer">
+        <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" />
+        <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="submit()" />
+      </ng-template>
+    </p-dialog>
+  }
+}

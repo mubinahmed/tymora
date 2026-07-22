@@ -1,0 +1,100 @@
+<p-dialog
+  [header]="isEdit() ? 'Edit Department' : 'New Department'"
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  [modal]="true"
+  [style]="{ width: '44rem' }"
+  [draggable]="false"
+  [dismissableMask]="true"
+>
+  <form [formGroup]="form" class="building-form" (ngSubmit)="submit()">
+    <div class="field-row">
+      <div class="field">
+        <label for="d-code">Code *</label>
+        <input pInputText id="d-code" formControlName="deptCode" autocomplete="off" />
+        @if (form.controls.deptCode.invalid && form.controls.deptCode.touched) {
+          <p-message severity="error" text="Code is required" />
+        }
+      </div>
+      <div class="field">
+        <label for="d-abbv">Abbreviation *</label>
+        <input pInputText id="d-abbv" formControlName="abbreviation" autocomplete="off" />
+        @if (form.controls.abbreviation.invalid && form.controls.abbreviation.touched) {
+          <p-message severity="error" text="Abbreviation is required" />
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="d-name">Name *</label>
+      <input pInputText id="d-name" formControlName="name" autocomplete="off" />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <p-message severity="error" text="Name is required" />
+      }
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="d-status">Status</label>
+        <p-select
+          inputId="d-status"
+          formControlName="statusType"
+          [options]="statuses()"
+          optionLabel="label"
+          optionValue="reference"
+          placeholder="(session default)"
+          [showClear]="true"
+          appendTo="body"
+        />
+      </div>
+      <div class="field">
+        <label for="d-extid">External Id</label>
+        <input pInputText id="d-extid" formControlName="externalId" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="d-prio">Distribution Priority</label>
+        <p-inputNumber inputId="d-prio" formControlName="distributionPrefPriority" [useGrouping]="false" />
+      </div>
+    </div>
+
+    <div class="field-check">
+      <p-checkbox
+        inputId="d-extmgr"
+        formControlName="externalManager"
+        [binary]="true"
+        (onChange)="onExtManagerChange($event.checked)"
+      />
+      <label for="d-extmgr">External manager</label>
+    </div>
+    @if (extManager()) {
+      <div class="field-row">
+        <div class="field">
+          <label for="d-mgrabbv">Manager abbreviation</label>
+          <input pInputText id="d-mgrabbv" formControlName="externalMgrAbbv" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="d-mgrlabel">Manager label</label>
+          <input pInputText id="d-mgrlabel" formControlName="externalMgrLabel" autocomplete="off" />
+        </div>
+      </div>
+    }
+
+    <fieldset class="flags">
+      <legend>Options</legend>
+      <div class="flag"><p-checkbox inputId="f-events" formControlName="allowEvents" [binary]="true" /><label for="f-events">Allow events</label></div>
+      <div class="flag"><p-checkbox inputId="f-sched" formControlName="allowStudentScheduling" [binary]="true" /><label for="f-sched">Student scheduling</label></div>
+      <div class="flag"><p-checkbox inputId="f-inherit" formControlName="inheritInstructorPreferences" [binary]="true" /><label for="f-inherit">Inherit instructor prefs</label></div>
+      <div class="flag"><p-checkbox inputId="f-time" formControlName="allowReqTime" [binary]="true" /><label for="f-time">Require time</label></div>
+      <div class="flag"><p-checkbox inputId="f-room" formControlName="allowReqRoom" [binary]="true" /><label for="f-room">Require room</label></div>
+      <div class="flag"><p-checkbox inputId="f-dist" formControlName="allowReqDistribution" [binary]="true" /><label for="f-dist">Require distribution</label></div>
+      @if (fundingEnabled()) {
+        <div class="flag"><p-checkbox inputId="f-funding" formControlName="externalFundingDept" [binary]="true" /><label for="f-funding">External funding dept</label></div>
+      }
+    </fieldset>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" [disabled]="saving()" />
+    <p-button [label]="isEdit() ? 'Save' : 'Create'" icon="pi pi-check" (onClick)="submit()" [loading]="saving()" />
+  </ng-template>
+</p-dialog>

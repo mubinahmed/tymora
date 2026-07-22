@@ -1,0 +1,73 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="buildings()"
+    [paginator]="true"
+    [rows]="15"
+    [rowsPerPageOptions]="[15, 30, 50]"
+    [globalFilterFields]="['abbreviation', 'name', 'externalId']"
+    sortField="abbreviation"
+    [sortOrder]="1"
+    dataKey="id"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ buildings().length }} building(s)</span>
+        <span class="spacer"></span>
+        <input
+          pInputText
+          type="text"
+          placeholder="Search…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+        />
+        <p-button label="New" icon="pi pi-plus" [disabled]="!canAdd()" (onClick)="openCreate()" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="abbreviation">Abbreviation <p-sortIcon field="abbreviation" /></th>
+        <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+        <th pSortableColumn="externalId">External Id <p-sortIcon field="externalId" /></th>
+        <th>Coordinates</th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-b>
+      <tr>
+        <td>{{ b.abbreviation }}</td>
+        <td>{{ b.name }}</td>
+        <td>{{ b.externalId }}</td>
+        <td>
+          @if (b.x != null && b.y != null) { {{ b.x }}, {{ b.y }} } @else { — }
+        </td>
+        <td class="row-actions">
+          @if (b.canEdit) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="openEdit(b)" />
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(b)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="5">No buildings found.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <app-building-dialog
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [building]="editing()"
+    (saved)="onSaved()"
+  />
+
+  <p-confirmDialog />
+}

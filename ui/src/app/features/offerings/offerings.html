@@ -1,0 +1,86 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else {
+  <div class="offering-search">
+    <div class="search-bar">
+      <p-select
+        [options]="subjectAreas()"
+        optionValue="id"
+        [(ngModel)]="subjectAreaId"
+        placeholder="Select subject area"
+        [filter]="true"
+        filterBy="abbreviation,title"
+        appendTo="body"
+        styleClass="sa-select"
+      >
+        <ng-template let-sa pTemplate="selectedItem">{{ sa.abbreviation }} — {{ sa.title }}</ng-template>
+        <ng-template let-sa pTemplate="item">{{ sa.abbreviation }} — {{ sa.title }}</ng-template>
+      </p-select>
+      <input pInputText type="text" placeholder="Course number (optional)" [(ngModel)]="courseNumber"
+        (keyup.enter)="search()" />
+      <p-button label="Search" icon="pi pi-search" (onClick)="search()" [disabled]="subjectAreaId == null" [loading]="searching()" />
+    </div>
+
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" />
+    }
+
+    @if (searched()) {
+      <p-table
+        #dt
+        [value]="offerings()"
+        [paginator]="offerings().length > 25"
+        [rows]="25"
+        [rowsPerPageOptions]="[25, 50, 100]"
+        [globalFilterFields]="['courseName', 'title']"
+        sortField="courseName"
+        [sortOrder]="1"
+        dataKey="id"
+        styleClass="p-datatable-sm p-datatable-striped"
+      >
+        <ng-template pTemplate="caption">
+          <div class="tbl-caption">
+            <span>{{ offerings().length }} offering(s)</span>
+            <span class="spacer"></span>
+            <input pInputText type="text" placeholder="Filter…"
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="courseName">Course <p-sortIcon field="courseName" /></th>
+            <th pSortableColumn="title">Title <p-sortIcon field="title" /></th>
+            <th pSortableColumn="enrollment">Enrolled <p-sortIcon field="enrollment" /></th>
+            <th>Status</th>
+            <th class="col-actions"></th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-o>
+          <tr>
+            <td>{{ o.courseName }}</td>
+            <td>{{ o.title }}</td>
+            <td>{{ o.enrollment }}</td>
+            <td>
+              @if (o.offered) { <p-tag value="Offered" severity="success" /> }
+              @else { <p-tag value="Not offered" severity="secondary" /> }
+            </td>
+            <td class="row-actions">
+              <p-button icon="pi pi-eye" severity="secondary" [text]="true" title="Offering detail"
+                [routerLink]="['/offering-detail', o.id]" />
+              <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit"
+                [routerLink]="['/course-offering', o.id]" />
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="5">No offerings in this subject area{{ courseNumber ? ' matching "' + courseNumber + '"' : '' }}.</td></tr>
+        </ng-template>
+      </p-table>
+    } @else {
+      <p class="hint">Select a subject area and search to list its offerings.</p>
+    }
+  </div>
+}

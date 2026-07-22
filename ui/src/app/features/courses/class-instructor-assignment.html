@@ -1,0 +1,113 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Back to offerings" icon="pi pi-arrow-left" routerLink="/offerings" /></div>
+} @else if (data(); as d) {
+  <div class="form-page">
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-user-edit"></i></span>
+        <div>
+          <h2>Assign instructors</h2>
+          <p>{{ d.courseName }}</p>
+        </div>
+      </div>
+      @if (d.courseCoordinators) {
+        <div class="detail-grid">
+          <div>
+            <div class="dt">Offering coordinators</div>
+            <div class="dd" [innerHTML]="d.courseCoordinators"></div>
+          </div>
+        </div>
+      }
+      @if (d.editable === false) {
+        <p-message severity="info" text="You have read-only access to these instructor assignments." />
+      }
+    </fieldset>
+
+    @for (g of groups(); track g.classUid) {
+      <fieldset class="section">
+        <div class="section-head">
+          <span class="section-icon"><i class="pi pi-users"></i></span>
+          <div>
+            <h2><span [innerHTML]="g.nameHtml"></span></h2>
+            @if (d.showTimeAndRoom) {
+              <p><span [innerHTML]="g.timeHtml"></span> <span [innerHTML]="g.roomHtml"></span></p>
+            }
+          </div>
+          <span class="head-spacer"></span>
+          <label class="aci-inline">
+            <p-checkbox [binary]="true" [ngModel]="checked(g.head, ACI.DISPLAY)"
+              (ngModelChange)="setToggle(g.head, ACI.DISPLAY, $event)" [disabled]="!canEdit(g.head, ACI.DISPLAY)" />
+            <span>Display instructors</span>
+          </label>
+        </div>
+
+        <table class="aci-grid">
+          <thead>
+            <tr>
+              <th>Instructor</th>
+              <th style="width:6rem;">Share %</th>
+              <th style="width:4.5rem;">Lead</th>
+              <th style="width:12rem;">Responsibility</th>
+              <th style="width:3rem;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of g.records; track $index) {
+              <tr [class.aci-error]="checked(r, ACI.HAS_ERROR)">
+                <td>
+                  <p-select [options]="options(ACI.INSTR)" optionLabel="text" optionValue="value"
+                    [ngModel]="val(r, ACI.INSTR)" (ngModelChange)="setVal(r, ACI.INSTR, $event)"
+                    [ngModelOptions]="{ standalone: true }" [disabled]="!canEdit(r, ACI.INSTR)"
+                    [filter]="true" filterBy="text" appendTo="body" styleClass="aci-select" />
+                </td>
+                <td>
+                  <input pInputText [ngModel]="val(r, ACI.PCT_SHARE)" (ngModelChange)="setVal(r, ACI.PCT_SHARE, $event)"
+                    [ngModelOptions]="{ standalone: true }" [disabled]="!canEdit(r, ACI.PCT_SHARE)" class="aci-num" />
+                </td>
+                <td style="text-align:center;">
+                  <p-checkbox [binary]="true" [ngModel]="checked(r, ACI.LEAD)"
+                    (ngModelChange)="setToggle(r, ACI.LEAD, $event)" [ngModelOptions]="{ standalone: true }"
+                    [disabled]="!canEdit(r, ACI.LEAD)" />
+                </td>
+                <td>
+                  <p-select [options]="options(ACI.RESPONSIBILITY)" optionLabel="text" optionValue="value"
+                    [ngModel]="val(r, ACI.RESPONSIBILITY)" (ngModelChange)="setVal(r, ACI.RESPONSIBILITY, $event)"
+                    [ngModelOptions]="{ standalone: true }" [disabled]="!canEdit(r, ACI.RESPONSIBILITY)"
+                    appendTo="body" styleClass="aci-select" />
+                </td>
+                <td style="text-align:center;">
+                  @if (d.editable !== false && r.deletable) {
+                    <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Remove instructor"
+                      (onClick)="deleteInstructor(g, r)" />
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        @if (d.editable !== false) {
+          <div style="margin-top:0.75rem;">
+            <p-button label="Add instructor" icon="pi pi-plus" severity="secondary" [text]="true"
+              (onClick)="addInstructor(g)" />
+          </div>
+        }
+      </fieldset>
+    } @empty {
+      <div class="empty-state">This configuration has no classes.</div>
+    }
+
+    <div class="form-actions">
+      <p-button label="Back to offering" severity="secondary" [text]="true" icon="pi pi-arrow-left"
+        [routerLink]="offeringId() ? ['/offering-detail', offeringId()] : ['/offerings']" [disabled]="saving()" />
+      <span class="spacer"></span>
+      @if (d.editable !== false) {
+        <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+      }
+    </div>
+  </div>
+}

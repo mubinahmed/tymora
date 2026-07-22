@@ -1,0 +1,155 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="managers()"
+    [paginator]="true"
+    [rows]="15"
+    [rowsPerPageOptions]="[15, 30, 50]"
+    [globalFilterFields]="['name', 'externalUniqueId', 'email']"
+    sortField="name"
+    [sortOrder]="1"
+    dataKey="uniqueId"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ managers().length }} manager(s)</span>
+        <span class="spacer"></span>
+        <input pInputText type="text" placeholder="Search…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+        @if (canAdd()) {
+          <p-button label="New" icon="pi pi-plus" (onClick)="openCreate()" />
+        }
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="externalUniqueId">External Id <p-sortIcon field="externalUniqueId" /></th>
+        <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+        <th pSortableColumn="email">Email <p-sortIcon field="email" /></th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-m>
+      <tr>
+        <td>{{ m.externalUniqueId }}</td>
+        <td>{{ m.name }}</td>
+        <td>{{ m.email }}</td>
+        <td class="row-actions">
+          @if (m.canEdit) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="openEdit(m)" />
+          }
+          @if (m.canDelete) {
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(m)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="4">No timetabling managers found.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <p-dialog
+    [header]="heading()"
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [modal]="true"
+    [style]="{ width: '32rem' }"
+  >
+    <form [formGroup]="form" class="p-fluid" (ngSubmit)="submit()">
+      <div class="field">
+        <label for="externalUniqueId">External Id</label>
+        <input id="externalUniqueId" pInputText formControlName="externalUniqueId" maxlength="40" />
+      </div>
+      <div class="field">
+        <label for="firstName">First Name</label>
+        <input id="firstName" pInputText formControlName="firstName" maxlength="100" />
+      </div>
+      <div class="field">
+        <label for="middleName">Middle Name</label>
+        <input id="middleName" pInputText formControlName="middleName" maxlength="100" />
+      </div>
+      <div class="field">
+        <label for="lastName">Last Name</label>
+        <input id="lastName" pInputText formControlName="lastName" maxlength="100" />
+        @if (form.controls.lastName.invalid && form.controls.lastName.touched) {
+          <small class="p-error">Last name is required.</small>
+        }
+      </div>
+      <div class="field">
+        <label for="academicTitle">Academic Title</label>
+        <input id="academicTitle" pInputText formControlName="academicTitle" maxlength="50" />
+      </div>
+      <div class="field">
+        <label for="emailAddress">Email</label>
+        <input id="emailAddress" pInputText formControlName="emailAddress" maxlength="200" />
+      </div>
+
+      <div class="field">
+        <label for="roleIds">Roles</label>
+        <p-multiSelect
+          inputId="roleIds"
+          formControlName="roleIds"
+          [options]="availableRoles()"
+          optionLabel="name"
+          optionValue="id"
+          [filter]="true"
+          filterBy="name"
+          display="chip"
+          placeholder="Select roles"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+        />
+      </div>
+
+      @if (selectedRoleIds().length) {
+        <div class="field">
+          <label for="primaryRoleId">Primary Role</label>
+          <p-select
+            inputId="primaryRoleId"
+            formControlName="primaryRoleId"
+            [options]="primaryRoleOptions()"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="Select primary role"
+            appendTo="body"
+            [style]="{ width: '100%' }"
+          />
+        </div>
+      }
+
+      <div class="field">
+        <label for="departmentIds">Departments</label>
+        <p-multiSelect
+          inputId="departmentIds"
+          formControlName="departmentIds"
+          [options]="availableDepartments()"
+          optionLabel="name"
+          optionValue="id"
+          [filter]="true"
+          filterBy="name"
+          display="chip"
+          placeholder="Select departments"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+        />
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="cancel()" [disabled]="saving()" />
+      <p-button label="Save" icon="pi pi-check" (onClick)="submit()" [loading]="saving()" />
+    </ng-template>
+  </p-dialog>
+
+  <p-confirmDialog />
+}

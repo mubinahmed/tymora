@@ -1,0 +1,65 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else if (data(); as d) {
+  <p-table
+    [value]="rows()"
+    [paginator]="rows().length > 25"
+    [rows]="25"
+    [rowsPerPageOptions]="[25, 50, 100]"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <p-select
+          [options]="examTypeOptions()"
+          [(ngModel)]="examTypeId"
+          (onChange)="onExamTypeChange()"
+          placeholder="Examination type"
+          [style]="{ minWidth: '14rem' }"
+        />
+        <span class="spacer"></span>
+        <span>{{ rows().length }} exam(s)</span>
+        <input
+          pInputText
+          type="text"
+          placeholder="Filter…"
+          [value]="filter()"
+          (input)="filter.set($any($event.target).value)"
+        />
+        <p-button label="CSV" icon="pi pi-download" severity="secondary" [text]="true" (onClick)="exportCsv()" [disabled]="!rows().length" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        @for (col of columns(); track $index) {
+          <th>{{ col }}</th>
+        }
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-row>
+      <tr>
+        @for (col of columns(); track $index) {
+          <td>{{ row.cells?.[$index] ?? '' }}</td>
+        }
+        <td class="row-actions">
+          @if (row.id) {
+            <p-button icon="pi pi-eye" severity="secondary" [text]="true" title="Examination detail"
+              [routerLink]="['/exam-detail', row.id]" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td [attr.colspan]="(columns().length || 1) + 1">No matching exams.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+}

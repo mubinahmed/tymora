@@ -1,0 +1,134 @@
+<div class="offering-search">
+  <div class="search-bar">
+    <p-selectButton
+      [options]="viewOptions"
+      optionLabel="label"
+      optionValue="value"
+      [allowEmpty]="false"
+      [ngModel]="view()"
+      (ngModelChange)="onViewChange($event)"
+    />
+
+    <input
+      pInputText
+      type="text"
+      placeholder="Filter query (e.g. subject:MATH)…"
+      [(ngModel)]="query"
+      (keyup.enter)="load()"
+    />
+    <p-button label="Search" icon="pi pi-search" (onClick)="load()" [loading]="loading()" />
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+
+  @if (loading()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (searched() && view() === 'courses') {
+    <p-table
+      #ct
+      [value]="courses()"
+      [paginator]="courses().length > 50"
+      [rows]="50"
+      dataKey="clazzId"
+      styleClass="p-datatable-sm p-datatable-striped"
+    >
+      <ng-template pTemplate="caption">
+        <div class="tbl-caption">
+          <span>{{ courses().length }} row(s)</span>
+          <span class="spacer"></span>
+          <input pInputText type="text" placeholder="Filter…"
+            (input)="ct.filterGlobal($any($event.target).value, 'contains')" />
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="subject">Course <p-sortIcon field="subject" /></th>
+          <th>Title</th>
+          <th>Consent</th>
+          <th class="num">Limit</th>
+          <th class="num">Enrollment</th>
+          <th class="num">Wait-Listed</th>
+          <th class="num">Reserved</th>
+          <th class="num">Available</th>
+          <th class="num">Projection</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-r>
+        <tr>
+          <td>{{ courseName(r) }}</td>
+          <td>{{ r.title }}</td>
+          <td>{{ r.consent }}</td>
+          <td class="num">{{ r.limit }}</td>
+          <td class="num">{{ r.enrollment }}</td>
+          <td class="num">{{ r.waitlist }}</td>
+          <td class="num">{{ r.reservation }}</td>
+          <td class="num">{{ r.available }}</td>
+          <td class="num">{{ r.projection }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="9">No enrollments found. A student solver must be loaded for batch data.</td></tr>
+      </ng-template>
+    </p-table>
+  } @else if (searched()) {
+    <p-table
+      #st
+      [value]="students()"
+      [paginator]="students().length > 50"
+      [rows]="50"
+      [globalFilterFields]="['student.name', 'student.externalId', 'status']"
+      dataKey="student.id"
+      styleClass="p-datatable-sm p-datatable-striped"
+    >
+      <ng-template pTemplate="caption">
+        <div class="tbl-caption">
+          <span>{{ students().length }} student(s)</span>
+          <span class="spacer"></span>
+          <input pInputText type="text" placeholder="Filter…"
+            (input)="st.filterGlobal($any($event.target).value, 'contains')" />
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="student.name">Student <p-sortIcon field="student.name" /></th>
+          <th>External Id</th>
+          <th>Area</th>
+          <th>Classification</th>
+          <th>Major</th>
+          <th>Status</th>
+          <th class="num">Requested</th>
+          <th class="num">Enrolled</th>
+          <th class="num">Wait-Listed</th>
+          <th class="num">Credit</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-s>
+        <tr>
+          <td>{{ s.student?.name }}</td>
+          <td>{{ s.student?.externalId }}</td>
+          <td>{{ codes(s.student?.area) }}</td>
+          <td>{{ codes(s.student?.classification) }}</td>
+          <td>{{ codes(s.student?.major) }}</td>
+          <td>@if (s.status) { <p-tag [value]="s.status" severity="info" /> }</td>
+          <td class="num">{{ s.requested }}</td>
+          <td class="num">{{ s.enrollment }}</td>
+          <td class="num">{{ s.waitlist }}</td>
+          <td class="num">{{ s.credit }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="10">No students found. A student solver must be loaded for batch data.</td></tr>
+      </ng-template>
+    </p-table>
+  } @else {
+    <p class="hint">Loading batch sectioning data…</p>
+  }
+</div>

@@ -1,0 +1,8 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="load()" /></div>
+} @else {
+  <app-rpc-table [table]="table()" />
+}

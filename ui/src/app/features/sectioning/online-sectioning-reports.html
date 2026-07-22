@@ -1,0 +1,63 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else {
+  <p-card>
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" />
+    }
+
+    <div class="filter-row">
+      <label for="report">Report</label>
+      <p-select
+        inputId="report"
+        [options]="reportOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="reportRef"
+        (ngModelChange)="onReportChange()"
+        placeholder="Select a report"
+        [filter]="true"
+        filterBy="label"
+        appendTo="body"
+        [style]="{ 'min-width': '28rem' }"
+      />
+    </div>
+
+    @if (selectedType()?.filter) {
+      <div class="filter-row">
+        <label for="filter">Filter</label>
+        <input
+          id="filter"
+          type="text"
+          pInputText
+          [(ngModel)]="filter"
+          placeholder="Optional student filter"
+          [style]="{ 'min-width': '28rem' }"
+        />
+      </div>
+    }
+
+    <div class="actions">
+      <p-button
+        label="Execute"
+        icon="pi pi-play"
+        [disabled]="!reportRef || executing()"
+        [loading]="executing()"
+        (onClick)="execute()"
+      />
+    </div>
+  </p-card>
+
+  @if (executing()) {
+    <div class="center mt"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (table()) {
+    <p-card class="mt" [header]="selectedType()?.name ?? 'Results'">
+      @if (resultsMessage()) {
+        <div class="results-msg">{{ resultsMessage() }}</div>
+      }
+      <app-rpc-table [table]="table()" />
+    </p-card>
+  } @else if (resultsMessage()) {
+    <div class="mt"><p-message severity="info" [text]="resultsMessage()!" /></div>
+  }
+}

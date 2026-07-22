@@ -1,0 +1,133 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else {
+  <div class="ra-page">
+    @if (error()) {
+      <p-message severity="error" [text]="error()!" styleClass="mb" />
+    }
+
+    <div class="ra-filter">
+      <div class="field">
+        <label for="ra-session">Academic Session</label>
+        <p-select
+          inputId="ra-session"
+          [options]="sessions()"
+          optionLabel="label"
+          optionValue="uniqueId"
+          [(ngModel)]="sessionId"
+          (onChange)="onSessionChange()"
+          appendTo="body"
+        />
+      </div>
+
+      <div class="field">
+        <label for="ra-from">From</label>
+        <p-select inputId="ra-from" [options]="hours" optionLabel="label" optionValue="value" [(ngModel)]="startHour" placeholder="Any" [showClear]="true" appendTo="body" />
+      </div>
+      <div class="field">
+        <label for="ra-to">To</label>
+        <p-select inputId="ra-to" [options]="hours" optionLabel="label" optionValue="value" [(ngModel)]="endHour" placeholder="Any" [showClear]="true" appendTo="body" />
+      </div>
+
+      <div class="field ra-rooms">
+        <label for="ra-rooms">Rooms</label>
+        <p-multiSelect
+          inputId="ra-rooms"
+          [options]="rooms()"
+          optionLabel="label"
+          optionValue="id"
+          [(ngModel)]="selectedRoomIds"
+          [filter]="true"
+          filterBy="label"
+          [loading]="loadingRooms()"
+          placeholder="Select rooms…"
+          selectedItemsLabel="{0} rooms selected"
+          [maxSelectedLabels]="3"
+          appendTo="body"
+        />
+      </div>
+
+      <div class="field ra-rooms ra-dates">
+        <label for="ra-dates">Dates</label>
+        <p-multiSelect
+          inputId="ra-dates"
+          [options]="selectableDates()"
+          optionLabel="label"
+          optionValue="dayOfYear"
+          [ngModel]="selectedDateDoys()"
+          (ngModelChange)="selectedDateDoys.set($event)"
+          [filter]="true"
+          filterBy="label"
+          [loading]="loadingDates()"
+          placeholder="All dates (representative week)"
+          selectedItemsLabel="{0} dates selected"
+          [maxSelectedLabels]="3"
+          appendTo="body"
+        />
+      </div>
+
+      <div class="field ra-past">
+        <p-checkbox
+          inputId="ra-past"
+          [binary]="true"
+          [ngModel]="allowPast()"
+          (ngModelChange)="allowPast.set($event); onAllowPastChange()"
+        />
+        <label for="ra-past">Include past dates</label>
+      </div>
+
+      <div class="ra-actions">
+        <p-button label="Search" icon="pi pi-search" (onClick)="search()" [loading]="searching()" />
+        <p-button label="Clear" severity="secondary" [text]="true" (onClick)="clear()" [disabled]="searching()" />
+      </div>
+    </div>
+
+    @if (searching()) {
+      <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+    } @else if (searched()) {
+      @if (hasDates()) {
+        <p class="ra-date-caption">Showing availability for: {{ selectedDatesLabel() }}</p>
+      }
+      @if (filtered().length) {
+        @for (r of filtered(); track r.room.id) {
+          <div class="ra-room">
+            <div class="ra-room-head">{{ r.room.label }}</div>
+            @if (hasDates()) {
+              <table class="ra-date-table">
+                <thead>
+                  <tr>
+                    <th class="date-c">Date</th>
+                    <th>Availability</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of dateRowsFor(r.room.id); track row.date.dayOfYear) {
+                    <tr [class.free]="!row.items.length" [class.busy]="row.items.length" [class.wknd]="row.date.weekend" [class.hol]="row.date.holiday">
+                      <th class="date-c">{{ row.date.label }}</th>
+                      <td class="status-c">
+                        @if (row.items.length) {
+                          @for (it of row.items; track $index) {
+                            <span class="ra-slot"><span class="ra-time">{{ it.time }}</span> {{ it.eventName }}</span>
+                          }
+                        } @else {
+                          Available
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+            @if (r.events.length) {
+              <app-event-grid [events]="r.events" />
+            } @else {
+              <p class="hint">No events — room is available in the selected {{ hasDates() ? 'dates' : 'window' }}.</p>
+            }
+          </div>
+        }
+      } @else {
+        <p-message severity="info" text="No rooms matched." />
+      }
+    }
+  </div>
+}

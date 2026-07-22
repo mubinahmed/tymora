@@ -1,0 +1,54 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="solutions()"
+    [paginator]="solutions().length > 25"
+    [rows]="25"
+    [globalFilterFields]="['owner', 'config', 'note']"
+    sortField="timeStamp"
+    [sortOrder]="-1"
+    dataKey="uniqueId"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ solutions().length }} published solution(s)</span>
+        <span class="spacer"></span>
+        <input pInputText type="text" placeholder="Filter…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="timeStamp">Published <p-sortIcon field="timeStamp" /></th>
+        <th pSortableColumn="owner">Owner <p-sortIcon field="owner" /></th>
+        <th>Configuration</th>
+        <th>Note</th>
+        <th>Status</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-s>
+      <tr>
+        <td>{{ s.timeStamp }}</td>
+        <td>{{ s.owner }}</td>
+        <td>{{ s.config }}</td>
+        <td>{{ s.note }}</td>
+        <td>
+          @if (s.selected) { <p-tag value="Selected" severity="success" /> }
+          @else if (s.loaded) { <p-tag value="Loaded" severity="info" /> }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="5">No published sectioning solutions.</td></tr>
+    </ng-template>
+  </p-table>
+}

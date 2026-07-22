@@ -1,0 +1,102 @@
+<div class="offering-search">
+  <div class="search-bar">
+    @if (sessions().length > 1) {
+      <p-select
+        [options]="sessions()"
+        optionLabel="name"
+        optionValue="uniqueId"
+        [(ngModel)]="sessionId"
+        (onChange)="onSessionChange()"
+        styleClass="rt-select"
+      />
+    }
+
+    @if (loading()) {
+      <p-progressSpinner strokeWidth="4" styleClass="inline-spin" />
+    } @else {
+      <p-select
+        [options]="picks()"
+        optionValue="id"
+        optionLabel="label"
+        [(ngModel)]="resourceId"
+        (onChange)="loadEvents()"
+        placeholder="Select subject area"
+        [filter]="true"
+        filterBy="label"
+        appendTo="body"
+        styleClass="sa-select"
+      />
+    }
+
+    @if (searched() && events().length) {
+      <p-selectButton
+        class="tt-view-toggle"
+        [options]="viewOptions"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        [ngModel]="view()"
+        (ngModelChange)="view.set($event)"
+      />
+    }
+  </div>
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+
+  @if (loadingList()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (searched() && view() === 'grid') {
+    <app-event-grid [events]="events()" />
+  } @else if (searched()) {
+    <p-table
+      #dt
+      [value]="events()"
+      [paginator]="events().length > 25"
+      [rows]="25"
+      [globalFilterFields]="['eventName']"
+      sortField="eventName"
+      [sortOrder]="1"
+      dataKey="eventId"
+      styleClass="p-datatable-sm p-datatable-striped"
+    >
+      <ng-template pTemplate="caption">
+        <div class="tbl-caption">
+          <span>{{ events().length }} examination(s)</span>
+          <span class="spacer"></span>
+          <input pInputText type="text" placeholder="Filter…"
+            (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="eventName">Examination <p-sortIcon field="eventName" /></th>
+          <th>Type</th>
+          <th>Meetings</th>
+          <th>Dates</th>
+          <th>Enrollment</th>
+          <th>Main Contact</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-e>
+        <tr>
+          <td>{{ e.eventName }}</td>
+          <td><p-tag [value]="e.eventType" severity="info" /></td>
+          <td>{{ e.meetings?.length ?? 0 }}</td>
+          <td>{{ meetingSpan(e) }}</td>
+          <td>{{ e.enrollment ?? '—' }}</td>
+          <td>{{ contactName(e.contact) }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="6">No examinations found.</td></tr>
+      </ng-template>
+    </p-table>
+  } @else {
+    <p class="hint">Select a subject area to list its examinations.</p>
+  }
+</div>

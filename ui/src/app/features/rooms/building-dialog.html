@@ -1,0 +1,60 @@
+<p-dialog
+  [header]="isEdit() ? 'Edit Building' : 'New Building'"
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  [modal]="true"
+  [style]="{ width: '32rem' }"
+  [draggable]="false"
+  [dismissableMask]="true"
+>
+  <form [formGroup]="form" class="building-form" (ngSubmit)="submit()">
+    <div class="field">
+      <label for="abbreviation">Abbreviation *</label>
+      <input pInputText id="abbreviation" formControlName="abbreviation" autocomplete="off" />
+      @if (form.controls.abbreviation.invalid && form.controls.abbreviation.touched) {
+        <p-message severity="error" text="Abbreviation is required" />
+      }
+    </div>
+
+    <div class="field">
+      <label for="name">Name *</label>
+      <input pInputText id="name" formControlName="name" autocomplete="off" />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <p-message severity="error" text="Name is required" />
+      }
+    </div>
+
+    <div class="field">
+      <label for="externalId">External Id</label>
+      <input pInputText id="externalId" formControlName="externalId" autocomplete="off" />
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="x">Longitude (X)</label>
+        <p-inputNumber inputId="x" formControlName="x" [maxFractionDigits]="6" [useGrouping]="false" />
+      </div>
+      <div class="field">
+        <label for="y">Latitude (Y)</label>
+        <p-inputNumber inputId="y" formControlName="y" [maxFractionDigits]="6" [useGrouping]="false" />
+      </div>
+    </div>
+
+    @if (isEdit()) {
+      <div class="field-check">
+        <p-checkbox inputId="urc" formControlName="updateRoomCoordinates" [binary]="true" />
+        <label for="urc">Also update coordinates of rooms in this building</label>
+      </div>
+    }
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" [disabled]="saving()" />
+    <p-button
+      [label]="isEdit() ? 'Save' : 'Create'"
+      icon="pi pi-check"
+      (onClick)="submit()"
+      [loading]="saving()"
+    />
+  </ng-template>
+</p-dialog>

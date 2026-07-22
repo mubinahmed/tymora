@@ -1,0 +1,107 @@
+<div class="offering-search">
+  <div class="search-bar">
+    @if (sessions().length > 1) {
+      <p-select
+        [options]="sessions()"
+        optionLabel="name"
+        optionValue="uniqueId"
+        [(ngModel)]="sessionId"
+        (onChange)="onSessionChange()"
+        styleClass="rt-select"
+      />
+    }
+
+    <input pInputText type="text" placeholder="Person name" [(ngModel)]="personName" (keyup.enter)="searchPeople()" />
+    <p-button label="Search" icon="pi pi-search" (onClick)="searchPeople()" [disabled]="!personName.trim()" [loading]="loading()" />
+
+    @if (matches().length > 1) {
+      <p-select
+        [options]="matches()"
+        [ngModel]="person()"
+        (onChange)="selectPerson($event.value)"
+        [optionLabel]="'resourceName'"
+        placeholder="Select person"
+        appendTo="body"
+        styleClass="sa-select"
+      >
+        <ng-template let-p pTemplate="item">{{ personLabel(p) }}</ng-template>
+        <ng-template let-p pTemplate="selectedItem">{{ personLabel(p) }}</ng-template>
+      </p-select>
+    }
+
+    @if (searched() && events().length) {
+      <p-selectButton
+        class="tt-view-toggle"
+        [options]="viewOptions"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        [ngModel]="view()"
+        (ngModelChange)="view.set($event)"
+      />
+    }
+  </div>
+
+  @if (person()) {
+    <p class="hint">Timetable for {{ personLabel(person()!) }}</p>
+  }
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+
+  @if (loadingList()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (searched() && view() === 'grid') {
+    <app-event-grid [events]="events()" />
+  } @else if (searched()) {
+    <p-table
+      #dt
+      [value]="events()"
+      [paginator]="events().length > 25"
+      [rows]="25"
+      [globalFilterFields]="['eventName']"
+      sortField="eventName"
+      [sortOrder]="1"
+      dataKey="eventId"
+      styleClass="p-datatable-sm p-datatable-striped"
+    >
+      <ng-template pTemplate="caption">
+        <div class="tbl-caption">
+          <span>{{ events().length }} event(s)</span>
+          <span class="spacer"></span>
+          <input pInputText type="text" placeholder="Filter…"
+            (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="eventName">Event <p-sortIcon field="eventName" /></th>
+          <th>Type</th>
+          <th>Meetings</th>
+          <th>Dates</th>
+          <th>Main Contact</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-e>
+        <tr>
+          <td>{{ e.eventName }}</td>
+          <td><p-tag [value]="e.eventType" severity="info" /></td>
+          <td>{{ e.meetings?.length ?? 0 }}</td>
+          <td>{{ meetingSpan(e) }}</td>
+          <td>{{ contactName(e.contact) }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="5">No events found for this person.</td></tr>
+      </ng-template>
+    </p-table>
+  } @else if (matches().length === 0 && personName.trim() && !loading()) {
+    <p class="hint">No people found. Note that only people with an external id can have a personal timetable.</p>
+  } @else {
+    <p class="hint">Enter a person's name and search to view their personal timetable.</p>
+  }
+</div>

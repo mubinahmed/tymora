@@ -1,0 +1,80 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
+} @else {
+  <p-table
+    #dt
+    [value]="curricula()"
+    [paginator]="true"
+    [rows]="20"
+    [rowsPerPageOptions]="[20, 50, 100]"
+    [globalFilterFields]="['abbv', 'name']"
+    sortField="abbv"
+    [sortOrder]="1"
+    dataKey="id"
+    styleClass="p-datatable-sm p-datatable-striped"
+  >
+    <ng-template pTemplate="caption">
+      <div class="tbl-caption">
+        <span>{{ curricula().length }} curriculum/a</span>
+        <span class="spacer"></span>
+        <input pInputText type="text" placeholder="Search…"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="abbv">Abbreviation <p-sortIcon field="abbv" /></th>
+        <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+        <th>Academic Area</th>
+        <th>Majors</th>
+        <th>Department</th>
+        <th class="col-actions"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-c>
+      <tr>
+        <td>{{ c.abbv }}</td>
+        <td>{{ c.name }}</td>
+        <td>{{ c.academicArea?.areaAbbv ?? c.academicArea?.areaName }}</td>
+        <td>{{ majorLabel(c.majors) }}</td>
+        <td>{{ c.dept?.deptCode }}</td>
+        <td class="row-actions">
+          @if (c.editable) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="openEdit(c)" />
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(c)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="6">No curricula found.</td></tr>
+    </ng-template>
+  </p-table>
+
+  <p-confirmDialog />
+
+  <p-dialog header="Edit Curriculum" [visible]="dialogVisible()" (visibleChange)="dialogVisible.set($event)"
+    [modal]="true" [style]="{ width: '32rem' }" [draggable]="false" [dismissableMask]="true">
+    <div class="building-form">
+      <div class="field">
+        <label for="cu-abbv">Abbreviation</label>
+        <input pInputText id="cu-abbv" [(ngModel)]="editAbbv" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="cu-name">Name</label>
+        <input pInputText id="cu-name" [(ngModel)]="editName" autocomplete="off" />
+      </div>
+      <small>Academic area, classifications and courses are preserved as loaded; edit those on the legacy screen.</small>
+    </div>
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="dialogVisible.set(false)" [disabled]="saving()" />
+      <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+    </ng-template>
+  </p-dialog>
+}

@@ -1,0 +1,164 @@
+<div class="task-scheduler">
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  }
+
+  <!-- ============ LIST ============ -->
+  @if (!selected()) {
+    <div class="tbl-caption">
+      <h3>Scheduled Tasks @if (sessionName()) { <span class="muted">— {{ sessionName() }}</span> }</h3>
+      <span class="spacer"></span>
+      <p-button label="Refresh" icon="pi pi-refresh" (onClick)="reload()" [loading]="loading()" severity="secondary" />
+    </div>
+
+    @if (loading()) {
+      <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+    } @else {
+      <p-table
+        #dt
+        [value]="tasks()"
+        [paginator]="tasks().length > 25"
+        [rows]="25"
+        sortField="name"
+        [sortOrder]="1"
+        dataKey="id"
+        styleClass="p-datatable-sm p-datatable-striped"
+      >
+        <ng-template pTemplate="caption">
+          <div class="tbl-caption">
+            <span>{{ tasks().length }} task(s)</span>
+            <span class="spacer"></span>
+            <input pInputText type="text" placeholder="Filter…"
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+            <th>Script</th>
+            <th>Owner</th>
+            <th>Email</th>
+            <th>Last Executed</th>
+            <th>Status</th>
+            <th>Runs</th>
+            <th></th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-t>
+          <tr [style.cursor]="t.canView ? 'pointer' : 'default'" (click)="openDetail(t)">
+            <td>{{ t.name }}</td>
+            <td>{{ t.script?.name }}</td>
+            <td>{{ contactName(t.owner) }}</td>
+            <td>{{ t.email }}</td>
+            <td>{{ t.lastExecuted }}</td>
+            <td>
+              @if (t.lastStatus) {
+                <p-tag [value]="t.lastStatus" [severity]="statusSeverity(t.lastStatus)" />
+              }
+            </td>
+            <td>{{ t.executions?.length ?? 0 }}</td>
+            <td>
+              @if (t.canView) {
+                <p-button icon="pi pi-eye" [rounded]="true" [text]="true" (onClick)="openDetail(t); $event.stopPropagation()" />
+              }
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="8">No scheduled tasks for this session.</td></tr>
+        </ng-template>
+      </p-table>
+    }
+  }
+
+  <!-- ============ DETAIL ============ -->
+  @if (selected(); as task) {
+    <div class="tbl-caption">
+      <p-button label="Back" icon="pi pi-arrow-left" (onClick)="back()" severity="secondary" [text]="true" />
+      <h3>{{ task.name }}</h3>
+      <span class="spacer"></span>
+      @if (task.canEdit) {
+        <p-button label="Delete" icon="pi pi-trash" severity="danger" (onClick)="deleteTask(task)" />
+      }
+    </div>
+
+    <p-card>
+      <div class="detail-grid">
+        <div><span class="lbl">Script</span><span>{{ task.script?.name }}</span></div>
+        <div><span class="lbl">Owner</span><span>{{ contactName(task.owner) }}</span></div>
+        <div><span class="lbl">Email</span><span>{{ task.email || '—' }}</span></div>
+        <div><span class="lbl">Last Executed</span><span>{{ task.lastExecuted || '—' }}</span></div>
+        <div>
+          <span class="lbl">Last Status</span>
+          <span>
+            @if (task.lastStatus) {
+              <p-tag [value]="task.lastStatus" [severity]="statusSeverity(task.lastStatus)" />
+            } @else { — }
+          </span>
+        </div>
+      </div>
+    </p-card>
+
+    @if (paramEntries(task).length) {
+      <h4>Parameters</h4>
+      <p-table [value]="paramEntries(task)" styleClass="p-datatable-sm p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr><th>Name</th><th>Value</th></tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-p>
+          <tr><td>{{ p.key }}</td><td>{{ p.value }}</td></tr>
+        </ng-template>
+      </p-table>
+    }
+
+    <h4>Schedule / Executions</h4>
+    <p-table [value]="executions(task)" styleClass="p-datatable-sm p-datatable-striped"
+      [paginator]="executions(task).length > 25" [rows]="25">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Date</th>
+          <th>Day</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Message</th>
+          <th>Output</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-e>
+        <tr>
+          <td>{{ e.executionDate }}</td>
+          <td>{{ dayName(e.dayOfWeek) }}</td>
+          <td>{{ slotTime(e.slot) }}</td>
+          <td>
+            @if (e.status) {
+              <p-tag [value]="e.status" [severity]="statusSeverity(e.status)" />
+            }
+          </td>
+          <td>{{ e.statusMessage }}</td>
+          <td>{{ e.output }}</td>
+          <td>
+            @if (e.id) {
+              <p-button icon="pi pi-file" label="Log" [text]="true" size="small" (onClick)="viewLog(e)" />
+            }
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="7">No executions scheduled.</td></tr>
+      </ng-template>
+    </p-table>
+  }
+
+  <!-- ============ LOG DIALOG ============ -->
+  <p-dialog header="Execution Log" [visible]="logVisible()" (visibleChange)="logVisible.set($event)" [modal]="true" [style]="{ width: '70vw' }" [dismissableMask]="true">
+    @if (logLoading()) {
+      <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+    } @else {
+      <pre class="log">{{ logText() }}</pre>
+    }
+  </p-dialog>
+</div>

@@ -1,0 +1,74 @@
+<div class="offering-search">
+  @if (loading()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else {
+    <p-card>
+      <div class="search-bar">
+        @for (p of params(); track p.name) {
+          @if (isBoolean(p)) {
+            <label class="ah-check">
+              <p-checkbox [binary]="true" [ngModel]="boolValue(p)" (ngModelChange)="setBool(p, $event)" />
+              <span>{{ p.label || p.name }}</span>
+            </label>
+          } @else if (isList(p)) {
+            <p-select
+              [options]="p.options ?? []"
+              optionLabel="text"
+              optionValue="value"
+              [(ngModel)]="p.value"
+              [placeholder]="p.label || p.name || ''"
+              appendTo="body"
+              styleClass="rt-select"
+            />
+          } @else {
+            <input pInputText type="text" [placeholder]="p.label || p.name || ''" [(ngModel)]="p.value" />
+          }
+        }
+        <p-button label="Search" icon="pi pi-search" (onClick)="search()" [loading]="searching()" />
+        <p-button
+          label="PDF"
+          icon="pi pi-file-pdf"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="exportServer('pdf')"
+          [disabled]="!hasRows()"
+        />
+        <p-button
+          label="CSV"
+          icon="pi pi-download"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="exportServer('csv')"
+          [disabled]="!hasRows()"
+        />
+      </div>
+    </p-card>
+
+    @if (error()) {
+      <div class="mt"><p-message severity="error" [text]="error()!" /></div>
+    }
+
+    @for (m of pageMessages(); track $index) {
+      <div class="mt"><p-message [severity]="pmSeverity(m)" [text]="m.message ?? ''" /></div>
+    }
+
+    @if (searched()) {
+      @if (message()) {
+        <div class="mt"><p-message severity="info" [text]="message()!" /></div>
+      }
+      @if (hasRows()) {
+        <div class="mt"><app-rpc-table [table]="table()" /></div>
+
+        @if (preferences().length) {
+          <div class="ah-legend mt">
+            @for (pref of preferences(); track pref.id) {
+              <span class="ah-legend-item" [style.background-color]="pref.color">{{ pref.name }}</span>
+            }
+          </div>
+        }
+      } @else if (!message()) {
+        <div class="mt"><p-message severity="info" text="No data returned." /></div>
+      }
+    }
+  }
+</div>
