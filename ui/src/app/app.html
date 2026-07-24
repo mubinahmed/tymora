@@ -3,9 +3,9 @@
 @if (authenticated()) {
   <div class="app-shell">
     <header class="app-topbar">
-      <img class="brand-logo" src="assets/logo-mark-dark.svg" width="34" height="34" alt="UniTime" />
+      <img class="brand-logo" src="assets/logo-mark-dark.svg" width="34" height="34" alt="Tymora" />
       <div class="brand">
-        <span class="brand-name">UniTime</span>
+        <span class="brand-name">Tymora</span>
         <span class="brand-sub">{{ subtitle() }}</span>
       </div>
 
@@ -54,7 +54,7 @@
       <main class="app-content">
         @if (page.title()) {
           <div class="content-crumb">
-            <span class="crumb-home">UniTime</span>
+            <span class="crumb-home">Tymora</span>
             <i class="pi pi-angle-right"></i>
             <span class="crumb-current">{{ page.title() }}</span>
           </div>
@@ -67,7 +67,7 @@
       @if (version(); as v) {
         <span>Tymora {{ v.version }} · build {{ v.buildNumber }} · {{ v.releaseDate }}</span>
       } @else {
-        <span>UniTime</span>
+        <span>Tymora</span>
       }
     </footer>
   </div>

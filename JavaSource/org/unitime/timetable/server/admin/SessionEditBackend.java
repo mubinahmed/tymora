@@ -29,33 +29,37 @@ import org.unitime.timetable.gwt.shared.SessionEditInterface.SessionEditRequest;
 import org.unitime.timetable.gwt.shared.SessionEditInterface.SessionEditResponse;
 import org.unitime.timetable.gwt.shared.SessionEditInterface.StatusOption;
 import org.unitime.timetable.model.ChangeLog;
+import org.unitime.timetable.model.ClassDurationType;
+import org.unitime.timetable.model.DatePattern;
 import org.unitime.timetable.model.DepartmentStatusType;
+import org.unitime.timetable.model.InstructionalMethod;
 import org.unitime.timetable.model.Session;
 import org.unitime.timetable.model.StudentSectioningQueue;
+import org.unitime.timetable.model.StudentSectioningStatus;
+import org.unitime.timetable.model.dao.ClassDurationTypeDAO;
+import org.unitime.timetable.model.dao.DatePatternDAO;
 import org.unitime.timetable.model.dao.DepartmentStatusTypeDAO;
+import org.unitime.timetable.model.dao.InstructionalMethodDAO;
 import org.unitime.timetable.model.dao.SessionDAO;
+import org.unitime.timetable.model.dao.StudentSectioningStatusDAO;
 import org.unitime.timetable.security.SessionContext;
 import org.unitime.timetable.security.rights.Right;
 import org.unitime.timetable.util.Formats;
 
 /**
- * Edit the core descriptive fields of an academic {@link Session}: academic
- * initiative / year / term, the session begin, classes end and session end
- * dates, and the status type. Backs the Angular sessions-edit screen and
- * replaces the descriptive-field portion of the legacy Struts sessionEdit page.
+ * Edit an academic {@link Session}, aligned with the legacy Struts sessionEdit
+ * page: academic initiative / year / term, the date boundaries (session begin,
+ * classes end, exam begin, session end, event begin/end), status, default date
+ * pattern, default class duration type, default instructional method, the
+ * online-student-scheduling week boundaries (enroll / change / drop), the default
+ * sectioning status and the notification dates. Backs the Angular sessions-edit
+ * screen.
  *
- * <p>Faithful to the legacy action's permission model: LOAD/SAVE require
- * {@link Right#AcademicSessionEdit} on the session and DELETE requires
- * {@link Right#AcademicSessionDelete}. On SAVE the existing entity is loaded via
- * {@link SessionDAO} and ONLY the rendered fields are set (merge-on-update) --
- * exam/event periods, holidays, date/time patterns, roll-forward, the week
- * boundaries and every relation are left exactly as they were.</p>
- *
- * <p>CREATE is intentionally NOT supported: a Session row has several mandatory
- * columns this screen does not render (exam begin date, event begin/end dates,
- * status, enroll/change/drop week boundaries) plus holiday and date-pattern
- * setup, so a safe create is not possible from these fields alone. Creation
- * remains the responsibility of the legacy page.</p>
+ * <p>LOAD/SAVE require {@link Right#AcademicSessionEdit}; DELETE requires
+ * {@link Right#AcademicSessionDelete}. On SAVE the entity is loaded via
+ * {@link SessionDAO} and the rendered fields are set (merge-on-update). The
+ * interactive HOLIDAYS calendar, the DATE/TIME pattern editors and ROLL-FORWARD
+ * remain dedicated legacy screens and are left untouched.</p>
  *
  * @author Angular migration
  */
@@ -96,10 +100,22 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 		response.setAcademicInitiative(session.getAcademicInitiative());
 		response.setAcademicYear(session.getAcademicYear());
 		response.setAcademicTerm(session.getAcademicTerm());
-		response.setSessionBeginDateTime(session.getSessionBeginDateTime() == null ? "" : df.format(session.getSessionBeginDateTime()));
-		response.setClassesEndDateTime(session.getClassesEndDateTime() == null ? "" : df.format(session.getClassesEndDateTime()));
-		response.setSessionEndDateTime(session.getSessionEndDateTime() == null ? "" : df.format(session.getSessionEndDateTime()));
+		response.setSessionBeginDateTime(fmt(df, session.getSessionBeginDateTime()));
+		response.setClassesEndDateTime(fmt(df, session.getClassesEndDateTime()));
+		response.setSessionEndDateTime(fmt(df, session.getSessionEndDateTime()));
+		response.setExamBeginDate(fmt(df, session.getExamBeginDate()));
+		response.setEventBeginDate(fmt(df, session.getEventBeginDate()));
+		response.setEventEndDate(fmt(df, session.getEventEndDate()));
+		response.setNotificationsBegin(fmt(df, session.getNotificationsBeginDate()));
+		response.setNotificationsEnd(fmt(df, session.getNotificationsEndDate()));
 		response.setStatusTypeId(session.getStatusType() == null ? null : session.getStatusType().getUniqueId());
+		response.setDefaultDatePatternId(session.getDefaultDatePattern() == null ? null : session.getDefaultDatePattern().getUniqueId());
+		response.setDurationTypeId(session.getDefaultClassDurationType() == null ? null : session.getDefaultClassDurationType().getUniqueId());
+		response.setInstructionalMethodId(session.getDefaultInstructionalMethod() == null ? null : session.getDefaultInstructionalMethod().getUniqueId());
+		response.setSectStatusId(session.getDefaultSectioningStatus() == null ? null : session.getDefaultSectioningStatus().getUniqueId());
+		response.setWkEnroll(session.getLastWeekToEnroll());
+		response.setWkChange(session.getLastWeekToChange());
+		response.setWkDrop(session.getLastWeekToDrop());
 		response.setCanEdit(true);
 		response.setCanDelete(context.hasPermission(session, Right.AcademicSessionDelete)
 				&& !session.getUniqueId().equals(context.getUser().getCurrentAcademicSessionId()));
@@ -107,6 +123,15 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 		boolean includeTest = context.hasPermission(Right.AllowTestSessions);
 		for (DepartmentStatusType st : DepartmentStatusType.findAllForSession(includeTest))
 			response.addStatus(new StatusOption(st.getUniqueId(), st.getLabel()));
+		for (DatePattern dp : DatePattern.findAll(session.getUniqueId(), false, null, session.getDefaultDatePattern()))
+			response.addDatePattern(new StatusOption(dp.getUniqueId(), dp.getName()));
+		for (ClassDurationType t : ClassDurationType.findAll())
+			if (t.isVisible() || t.getUniqueId().equals(response.getDurationTypeId()))
+				response.addDurationType(new StatusOption(t.getUniqueId(), t.getLabel()));
+		for (InstructionalMethod im : InstructionalMethod.findAll())
+			response.addInstructionalMethod(new StatusOption(im.getUniqueId(), im.getLabel()));
+		for (StudentSectioningStatus st : StudentSectioningStatus.findAll(session.getUniqueId()))
+			response.addSectStatus(new StatusOption(st.getUniqueId(), st.getLabel()));
 
 		return response;
 	}
@@ -117,7 +142,6 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 
 		context.checkPermission(request.getUniqueId(), "Session", Right.AcademicSessionEdit);
 
-		// Validate the descriptive fields before touching the database.
 		if (isEmpty(request.getAcademicInitiative()))
 			throw new GwtRpcException("Academic initiative is required.");
 		if (isEmpty(request.getAcademicYear()))
@@ -131,6 +155,24 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 		Date begin = parseDate(df, request.getSessionBeginDateTime(), "session start date");
 		Date classesEnd = parseDate(df, request.getClassesEndDateTime(), "classes end date");
 		Date end = parseDate(df, request.getSessionEndDateTime(), "session end date");
+		Date examBegin = parseDate(df, request.getExamBeginDate(), "examination start date");
+		Date eventBegin = parseDate(df, request.getEventBeginDate(), "event start date");
+		Date eventEnd = parseDate(df, request.getEventEndDate(), "event end date");
+
+		// Ordering checks, faithful to the legacy SessionEditForm.validateDates.
+		if (!end.after(begin))
+			throw new GwtRpcException("The session end date must be after the session start date.");
+		if (!classesEnd.after(begin))
+			throw new GwtRpcException("The classes end date must be after the session start date.");
+		if (classesEnd.after(end))
+			throw new GwtRpcException("The classes end date must be on or before the session end date.");
+		if (!eventBegin.before(eventEnd))
+			throw new GwtRpcException("The event end date must be after the event start date.");
+
+		Date notifBegin = parseOptionalDate(df, request.getNotificationsBegin(), "notifications begin date");
+		Date notifEnd = parseOptionalDate(df, request.getNotificationsEnd(), "notifications end date");
+		if (notifBegin != null && notifEnd != null && !notifBegin.before(notifEnd))
+			throw new GwtRpcException("The notifications end date must be after the notifications start date.");
 
 		DepartmentStatusType status = DepartmentStatusTypeDAO.getInstance().get(request.getStatusTypeId());
 		if (status == null)
@@ -145,18 +187,31 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 			if (session == null)
 				throw new GwtRpcException("Academic session not found.");
 
-			// Merge-on-update: set ONLY the fields this screen renders. Every other
-			// column and relation (exam/event dates, holidays, date/time patterns,
-			// week boundaries, default sectioning/duration/instructional method,
-			// subject areas, departments, rooms, offerings) is deliberately left
-			// untouched.
+			// Merge-on-update. The interactive holidays calendar, the date/time
+			// pattern editors and roll-forward are left to their legacy screens.
 			session.setAcademicInitiative(request.getAcademicInitiative().trim());
 			session.setAcademicYear(request.getAcademicYear().trim());
 			session.setAcademicTerm(request.getAcademicTerm().trim());
 			session.setSessionBeginDateTime(begin);
 			session.setClassesEndDateTime(classesEnd);
 			session.setSessionEndDateTime(end);
+			session.setExamBeginDate(examBegin);
+			session.setEventBeginDate(eventBegin);
+			session.setEventEndDate(eventEnd);
 			session.setStatusType(status);
+			session.setDefaultDatePattern(resolveId(request.getDefaultDatePatternId()) == null ? null
+					: DatePatternDAO.getInstance().get(request.getDefaultDatePatternId(), hibSession));
+			session.setDefaultClassDurationType(resolveId(request.getDurationTypeId()) == null ? null
+					: ClassDurationTypeDAO.getInstance().get(request.getDurationTypeId(), hibSession));
+			session.setDefaultInstructionalMethod(resolveId(request.getInstructionalMethodId()) == null ? null
+					: InstructionalMethodDAO.getInstance().get(request.getInstructionalMethodId(), hibSession));
+			session.setDefaultSectioningStatus(resolveId(request.getSectStatusId()) == null ? null
+					: StudentSectioningStatusDAO.getInstance().get(request.getSectStatusId(), hibSession));
+			if (request.getWkEnroll() != null) session.setLastWeekToEnroll(request.getWkEnroll());
+			if (request.getWkChange() != null) session.setLastWeekToChange(request.getWkChange());
+			if (request.getWkDrop() != null) session.setLastWeekToDrop(request.getWkDrop());
+			session.setNotificationsBeginDate(notifBegin);
+			session.setNotificationsEndDate(notifEnd);
 
 			hibSession.merge(session);
 
@@ -211,6 +266,15 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 
 	private static boolean isEmpty(String s) { return s == null || s.trim().isEmpty(); }
 
+	/** null / negative -> null ("none" selection); otherwise the id itself. */
+	private static Long resolveId(Long id) {
+		return (id == null || id < 0) ? null : id;
+	}
+
+	private static String fmt(Formats.Format<Date> df, Date d) {
+		return d == null ? "" : df.format(d);
+	}
+
 	private static Date parseDate(Formats.Format<Date> df, String value, String what) {
 		if (isEmpty(value))
 			throw new GwtRpcException("The " + what + " is required.");
@@ -224,5 +288,10 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 		} catch (Exception e) {
 			throw new GwtRpcException("The " + what + " '" + value + "' could not be parsed (expected format " + df.toPattern() + ").");
 		}
+	}
+
+	private static Date parseOptionalDate(Formats.Format<Date> df, String value, String what) {
+		if (isEmpty(value)) return null;
+		return parseDate(df, value, what);
 	}
 }

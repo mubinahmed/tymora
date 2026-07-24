@@ -30,9 +30,13 @@ import org.unitime.timetable.gwt.shared.SessionCreateInterface.SessionCreateRequ
 import org.unitime.timetable.gwt.shared.SessionCreateInterface.SessionCreateResponse;
 import org.unitime.timetable.gwt.shared.SessionCreateInterface.StatusOption;
 import org.unitime.timetable.model.ChangeLog;
+import org.unitime.timetable.model.ClassDurationType;
 import org.unitime.timetable.model.DepartmentStatusType;
+import org.unitime.timetable.model.InstructionalMethod;
 import org.unitime.timetable.model.Session;
+import org.unitime.timetable.model.dao.ClassDurationTypeDAO;
 import org.unitime.timetable.model.dao.DepartmentStatusTypeDAO;
+import org.unitime.timetable.model.dao.InstructionalMethodDAO;
 import org.unitime.timetable.model.dao.SessionDAO;
 import org.unitime.timetable.security.SessionContext;
 import org.unitime.timetable.security.rights.Right;
@@ -88,10 +92,22 @@ public class SessionCreateBackend implements GwtRpcImplementation<SessionCreateR
 		Formats.Format<Date> df = Formats.getDateFormat(Formats.Pattern.DATE_ENTRY_FORMAT);
 		response.setDateFormat(df.toPattern());
 		response.setCanAdd(true);
+		// Legacy SessionEditForm week-boundary defaults.
+		response.setWkEnroll(1);
+		response.setWkChange(1);
+		response.setWkDrop(4);
 
 		boolean includeTest = context.hasPermission(Right.AllowTestSessions);
 		for (DepartmentStatusType st : DepartmentStatusType.findAllForSession(includeTest))
 			response.addStatus(new StatusOption(st.getUniqueId(), st.getLabel()));
+		// Global option lists. The default-date-pattern and sectioning-status lists
+		// are session-scoped and therefore empty until the session exists (set later
+		// on the Edit page); duration types and instructional methods are global.
+		for (ClassDurationType t : ClassDurationType.findAll())
+			if (t.isVisible())
+				response.addDurationType(new StatusOption(t.getUniqueId(), t.getLabel()));
+		for (InstructionalMethod im : InstructionalMethod.findAll())
+			response.addInstructionalMethod(new StatusOption(im.getUniqueId(), im.getLabel()));
 
 		return response;
 	}
@@ -160,18 +176,26 @@ public class SessionCreateBackend implements GwtRpcImplementation<SessionCreateR
 			session.setEventBeginDate(eventBegin);
 			session.setEventEndDate(eventEnd);
 			session.setStatusType(status);
-			// Mandatory NOT-NULL enrollment week boundaries: use the legacy form defaults.
-			session.setLastWeekToEnroll(1);
-			session.setLastWeekToChange(1);
-			session.setLastWeekToDrop(4);
-			// Optional (nullable) setup left unset on create -- configured later.
+			// Mandatory NOT-NULL week boundaries: request values, else legacy defaults 1 / 1 / 4.
+			session.setLastWeekToEnroll(request.getWkEnroll() == null ? 1 : request.getWkEnroll());
+			session.setLastWeekToChange(request.getWkChange() == null ? 1 : request.getWkChange());
+			session.setLastWeekToDrop(request.getWkDrop() == null ? 4 : request.getWkDrop());
+			// Optional defaults, now settable on create too (all nullable in the schema).
+			session.setDefaultClassDurationType(resolveId(request.getDurationTypeId()) == null ? null
+					: ClassDurationTypeDAO.getInstance().get(request.getDurationTypeId(), hibSession));
+			session.setDefaultInstructionalMethod(resolveId(request.getInstructionalMethodId()) == null ? null
+					: InstructionalMethodDAO.getInstance().get(request.getInstructionalMethodId(), hibSession));
+			Date notifBegin = parseOptionalDate(df, request.getNotificationsBegin(), "notifications begin date");
+			Date notifEnd = parseOptionalDate(df, request.getNotificationsEnd(), "notifications end date");
+			if (notifBegin != null && notifEnd != null && !notifBegin.before(notifEnd))
+				throw new GwtRpcException("The notifications end date must be after the notifications start date.");
+			session.setNotificationsBeginDate(notifBegin);
+			session.setNotificationsEndDate(notifEnd);
+			// Default date pattern and default sectioning status are session-scoped and do
+			// not exist yet for a brand new session -> left null (configured on Edit later).
 			session.setDefaultDatePattern(null);
 			session.setHolidays((String) null);
-			session.setNotificationsBeginDate(null);
-			session.setNotificationsEndDate(null);
 			session.setDefaultSectioningStatus(null);
-			session.setDefaultClassDurationType(null);
-			session.setDefaultInstructionalMethod(null);
 
 			hibSession.persist(session);
 
@@ -203,6 +227,16 @@ public class SessionCreateBackend implements GwtRpcImplementation<SessionCreateR
 		if (s == null) return null;
 		String t = s.trim();
 		return t.isEmpty() ? null : t;
+	}
+
+	/** null / negative -> null ("none" selection); otherwise the id itself. */
+	private static Long resolveId(Long id) {
+		return (id == null || id < 0) ? null : id;
+	}
+
+	private static Date parseOptionalDate(Formats.Format<Date> df, String value, String what) {
+		if (value == null || value.trim().isEmpty()) return null;
+		return parseDate(df, value, what);
 	}
 
 	private static Date parseDate(Formats.Format<Date> df, String value, String what) {

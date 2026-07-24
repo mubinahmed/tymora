@@ -1,23 +1,106 @@
-<div class="home">
-  <p-card header="Angular front-end — Wave 0 skeleton">
-    <p>
-      This shell talks to the existing Tymora backend through the additive JSON facade
-      (<code>/api/rpc/*</code>) — no GWT code changed. The top bar, side menu, and footer below
-      are all populated from real RPC commands.
-    </p>
-    @if (user()?.name) {
-      <p>Signed in as <strong>{{ user()!.name }}</strong>@if (user()!.role) { — {{ user()!.role }} }.</p>
-    } @else {
-      <p>You are not signed in; data screens will redirect to the Tymora login.</p>
-    }
-    @if (session()?.session) {
-      <p>Academic session: <strong>{{ session()!.session }}</strong>.</p>
-    }
-  </p-card>
+<div class="dash">
+  <!-- Hero / context -->
+  <section class="dash-hero">
+    <div class="dash-hero-text">
+      <h1>{{ greeting }}, {{ firstName() }}</h1>
+      <p>
+        @if (session()?.session) {
+          <span class="dash-pill"><i class="pi pi-calendar"></i> {{ session()!.session }}</span>
+        }
+        @if (user()?.role) {
+          <span class="dash-pill"><i class="pi pi-id-card"></i> {{ user()!.role }}</span>
+        }
+        @if (version()?.version) {
+          <span class="dash-pill dash-pill-ghost"><i class="pi pi-server"></i> UniTime {{ version()!.version }}</span>
+        }
+      </p>
+    </div>
+    <div class="dash-hero-cta">
+      <p-button label="Course Timetabling" icon="pi pi-calendar" routerLink="/solver" />
+      <p-button label="Rooms" icon="pi pi-building" severity="secondary" [outlined]="true" routerLink="/rooms" />
+    </div>
+  </section>
 
-  <p-card header="Pilot screen (Wave 1)">
-    <p>The Buildings list is the first migrated screen, rendered from
-      <code>GetBuildingsRequest</code> in a PrimeNG table.</p>
-    <p-button label="Open Buildings" icon="pi pi-building" routerLink="/buildings" />
-  </p-card>
+  <!-- KPI tiles -->
+  <section class="dash-kpis">
+    @for (k of kpis(); track k.label) {
+      <a class="dash-kpi" [routerLink]="k.route">
+        <span class="dash-kpi-icon"><i class="pi {{ k.icon }}"></i></span>
+        <span class="dash-kpi-body">
+          <span class="dash-kpi-value">{{ k.value | number }}</span>
+          <span class="dash-kpi-label">{{ k.label }}</span>
+        </span>
+      </a>
+    }
+  </section>
+
+  <!-- Charts -->
+  <section class="dash-charts">
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>Rooms by type</h2>
+        <span class="dash-card-sub">Facilities in {{ session()?.session || 'the current session' }}</span>
+      </div>
+
+      @if (loading()) {
+        <div class="dash-center"><p-progressSpinner strokeWidth="4" /></div>
+      } @else if (error()) {
+        <p-message severity="info" [text]="error()!" />
+      } @else if (hasRoomData()) {
+        <div class="bars">
+          @for (b of byType(); track b.label) {
+            <div class="bar-row" [title]="b.label + ': ' + b.value">
+              <span class="bar-label">{{ b.label }}</span>
+              <span class="bar-track"><span class="bar-fill" [style.width.%]="barPct(byType(), b.value)"></span></span>
+              <span class="bar-value">{{ b.value }}</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="dash-empty">No rooms found for this session.</div>
+      }
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>Rooms by building</h2>
+        <span class="dash-card-sub">Top locations by room count</span>
+      </div>
+
+      @if (loading()) {
+        <div class="dash-center"><p-progressSpinner strokeWidth="4" /></div>
+      } @else if (error()) {
+        <p-message severity="info" [text]="error()!" />
+      } @else if (hasRoomData()) {
+        <div class="bars">
+          @for (b of byBuilding(); track b.label) {
+            <div class="bar-row" [title]="b.label + ': ' + b.value">
+              <span class="bar-label">{{ b.label }}</span>
+              <span class="bar-track"><span class="bar-fill" [style.width.%]="barPct(byBuilding(), b.value)"></span></span>
+              <span class="bar-value">{{ b.value }}</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="dash-empty">No rooms found for this session.</div>
+      }
+    </div>
+  </section>
+
+  <!-- Quick launch -->
+  <section class="dash-launch">
+    <h2 class="dash-section-title">Jump back in</h2>
+    <div class="dash-launch-grid">
+      @for (l of launches; track l.route) {
+        <a class="dash-launch-card" [routerLink]="l.route">
+          <span class="dash-launch-icon"><i class="pi {{ l.icon }}"></i></span>
+          <span class="dash-launch-text">
+            <strong>{{ l.label }}</strong>
+            <small>{{ l.hint }}</small>
+          </span>
+          <i class="pi pi-arrow-right dash-launch-go"></i>
+        </a>
+      }
+    </div>
+  </section>
 </div>

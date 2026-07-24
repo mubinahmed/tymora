@@ -23,6 +23,9 @@
           (input)="filter.set($any($event.target).value)"
         />
         <p-button label="CSV" icon="pi pi-download" severity="secondary" [text]="true" (onClick)="exportCsv()" [disabled]="!rows().length" />
+        @if (editor(); as ed) {
+          <p-button [label]="ed.createLabel" icon="pi pi-plus" [routerLink]="ed.createLink" />
+        }
       </div>
     </ng-template>
 
@@ -35,7 +38,10 @@
     </ng-template>
 
     <ng-template pTemplate="body" let-row>
-      <tr>
+      <tr
+        [style.cursor]="editor() && row.id != null ? 'pointer' : null"
+        (click)="openRow(row)"
+      >
         @for (col of d.columns ?? []; track $index) {
           <td>{{ row.cells?.[$index] ?? '' }}</td>
         }
