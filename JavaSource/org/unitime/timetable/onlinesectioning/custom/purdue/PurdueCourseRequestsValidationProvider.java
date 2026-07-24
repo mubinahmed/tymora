@@ -376,7 +376,7 @@ public class PurdueCourseRequestsValidationProvider implements CourseRequestsVal
 		if (!isValidationEnabled(server, helper, original)) return;
 		
 		Integer CONF_NONE = null;
-		Integer CONF_Tymora = Integer.valueOf(0);
+		Integer CONF_UNITIME = Integer.valueOf(0);
 		Integer CONF_BANNER = Integer.valueOf(1);
 		
 		OnlineSectioningModel model = new OnlineSectioningModel(server.getConfig(), server.getOverExpectedCriterion());
@@ -497,7 +497,7 @@ public class PurdueCourseRequestsValidationProvider implements CourseRequestsVal
 										boolean confirm = (original.getRequestForCourse(course.getId()) == null || original.getRequestForCourse(singleSections.get(other).getId()) == null) && (cr.getCourses().size() == 1);
 										response.addMessage(course.getId(), course.getName(), "OVERLAP",
 												ApplicationProperties.getProperty("purdue.specreg.messages.courseOverlaps", "Conflicts with {other}.").replace("{course}", course.getName()).replace("{other}", singleSections.get(other).getName()),
-												confirm ? CONF_Tymora : CONF_NONE);
+												confirm ? CONF_UNITIME : CONF_NONE);
 										if (confirm) questionTimeConflict = true;
 									}
 								}
@@ -523,7 +523,7 @@ public class PurdueCourseRequestsValidationProvider implements CourseRequestsVal
 						boolean confirm = (original.getRequestForCourse(course.getId()) == null);
 						response.addMessage(course.getId(), course.getName(), "STUD_PREF",
 								ApplicationProperties.getProperty("purdue.specreg.messages.inconsistentStudPref", "Not available due to preferences selected.").replace("{course}", course.getName()),
-								confirm ? CONF_Tymora : CONF_NONE);
+								confirm ? CONF_UNITIME : CONF_NONE);
 						if (confirm) questionInconStuPref = true;
 					}
 				}
@@ -550,7 +550,7 @@ public class PurdueCourseRequestsValidationProvider implements CourseRequestsVal
 											ApplicationProperties.getProperty("purdue.specreg.messages.notMatchingRuleCourse", "No {rule} option.")
 											.replace("{rule}", rule.getRuleName())
 											.replace("{course}", course.getName()),
-											confirm ? CONF_Tymora : CONF_NONE);
+											confirm ? CONF_UNITIME : CONF_NONE);
 									if (confirm) questionRestrictionsNotMet = true;
 								}
 							}
@@ -576,11 +576,11 @@ public class PurdueCourseRequestsValidationProvider implements CourseRequestsVal
 									if (onlineOnly)
 										response.addMessage(course.getId(), course.getName(), "NOT-ONLINE",
 											ApplicationProperties.getProperty("purdue.specreg.messages.onlineStudentReqResidentialCourse", "No online-only option.").replace("{course}", course.getName()),
-											confirm ? CONF_Tymora : CONF_NONE);
+											confirm ? CONF_UNITIME : CONF_NONE);
 									else
 										response.addMessage(course.getId(), course.getName(), "NOT-RESIDENTIAL",
 												ApplicationProperties.getProperty("purdue.specreg.messages.residentialStudentReqOnlineCourse", "No residential option.").replace("{course}", course.getName()),
-												confirm ? CONF_Tymora : CONF_NONE);
+												confirm ? CONF_UNITIME : CONF_NONE);
 									if (confirm) questionRestrictionsNotMet = true;
 								}
 							}
@@ -627,7 +627,7 @@ public class PurdueCourseRequestsValidationProvider implements CourseRequestsVal
 				if (hasCourse)
 					response.addMessage(0l, CONSTANTS.freePrefix() + free, "FREE-TIME",
 						ApplicationProperties.getProperty("purdue.specreg.messages.freeTimeHighPriority", "High priority free time"),
-						confirm ? CONF_Tymora : CONF_NONE);
+						confirm ? CONF_UNITIME : CONF_NONE);
 				if (confirm) questionFreeTime = true;
 			}
 		}
@@ -1028,7 +1028,7 @@ public class PurdueCourseRequestsValidationProvider implements CourseRequestsVal
 				if (rc.getCourseId() != null && !rc.isReadOnly() && !advisorCoursesNoAlt.contains(rc.getCourseId())) {
 					response.addMessage(rc.getCourseId(), rc.getCourseName(), "NO_ALT",
 							ApplicationProperties.getProperty("purdue.specreg.messages.courseHasNoAlt", "No alternative course provided.").replace("{course}", rc.getCourseName()),
-							!coursesWithNotAlt.contains(rc.getCourseId()) ? CONF_Tymora : CONF_NONE);
+							!coursesWithNotAlt.contains(rc.getCourseId()) ? CONF_UNITIME : CONF_NONE);
 					if (!coursesWithNotAlt.contains(rc.getCourseId())) {
 						questionNoAlt = true;
 					}
@@ -1812,7 +1812,7 @@ public class PurdueCourseRequestsValidationProvider implements CourseRequestsVal
 				otherCredits = solverServer.getCreditRangeFromOtherSessions(server.getAcademicSession(), original.getExternalId());
 		}
 		
-		Integer ORD_Tymora = Integer.valueOf(0);
+		Integer ORD_UNITIME = Integer.valueOf(0);
 		Integer ORD_BANNER = Integer.valueOf(1);
 		Integer ORD_CREDIT = Integer.valueOf(2);
 		
@@ -3335,7 +3335,7 @@ public class PurdueCourseRequestsValidationProvider implements CourseRequestsVal
 		if (!isAdvisorValidationEnabled(server, helper, original, details.getStatus() == null ? null : details.getStatus().getReference())) return;
 		CourseRequestInterface request = details.getRequest();
 		
-		Integer CONF_Tymora = Integer.valueOf(0);
+		Integer CONF_UNITIME = Integer.valueOf(0);
 		Integer CONF_BANNER = Integer.valueOf(1);
 		
 		OnlineSectioningModel model = new OnlineSectioningModel(server.getConfig(), server.getOverExpectedCriterion());

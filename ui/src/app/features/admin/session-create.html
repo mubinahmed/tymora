@@ -2,107 +2,157 @@
   <div class="center"><p-progressSpinner strokeWidth="4" /></div>
 } @else if (error()) {
   <p-message severity="error" [text]="error()!" />
-  <div class="mt">
-    <p-button label="Back to Academic Sessions" icon="pi pi-arrow-left" severity="secondary" (onClick)="back()" />
-  </div>
+  <div class="mt"><p-button label="Back to sessions" icon="pi pi-arrow-left" (onClick)="back()" /></div>
 } @else {
-  <p-card header="Add Academic Session">
-    <div class="building-form">
-      <div class="field">
-        <label>Academic Initiative *</label>
-        <input pInputText [disabled]="!canAdd()"
-          [ngModel]="model().academicInitiative"
-          (ngModelChange)="set('academicInitiative', $event)" />
+  <div class="form-page session-form" style="max-width: 62rem;">
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-calendar-plus"></i></span>
+        <div>
+          <h2>Add Academic Session</h2>
+          <p>Create a new term. The holidays calendar, date &amp; time patterns and roll-forward are set up afterwards on the classic page.</p>
+        </div>
       </div>
 
-      <div class="field">
-        <label>Academic Year *</label>
-        <input pInputText [disabled]="!canAdd()"
-          [ngModel]="model().academicYear"
-          (ngModelChange)="set('academicYear', $event)" />
+      <div class="form-grid">
+        <div class="field">
+          <label for="s-init">Academic Initiative *</label>
+          <input pInputText id="s-init" [(ngModel)]="model.academicInitiative" placeholder="e.g. MBIT" />
+        </div>
+        <div class="field">
+          <label for="s-term">Academic Term *</label>
+          <input pInputText id="s-term" [(ngModel)]="model.academicTerm" placeholder="e.g. Fal" />
+        </div>
+        <div class="field">
+          <label for="s-year">Academic Year *</label>
+          <input pInputText id="s-year" [(ngModel)]="model.academicYear" placeholder="e.g. 2026" />
+        </div>
+        <div class="field">
+          <label for="s-status">Session Status *</label>
+          <p-select
+            inputId="s-status"
+            [options]="statuses()"
+            optionLabel="label"
+            optionValue="id"
+            [(ngModel)]="model.statusTypeId"
+            placeholder="Select status"
+            appendTo="body"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-calendar"></i></span>
+        <div>
+          <h2>Dates</h2>
+          <p>Enter dates in <code>{{ dateFormat() || 'MM/dd/yyyy' }}</code> format.</p>
+        </div>
       </div>
 
-      <div class="field">
-        <label>Academic Term *</label>
-        <input pInputText [disabled]="!canAdd()"
-          [ngModel]="model().academicTerm"
-          (ngModelChange)="set('academicTerm', $event)" />
+      <div class="form-grid">
+        <div class="field">
+          <label for="s-begin">Session Start *</label>
+          <input pInputText id="s-begin" class="mono" [(ngModel)]="model.sessionBeginDateTime" [placeholder]="dateFormat()" />
+        </div>
+        <div class="field">
+          <label for="s-cend">Classes End *</label>
+          <input pInputText id="s-cend" class="mono" [(ngModel)]="model.classesEndDateTime" [placeholder]="dateFormat()" />
+        </div>
+        <div class="field">
+          <label for="s-exam">Examination Start *</label>
+          <input pInputText id="s-exam" class="mono" [(ngModel)]="model.examBeginDate" [placeholder]="dateFormat()" />
+        </div>
+        <div class="field">
+          <label for="s-send">Session End *</label>
+          <input pInputText id="s-send" class="mono" [(ngModel)]="model.sessionEndDateTime" [placeholder]="dateFormat()" />
+        </div>
+        <div class="field">
+          <label for="s-evb">Event Start *</label>
+          <input pInputText id="s-evb" class="mono" [(ngModel)]="model.eventBeginDate" [placeholder]="dateFormat()" />
+        </div>
+        <div class="field">
+          <label for="s-eve">Event End *</label>
+          <input pInputText id="s-eve" class="mono" [(ngModel)]="model.eventEndDate" [placeholder]="dateFormat()" />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-cog"></i></span>
+        <div>
+          <h2>Defaults</h2>
+          <p>Optional. Session-scoped date patterns become available after the session is created.</p>
+        </div>
       </div>
 
-      <div class="field">
-        <label>Session Start Date *</label>
-        <input pInputText [disabled]="!canAdd()"
-          [placeholder]="dateFormat()"
-          [ngModel]="model().sessionBeginDateTime"
-          (ngModelChange)="set('sessionBeginDateTime', $event)" />
+      <div class="form-grid">
+        <div class="field">
+          <label for="s-dp">Default Date Pattern</label>
+          <p-select inputId="s-dp" [options]="datePatternOptions()" [(ngModel)]="model.defaultDatePatternId"
+            optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" [disabled]="!datePatterns().length" />
+        </div>
+        <div class="field">
+          <label for="s-dur">Default Class Duration</label>
+          <p-select inputId="s-dur" [options]="durationOptions()" [(ngModel)]="model.durationTypeId"
+            optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" />
+        </div>
+        <div class="field">
+          <label for="s-im">Default Instructional Method</label>
+          <p-select inputId="s-im" [options]="methodOptions()" [(ngModel)]="model.instructionalMethodId"
+            optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-users"></i></span>
+        <div>
+          <h2>Online Student Scheduling</h2>
+          <p>Deadlines are counted in weeks relative to the classes-begin date.</p>
+        </div>
       </div>
 
-      <div class="field">
-        <label>Classes End Date *</label>
-        <input pInputText [disabled]="!canAdd()"
-          [placeholder]="dateFormat()"
-          [ngModel]="model().classesEndDateTime"
-          (ngModelChange)="set('classesEndDateTime', $event)" />
+      <div class="form-grid">
+        <div class="field">
+          <label for="s-wke">New Enrollment Deadline (week)</label>
+          <p-inputNumber inputId="s-wke" [(ngModel)]="model.wkEnroll" [useGrouping]="false" [showButtons]="true" styleClass="w-full" />
+        </div>
+        <div class="field">
+          <label for="s-wkc">Class Changes Deadline (week)</label>
+          <p-inputNumber inputId="s-wkc" [(ngModel)]="model.wkChange" [useGrouping]="false" [showButtons]="true" styleClass="w-full" />
+        </div>
+        <div class="field">
+          <label for="s-wkd">Course Drop Deadline (week)</label>
+          <p-inputNumber inputId="s-wkd" [(ngModel)]="model.wkDrop" [useGrouping]="false" [showButtons]="true" styleClass="w-full" />
+        </div>
+        <div class="field">
+          <label for="s-ss">Default Student Status</label>
+          <p-select inputId="s-ss" [options]="sectStatusOptions()" [(ngModel)]="model.sectStatusId"
+            optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" [disabled]="!sectStatuses().length" />
+        </div>
+        <div class="field">
+          <label for="s-nb">Notifications Start</label>
+          <input pInputText id="s-nb" class="mono" [(ngModel)]="model.notificationsBegin" [placeholder]="dateFormat()" />
+        </div>
+        <div class="field">
+          <label for="s-ne">Notifications End</label>
+          <input pInputText id="s-ne" class="mono" [(ngModel)]="model.notificationsEnd" [placeholder]="dateFormat()" />
+        </div>
       </div>
-
-      <div class="field">
-        <label>Session End Date *</label>
-        <input pInputText [disabled]="!canAdd()"
-          [placeholder]="dateFormat()"
-          [ngModel]="model().sessionEndDateTime"
-          (ngModelChange)="set('sessionEndDateTime', $event)" />
-      </div>
-
-      <div class="field">
-        <label>Examination Start Date *</label>
-        <input pInputText [disabled]="!canAdd()"
-          [placeholder]="dateFormat()"
-          [ngModel]="model().examBeginDate"
-          (ngModelChange)="set('examBeginDate', $event)" />
-      </div>
-
-      <div class="field">
-        <label>Event Start Date *</label>
-        <input pInputText [disabled]="!canAdd()"
-          [placeholder]="dateFormat()"
-          [ngModel]="model().eventBeginDate"
-          (ngModelChange)="set('eventBeginDate', $event)" />
-      </div>
-
-      <div class="field">
-        <label>Event End Date *</label>
-        <input pInputText [disabled]="!canAdd()"
-          [placeholder]="dateFormat()"
-          [ngModel]="model().eventEndDate"
-          (ngModelChange)="set('eventEndDate', $event)" />
-      </div>
-
-      <div class="field">
-        <label>Academic Session Status *</label>
-        <p-select
-          [options]="statuses()"
-          optionLabel="label"
-          optionValue="id"
-          [disabled]="!canAdd()"
-          appendTo="body"
-          placeholder="Select a status"
-          [ngModel]="model().statusTypeId"
-          (ngModelChange)="set('statusTypeId', $event)"
-        />
-      </div>
-    </div>
+    </fieldset>
 
     <p-message severity="info"
-      text="Only the mandatory descriptive fields above are set on create. Enrollment week boundaries default to 1 / 1 / 4. Optional setup — default date pattern, holidays, notifications, sectioning status, class duration type, instructional method and roll-forward — is configured afterwards on the edit / legacy pages." />
+      text="The interactive holidays calendar, the date & time pattern editors and roll-forward remain on the classic page." />
 
-    <ng-template pTemplate="footer">
-      <div class="tbl-caption">
-        <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [text]="true" (onClick)="back()" [disabled]="saving()" />
-        <span class="spacer"></span>
-        @if (canAdd()) {
-          <p-button label="Create" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
-        }
-      </div>
-    </ng-template>
-  </p-card>
+    <div class="form-actions">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="back()" [disabled]="saving()" />
+      <span class="spacer"></span>
+      <p-button label="Create session" icon="pi pi-check" (onClick)="save()" [loading]="saving()" [disabled]="!canAdd()" />
+    </div>
+  </div>
 }
