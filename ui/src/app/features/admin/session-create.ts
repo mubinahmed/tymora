@@ -1,9 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -12,12 +12,9 @@ import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 
-// --- SessionCreateInterface DTOs (declared inline; the bean was added for the
-//     Angular migration and is not in the generated models). Field names match
-//     the facade's Gson naming (Java iField -> field). ---------------------------
 type SessionCreateOperation = 'LOAD' | 'SAVE';
 
-interface SessionStatusOption {
+interface Option {
   id: number;
   label: string;
 }
@@ -34,6 +31,15 @@ interface SessionCreateRequest {
   eventBeginDate?: string;
   eventEndDate?: string;
   statusTypeId?: number | null;
+  defaultDatePatternId?: number | null;
+  durationTypeId?: number | null;
+  instructionalMethodId?: number | null;
+  wkEnroll?: number | null;
+  wkChange?: number | null;
+  wkDrop?: number | null;
+  sectStatusId?: number | null;
+  notificationsBegin?: string;
+  notificationsEnd?: string;
 }
 
 interface SessionCreateResponse {
@@ -41,7 +47,14 @@ interface SessionCreateResponse {
   label?: string;
   dateFormat?: string;
   canAdd?: boolean;
-  statuses?: SessionStatusOption[];
+  wkEnroll?: number;
+  wkChange?: number;
+  wkDrop?: number;
+  statuses?: Option[];
+  datePatterns?: Option[];
+  durationTypes?: Option[];
+  instructionalMethods?: Option[];
+  sectStatuses?: Option[];
 }
 
 interface Model {
@@ -50,34 +63,37 @@ interface Model {
   academicTerm: string;
   sessionBeginDateTime: string;
   classesEndDateTime: string;
-  sessionEndDateTime: string;
   examBeginDate: string;
+  sessionEndDateTime: string;
   eventBeginDate: string;
   eventEndDate: string;
   statusTypeId: number | null;
+  defaultDatePatternId: number | null;
+  durationTypeId: number | null;
+  instructionalMethodId: number | null;
+  wkEnroll: number | null;
+  wkChange: number | null;
+  wkDrop: number | null;
+  sectStatusId: number | null;
+  notificationsBegin: string;
+  notificationsEnd: string;
 }
 
 /**
- * Create a brand new academic session. Backed by the new SessionCreateBackend
- * command bean, which owns the CREATE half deferred by the edit-only
- * SessionEditBackend. Reached at /session-create from the academic sessions list
- * ("Add Session").
- *
- * Every mandatory NOT-NULL column is rendered here (initiative / year / term,
- * the session begin, classes end and session end dates, the examination begin
- * date, the event begin and end dates, and the status type). Enrollment week
- * boundaries default to 1 / 1 / 4 server-side. Optional setup (default date
- * pattern, holidays, notifications, sectioning status, class duration type,
- * instructional method, roll-forward) is configured afterwards on the Edit /
- * legacy pages.
+ * Create a brand new academic session, aligned with the legacy sessionEdit page:
+ * identity, the date boundaries, status, the default date pattern / class
+ * duration / instructional method, the enroll/change/drop week boundaries, the
+ * default student status and the notification dates. Backed by SessionCreateBackend.
+ * The interactive holidays calendar, the date/time pattern editors and roll-forward
+ * remain on the legacy page.
  */
 @Component({
   selector: 'app-session-create',
   imports: [
     FormsModule,
-    CardModule,
     ButtonModule,
     InputTextModule,
+    InputNumberModule,
     SelectModule,
     MessageModule,
     ProgressSpinnerModule,
@@ -95,34 +111,69 @@ export class SessionCreate {
   protected readonly error = signal<string | null>(null);
   protected readonly dateFormat = signal('');
   protected readonly canAdd = signal(false);
-  protected readonly statuses = signal<SessionStatusOption[]>([]);
-  protected readonly model = signal<Model>({
-    academicInitiative: '',
-    academicYear: '',
-    academicTerm: '',
-    sessionBeginDateTime: '',
-    classesEndDateTime: '',
-    sessionEndDateTime: '',
-    examBeginDate: '',
-    eventBeginDate: '',
-    eventEndDate: '',
-    statusTypeId: null,
-  });
+
+  protected readonly statuses = signal<Option[]>([]);
+  protected readonly datePatterns = signal<Option[]>([]);
+  protected readonly durationTypes = signal<Option[]>([]);
+  protected readonly instructionalMethods = signal<Option[]>([]);
+  protected readonly sectStatuses = signal<Option[]>([]);
+
+  /** Selects that allow "no default" get a leading blank option (value null). */
+  protected readonly datePatternOptions = computed(() => this.withNone(this.datePatterns()));
+  protected readonly durationOptions = computed(() => this.withNone(this.durationTypes()));
+  protected readonly methodOptions = computed(() => this.withNone(this.instructionalMethods()));
+  protected readonly sectStatusOptions = computed(() => this.withNone(this.sectStatuses()));
+
+  protected model: Model = this.blank();
 
   constructor() {
     this.page.set('Add Academic Session');
     this.load();
   }
 
+  private blank(): Model {
+    return {
+      academicInitiative: '',
+      academicYear: '',
+      academicTerm: '',
+      sessionBeginDateTime: '',
+      classesEndDateTime: '',
+      examBeginDate: '',
+      sessionEndDateTime: '',
+      eventBeginDate: '',
+      eventEndDate: '',
+      statusTypeId: null,
+      defaultDatePatternId: null,
+      durationTypeId: null,
+      instructionalMethodId: null,
+      wkEnroll: 1,
+      wkChange: 1,
+      wkDrop: 4,
+      sectStatusId: null,
+      notificationsBegin: '',
+      notificationsEnd: '',
+    };
+  }
+
+  private withNone(options: Option[]): { label: string; value: number | null }[] {
+    return [{ label: '— None —', value: null }, ...options.map((o) => ({ label: o.label, value: o.id }))];
+  }
+
   private load(): void {
     this.loading.set(true);
     this.error.set(null);
-    const req: SessionCreateRequest = { operation: 'LOAD' };
-    this.rpc.execute<SessionCreateResponse>('SessionCreateRequest', req).subscribe({
+    this.rpc.execute<SessionCreateResponse>('SessionCreateRequest', { operation: 'LOAD' }).subscribe({
       next: (d) => {
         this.dateFormat.set(d.dateFormat ?? '');
         this.canAdd.set(d.canAdd !== false);
         this.statuses.set(d.statuses ?? []);
+        this.datePatterns.set(d.datePatterns ?? []);
+        this.durationTypes.set(d.durationTypes ?? []);
+        this.instructionalMethods.set(d.instructionalMethods ?? []);
+        this.sectStatuses.set(d.sectStatuses ?? []);
+        this.model.wkEnroll = d.wkEnroll ?? 1;
+        this.model.wkChange = d.wkChange ?? 1;
+        this.model.wkDrop = d.wkDrop ?? 4;
         this.loading.set(false);
       },
       error: (e: ApiError) => {
@@ -132,25 +183,9 @@ export class SessionCreate {
     });
   }
 
-  set<K extends keyof Model>(key: K, value: Model[K]): void {
-    this.model.set({ ...this.model(), [key]: value });
-  }
-
   save(): void {
-    const m = this.model();
-    const req: SessionCreateRequest = {
-      operation: 'SAVE',
-      academicInitiative: m.academicInitiative,
-      academicYear: m.academicYear,
-      academicTerm: m.academicTerm,
-      sessionBeginDateTime: m.sessionBeginDateTime,
-      classesEndDateTime: m.classesEndDateTime,
-      sessionEndDateTime: m.sessionEndDateTime,
-      examBeginDate: m.examBeginDate,
-      eventBeginDate: m.eventBeginDate,
-      eventEndDate: m.eventEndDate,
-      statusTypeId: m.statusTypeId,
-    };
+    const m = this.model;
+    const req: SessionCreateRequest = { operation: 'SAVE', ...m };
     this.saving.set(true);
     this.rpc.execute<SessionCreateResponse>('SessionCreateRequest', req).subscribe({
       next: (d) => {
