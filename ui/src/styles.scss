@@ -49,6 +49,7 @@ body {
 .room-form,
 .login-form,
 .ra-filter,
+.session-form,
 .solver-controls {
   .field > label,
   .field label:first-child {
@@ -748,4 +749,23 @@ a.link:hover { text-decoration: underline; }
 .dash-launch-text strong { color: var(--ut-ink); font-size: 0.95rem; }
 .dash-launch-text small { color: var(--ut-muted); font-size: 0.78rem; }
 .dash-launch-go { margin-left: auto; color: var(--ut-faint); font-size: 0.85rem; }
+
+/* ---- two-column form layout (academic session create/edit) ---- */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1.5rem;
+}
+.form-grid .field { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.form-grid .field-full { grid-column: 1 / -1; }
+@media (max-width: 40rem) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+/* make PrimeNG select / inputnumber fill the grid cell */
+.session-form .w-full,
+.form-grid .w-full { width: 100%; display: block; }
+.form-grid input.mono { font-family: var(--ut-mono); letter-spacing: 0.02em; }
+.session-form input,
+.session-form .p-select,
+.session-form .p-inputnumber { width: 100%; }
 
