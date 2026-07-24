@@ -12,6 +12,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
+import { HolidaysCalendar, HolidayDay } from './holidays-calendar';
 
 type SessionEditOperation = 'LOAD' | 'SAVE' | 'DELETE';
 
@@ -42,6 +43,7 @@ interface SessionEditRequest {
   sectStatusId?: number | null;
   notificationsBegin?: string;
   notificationsEnd?: string;
+  holidays?: string;
 }
 
 interface SessionEditResponse {
@@ -74,6 +76,9 @@ interface SessionEditResponse {
   durationTypes?: Option[];
   instructionalMethods?: Option[];
   sectStatuses?: Option[];
+  holidayDays?: HolidayDay[];
+  holidayNames?: string[];
+  holidayColors?: string[];
 }
 
 interface Model {
@@ -118,6 +123,7 @@ interface Model {
     MessageModule,
     ProgressSpinnerModule,
     ConfirmDialogModule,
+    HolidaysCalendar,
   ],
   providers: [ConfirmationService],
   templateUrl: './sessions-edit.html',
@@ -150,6 +156,10 @@ export class SessionsEdit {
   protected readonly durationOptions = computed(() => this.withNone(this.durationTypes()));
   protected readonly methodOptions = computed(() => this.withNone(this.instructionalMethods()));
   protected readonly sectStatusOptions = computed(() => this.withNone(this.sectStatuses()));
+
+  protected readonly holidayDays = signal<HolidayDay[]>([]);
+  protected readonly holidayNames = signal<string[]>([]);
+  protected readonly holidayColors = signal<string[]>([]);
 
   protected model: Model = this.blank();
 
@@ -205,6 +215,9 @@ export class SessionsEdit {
         this.durationTypes.set(d.durationTypes ?? []);
         this.instructionalMethods.set(d.instructionalMethods ?? []);
         this.sectStatuses.set(d.sectStatuses ?? []);
+        this.holidayDays.set(d.holidayDays ?? []);
+        if (d.holidayNames?.length) this.holidayNames.set(d.holidayNames);
+        if (d.holidayColors?.length) this.holidayColors.set(d.holidayColors);
         this.model = {
           academicInitiative: d.academicInitiative ?? '',
           academicYear: d.academicYear ?? '',
@@ -237,7 +250,13 @@ export class SessionsEdit {
   }
 
   save(): void {
-    const req: SessionEditRequest = { operation: 'SAVE', uniqueId: Number(this.id()), ...this.model };
+    const req: SessionEditRequest = {
+      operation: 'SAVE',
+      uniqueId: Number(this.id()),
+      ...this.model,
+      // Rebuild the holidays string from the calendar (same order LOAD emitted).
+      holidays: this.holidayDays().map((d) => d.value).join(''),
+    };
     this.saving.set(true);
     this.rpc.execute<SessionEditResponse>('SessionEditRequest', req).subscribe({
       next: (d) => {

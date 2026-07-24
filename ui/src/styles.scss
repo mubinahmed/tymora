@@ -769,3 +769,46 @@ a.link:hover { text-decoration: underline; }
 .session-form .p-select,
 .session-form .p-inputnumber { width: 100%; }
 
+/* ---- holidays calendar widget ---- */
+.holidays-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+}
+.hol-key { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--ut-text); }
+.hol-swatch { width: 0.9rem; height: 0.9rem; border-radius: 3px; border: 1px solid var(--ut-border-strong); }
+.hol-hint { color: var(--ut-muted); font-style: italic; }
+.holidays-months {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1rem;
+}
+.hol-month {
+  border: 1px solid var(--ut-border);
+  border-radius: var(--ut-radius-sm);
+  padding: 0.6rem;
+  background: var(--ut-surface);
+}
+.hol-month-title { text-align: center; font-weight: 700; font-size: 0.85rem; color: var(--ut-ink); margin-bottom: 0.4rem; }
+.hol-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.hol-dow { text-align: center; font-size: 0.65rem; font-weight: 600; color: var(--ut-muted); padding-bottom: 0.15rem; }
+.hol-blank { aspect-ratio: 1; }
+.hol-day {
+  aspect-ratio: 1;
+  border: 1px solid var(--ut-border);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-family: var(--ut-mono);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: default;
+}
+.hol-day.hol-editable { cursor: pointer; }
+.hol-day.hol-editable:hover { outline: 2px solid var(--ut-blue); outline-offset: -1px; }
+.hol-day:disabled { opacity: 0.85; }
+

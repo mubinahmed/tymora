@@ -66,6 +66,26 @@ public class SessionEditInterface implements IsSerializable {
 		public void setLabel(String label) { iLabel = label; }
 	}
 
+	/**
+	 * One day of the holidays calendar. Emitted by LOAD in string-index order
+	 * (element i == index i of {@code Session.getHolidays()}), so the client
+	 * rebuilds the holidays string by joining the values in order. iValue is the
+	 * holiday type: 0 = none, 1 = holiday, 2 = break.
+	 */
+	public static class HolidayDay implements IsSerializable {
+		private String iDate;
+		private int iValue;
+
+		public HolidayDay() {}
+		public HolidayDay(String date, int value) { iDate = date; iValue = value; }
+
+		public String getDate() { return iDate; }
+		public void setDate(String date) { iDate = date; }
+
+		public int getValue() { return iValue; }
+		public void setValue(int value) { iValue = value; }
+	}
+
 	public static class SessionEditRequest implements GwtRpcRequest<SessionEditResponse> {
 		private Operation iOperation;
 		private Long iUniqueId;
@@ -88,6 +108,7 @@ public class SessionEditInterface implements IsSerializable {
 		private Long iSectStatusId;
 		private String iNotificationsBegin;
 		private String iNotificationsEnd;
+		private String iHolidays;
 
 		public SessionEditRequest() {}
 
@@ -154,6 +175,9 @@ public class SessionEditInterface implements IsSerializable {
 		public String getNotificationsEnd() { return iNotificationsEnd; }
 		public void setNotificationsEnd(String v) { iNotificationsEnd = v; }
 
+		public String getHolidays() { return iHolidays; }
+		public void setHolidays(String v) { iHolidays = v; }
+
 		@Override
 		public String toString() { return "SessionEdit[" + iOperation + "," + iUniqueId + "]"; }
 	}
@@ -188,6 +212,9 @@ public class SessionEditInterface implements IsSerializable {
 		private List<StatusOption> iDurationTypes = new ArrayList<StatusOption>();
 		private List<StatusOption> iInstructionalMethods = new ArrayList<StatusOption>();
 		private List<StatusOption> iSectStatuses = new ArrayList<StatusOption>();
+		private List<HolidayDay> iHolidayDays = new ArrayList<HolidayDay>();
+		private List<String> iHolidayNames = new ArrayList<String>();
+		private List<String> iHolidayColors = new ArrayList<String>();
 
 		public SessionEditResponse() {}
 
@@ -277,5 +304,15 @@ public class SessionEditInterface implements IsSerializable {
 
 		public List<StatusOption> getSectStatuses() { return iSectStatuses; }
 		public void addSectStatus(StatusOption o) { iSectStatuses.add(o); }
+
+		public List<HolidayDay> getHolidayDays() { return iHolidayDays; }
+		public void addHolidayDay(HolidayDay d) { iHolidayDays.add(d); }
+
+		public List<String> getHolidayNames() { return iHolidayNames; }
+		public void setHolidayNames(List<String> names) { iHolidayNames = names; }
+
+		public List<String> getHolidayColors() { return iHolidayColors; }
+		public void setHolidayColors(List<String> colors) { iHolidayColors = colors; }
 	}
 }
+

@@ -19,12 +19,15 @@
 */
 package org.unitime.timetable.server.admin;
 
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 import org.hibernate.Transaction;
 import org.unitime.timetable.gwt.command.client.GwtRpcException;
 import org.unitime.timetable.gwt.command.server.GwtRpcImplementation;
 import org.unitime.timetable.gwt.command.server.GwtRpcImplements;
+import org.unitime.timetable.gwt.shared.SessionEditInterface.HolidayDay;
 import org.unitime.timetable.gwt.shared.SessionEditInterface.SessionEditRequest;
 import org.unitime.timetable.gwt.shared.SessionEditInterface.SessionEditResponse;
 import org.unitime.timetable.gwt.shared.SessionEditInterface.StatusOption;
@@ -44,6 +47,7 @@ import org.unitime.timetable.model.dao.SessionDAO;
 import org.unitime.timetable.model.dao.StudentSectioningStatusDAO;
 import org.unitime.timetable.security.SessionContext;
 import org.unitime.timetable.security.rights.Right;
+import org.unitime.timetable.util.DateUtils;
 import org.unitime.timetable.util.Formats;
 
 /**
@@ -133,7 +137,33 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 		for (StudentSectioningStatus st : StudentSectioningStatus.findAll(session.getUniqueId()))
 			response.addSectStatus(new StatusOption(st.getUniqueId(), st.getLabel()));
 
+		fillHolidays(response, session);
+
 		return response;
+	}
+
+	/**
+	 * Emit the holidays calendar as an ordered list of days (element i == index i
+	 * of {@code Session.getHolidays()}), mirroring the day iteration of
+	 * {@code Session.setHolidays(HttpServletRequest)} / {@code getHolidaysHtml}, so
+	 * the client can rebuild the string by joining the per-day values in order.
+	 */
+	private static void fillHolidays(SessionEditResponse response, Session session) {
+		response.setHolidayNames(Arrays.asList(Session.getHolidayNames()));
+		response.setHolidayColors(Arrays.asList(Session.sHolidayTypeColors));
+		if (session.getSessionBeginDateTime() == null || session.getSessionEndDateTime() == null)
+			return;
+		SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd");
+		int startMonth = session.getStartMonth();
+		int endMonth = session.getEndMonth();
+		int startYear = session.getSessionStartYear();
+		for (int m = startMonth; m <= endMonth; m++) {
+			int daysOfMonth = DateUtils.getNrDaysOfMonth(m, startYear);
+			for (int d = 1; d <= daysOfMonth; d++) {
+				Date date = DateUtils.getDate(d, m, startYear);
+				response.addHolidayDay(new HolidayDay(iso.format(date), session.getHoliday(d, m)));
+			}
+		}
 	}
 
 	protected SessionEditResponse save(SessionEditRequest request, SessionContext context) {
@@ -212,6 +242,10 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 			if (request.getWkDrop() != null) session.setLastWeekToDrop(request.getWkDrop());
 			session.setNotificationsBeginDate(notifBegin);
 			session.setNotificationsEndDate(notifEnd);
+			// Holidays: the client rebuilds the per-day string in the same order LOAD
+			// emitted it. Only overwrite when provided (older clients omit it).
+			if (request.getHolidays() != null)
+				session.setHolidays(request.getHolidays());
 
 			hibSession.merge(session);
 

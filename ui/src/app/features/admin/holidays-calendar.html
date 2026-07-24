@@ -1,0 +1,40 @@
+@if (days().length) {
+  <div class="holidays">
+    <div class="holidays-legend">
+      @for (l of legend(); track $index) {
+        <span class="hol-key"><span class="hol-swatch" [style.background]="l.color"></span>{{ l.label }}</span>
+      }
+      <span class="hol-hint">Click a day to cycle its type.</span>
+    </div>
+
+    <div class="holidays-months">
+      @for (month of months(); track month.key) {
+        <div class="hol-month">
+          <div class="hol-month-title">{{ month.label }}</div>
+          <div class="hol-grid">
+            @for (w of weekdays; track w) {
+              <div class="hol-dow">{{ w }}</div>
+            }
+            @for (b of blanks(month.leading); track b) {
+              <div class="hol-blank"></div>
+            }
+            @for (cell of month.cells; track cell.index) {
+              <button
+                type="button"
+                class="hol-day"
+                [class.hol-editable]="!disabled()"
+                [style.background]="colorFor(cell.value)"
+                [style.color]="cell.value === 0 ? 'var(--ut-text)' : '#fff'"
+                [attr.title]="names()[cell.value]"
+                [disabled]="disabled()"
+                (click)="cycle(cell)"
+              >{{ cell.day }}</button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+} @else {
+  <p class="hint">No calendar available — set the session start and end dates first.</p>
+}

@@ -12,7 +12,7 @@
         <span class="section-icon"><i class="pi pi-calendar"></i></span>
         <div>
           <h2>{{ label() || 'Edit Academic Session' }}</h2>
-          <p>The holidays calendar, date &amp; time patterns and roll-forward are managed on the classic page and left unchanged.</p>
+          <p>The date &amp; time pattern editors and roll-forward are managed on the classic page and left unchanged.</p>
         </div>
       </div>
 
@@ -139,6 +139,23 @@
           <input pInputText id="e-ne" class="mono" [disabled]="!canEdit()" [(ngModel)]="model.notificationsEnd" [placeholder]="dateFormat()" />
         </div>
       </div>
+    </fieldset>
+
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi pi-flag"></i></span>
+        <div>
+          <h2>Holidays</h2>
+          <p>Mark holidays and breaks across the session. Click a day to cycle its type.</p>
+        </div>
+      </div>
+      <app-holidays-calendar
+        [days]="holidayDays()"
+        (daysChange)="holidayDays.set($event)"
+        [names]="holidayNames()"
+        [colors]="holidayColors()"
+        [disabled]="!canEdit()"
+      />
     </fieldset>
 
     <div class="form-actions">
