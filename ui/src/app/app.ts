@@ -1,10 +1,11 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, effect, inject } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { AuthService } from './core/auth.service';
 import { PageService } from './core/page.service';
+import { ThemeService } from './core/theme.service';
 import { MenuService } from './layout/menu.service';
 
 @Component({
@@ -17,7 +18,10 @@ export class App implements OnInit {
   private auth = inject(AuthService);
   private menu = inject(MenuService);
   private router = inject(Router);
+  private theme = inject(ThemeService);
   protected page = inject(PageService);
+
+  protected readonly isDark = this.theme.isDark;
 
   protected readonly menuItems = this.menu.items;
   protected readonly user = this.auth.user;
@@ -45,14 +49,29 @@ export class App implements OnInit {
   /** Small uppercase context line under the wordmark: current screen or module. */
   protected readonly subtitle = computed(() => this.page.title() || 'Timetabling');
 
-  ngOnInit(): void {
-    this.auth.ensureLoaded().subscribe(() => {
-      if (this.auth.isAuthenticated()) this.menu.load();
+  constructor() {
+    // Load the menu as soon as the user is authenticated. Reacting to the user
+    // signal (rather than only in ngOnInit) covers BOTH a cold load with an
+    // existing session AND an in-app (SPA) login — after which the root App is
+    // never re-created, so ngOnInit would not run again and the menu would stay
+    // stuck on "Loading menu…". menu.load() is idempotent.
+    effect(() => {
+      if (this.auth.user()?.name) this.menu.load();
     });
+  }
+
+  ngOnInit(): void {
+    // Kick off the user/session/version fetch; the effect above loads the menu
+    // once the user resolves.
+    this.auth.ensureLoaded().subscribe();
   }
 
   logout(): void {
     this.auth.logout().subscribe(() => this.router.navigate(['/signin']));
+  }
+
+  toggleTheme(): void {
+    this.theme.toggle();
   }
 
   /**

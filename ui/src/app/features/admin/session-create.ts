@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -94,6 +95,7 @@ interface Model {
     ButtonModule,
     InputTextModule,
     InputNumberModule,
+    DatePickerModule,
     SelectModule,
     MessageModule,
     ProgressSpinnerModule,

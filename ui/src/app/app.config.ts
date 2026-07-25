@@ -25,7 +25,8 @@ export const appConfig: ApplicationConfig = {
     providePrimeNG({
       theme: {
         preset: UniTimePreset,
-        options: { darkModeSelector: '.app-dark-never' },
+        // Dark mode activates when <html> has the `dark` class (ThemeService).
+        options: { darkModeSelector: '.dark' },
       },
     }),
     MessageService,

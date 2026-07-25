@@ -55,27 +55,27 @@
       <div class="form-grid">
         <div class="field">
           <label for="s-begin">Session Start *</label>
-          <input pInputText id="s-begin" class="mono" [(ngModel)]="model.sessionBeginDateTime" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="s-begin" [(ngModel)]="model.sessionBeginDateTime" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="s-cend">Classes End *</label>
-          <input pInputText id="s-cend" class="mono" [(ngModel)]="model.classesEndDateTime" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="s-cend" [(ngModel)]="model.classesEndDateTime" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="s-exam">Examination Start *</label>
-          <input pInputText id="s-exam" class="mono" [(ngModel)]="model.examBeginDate" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="s-exam" [(ngModel)]="model.examBeginDate" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="s-send">Session End *</label>
-          <input pInputText id="s-send" class="mono" [(ngModel)]="model.sessionEndDateTime" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="s-send" [(ngModel)]="model.sessionEndDateTime" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="s-evb">Event Start *</label>
-          <input pInputText id="s-evb" class="mono" [(ngModel)]="model.eventBeginDate" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="s-evb" [(ngModel)]="model.eventBeginDate" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="s-eve">Event End *</label>
-          <input pInputText id="s-eve" class="mono" [(ngModel)]="model.eventEndDate" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="s-eve" [(ngModel)]="model.eventEndDate" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
       </div>
     </fieldset>
@@ -137,11 +137,11 @@
         </div>
         <div class="field">
           <label for="s-nb">Notifications Start</label>
-          <input pInputText id="s-nb" class="mono" [(ngModel)]="model.notificationsBegin" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="s-nb" [(ngModel)]="model.notificationsBegin" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="s-ne">Notifications End</label>
-          <input pInputText id="s-ne" class="mono" [(ngModel)]="model.notificationsEnd" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="s-ne" [(ngModel)]="model.notificationsEnd" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
       </div>
     </fieldset>

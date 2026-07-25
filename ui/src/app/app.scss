@@ -125,7 +125,7 @@
   overflow: auto;
   border-right: 1px solid var(--ut-border);
   padding: 14px 10px;
-  background: #fff;
+  background: var(--ut-card);
 
   .menu-empty { padding: 1rem; color: var(--ut-muted); }
 }
@@ -157,6 +157,6 @@
   padding: 0 1.25rem;
   font-size: 0.72rem;
   color: var(--ut-muted);
-  background: #faf9f4;
+  background: var(--ut-surface);
   border-top: 1px solid var(--ut-border);
 }

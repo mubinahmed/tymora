@@ -39,6 +39,14 @@
         </span>
       </button>
 
+      <p-button
+        [icon]="isDark() ? 'pi pi-sun' : 'pi pi-moon'"
+        [text]="true"
+        severity="contrast"
+        [title]="isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+        (onClick)="toggleTheme()"
+      />
+
       <p-button icon="pi pi-sign-out" [text]="true" severity="contrast" title="Sign out" (onClick)="logout()" />
     </header>
 

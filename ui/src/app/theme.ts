@@ -64,6 +64,23 @@ export const UniTimePreset = definePreset(Aura, {
           950: '#121110',
         },
       },
+      // Dark scheme: lighten the blue accent so it reads on dark surfaces; the
+      // component surfaces (inputs, cards, tables, menus) come from Aura's dark
+      // slate ramp, which the app's --ut-* dark tokens (styles.scss) coordinate with.
+      dark: {
+        primary: {
+          color: '{primary.400}',
+          contrastColor: '#04121f',
+          hoverColor: '{primary.300}',
+          activeColor: '{primary.200}',
+        },
+        highlight: {
+          background: 'rgba(55, 138, 221, 0.16)',
+          focusBackground: 'rgba(55, 138, 221, 0.24)',
+          color: '{primary.100}',
+          focusColor: '#ffffff',
+        },
+      },
     },
   },
 });

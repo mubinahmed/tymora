@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -119,6 +120,7 @@ interface Model {
     ButtonModule,
     InputTextModule,
     InputNumberModule,
+    DatePickerModule,
     SelectModule,
     MessageModule,
     ProgressSpinnerModule,
@@ -160,6 +162,18 @@ export class SessionsEdit {
   protected readonly holidayDays = signal<HolidayDay[]>([]);
   protected readonly holidayNames = signal<string[]>([]);
   protected readonly holidayColors = signal<string[]>([]);
+  /** ISO date -> boundary marker key, recomputed from the CURRENT form dates. */
+  protected readonly dateBoundaries = signal<Record<string, string>>({});
+
+  /**
+   * The holiday grid shown in the calendar: the loaded day values/overlays, but
+   * with the boundary markers overridden by the live form dates so editing a date
+   * moves its marker immediately (no save needed).
+   */
+  protected readonly displayHolidayDays = computed<HolidayDay[]>(() => {
+    const bounds = this.dateBoundaries();
+    return this.holidayDays().map((d) => ({ ...d, boundary: bounds[d.date] ?? null }));
+  });
 
   protected model: Model = this.blank();
 
@@ -239,6 +253,7 @@ export class SessionsEdit {
           notificationsBegin: d.notificationsBegin ?? '',
           notificationsEnd: d.notificationsEnd ?? '',
         };
+        this.recomputeBoundaries();
         if (d.label) this.page.set('Edit ' + d.label);
         this.loading.set(false);
       },
@@ -247,6 +262,37 @@ export class SessionsEdit {
         this.loading.set(false);
       },
     });
+  }
+
+  /** Called when a boundary date changes — moves its marker in the calendar live. */
+  onBoundaryDateChange(): void {
+    this.recomputeBoundaries();
+  }
+
+  /**
+   * Rebuild the ISO-date -> boundary-key map from the CURRENT form dates. Order +
+   * "first wins" mirror the backend (SessionEditBackend.putBoundary / putIfAbsent):
+   * session begin, session end, classes end, exam begin, event begin, event end.
+   */
+  private recomputeBoundaries(): void {
+    const map: Record<string, string> = {};
+    const put = (mmddyyyy: string, key: string) => {
+      const iso = this.mmddyyyyToIso(mmddyyyy);
+      if (iso && !(iso in map)) map[iso] = key;
+    };
+    put(this.model.sessionBeginDateTime, 'sessionBegin');
+    put(this.model.sessionEndDateTime, 'sessionEnd');
+    put(this.model.classesEndDateTime, 'classesEnd');
+    put(this.model.examBeginDate, 'examBegin');
+    put(this.model.eventBeginDate, 'eventBegin');
+    put(this.model.eventEndDate, 'eventEnd');
+    this.dateBoundaries.set(map);
+  }
+
+  /** "MM/dd/yyyy" (the picker/back-end entry format) -> ISO "yyyy-MM-dd", or null. */
+  private mmddyyyyToIso(value: string): string | null {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((value ?? '').trim());
+    return m ? `${m[3]}-${m[1]}-${m[2]}` : null;
   }
 
   save(): void {

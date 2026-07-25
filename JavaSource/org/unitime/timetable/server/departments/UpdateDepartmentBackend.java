@@ -131,8 +131,15 @@ public class UpdateDepartmentBackend implements GwtRpcImplementation<UpdateDepar
             department.setInheritInstructorPreferences(departmentInterface.getInheritInstructorPreferences());  
             department.setStatusType(DepartmentStatusType.findByRef(departmentInterface.getStatusTypeStr()));     
          
+            // The Angular department dialog does not yet manage the external-manager
+            // dependent-department statuses grid, so it sends null dependent lists. Only
+            // reconcile the external status types when the client actually provides them:
+            // a null list here used to NPE, and treating it as empty would silently delete
+            // every existing external status.
+            boolean syncDependents = departmentInterface.iDependentDepartments != null
+            		&& departmentInterface.iDependentStatuses != null;
             List<ExternalDepartmentStatusType> statuses = new ArrayList<ExternalDepartmentStatusType>(department.getExternalStatusTypes());
-            if (department.isExternalManager()) {
+            if (department.isExternalManager() && syncDependents) {
             	for (int i = 0; i < Math.min(departmentInterface.iDependentDepartments.size(), departmentInterface.iDependentStatuses.size()); i++) {
             		Long deptId = Long.valueOf((String)departmentInterface.iDependentDepartments.get(i));
             		String status =  departmentInterface.iDependentStatuses.get(i);
@@ -156,10 +163,12 @@ public class UpdateDepartmentBackend implements GwtRpcImplementation<UpdateDepar
             		}
             	}
             }
-            for (ExternalDepartmentStatusType t: statuses) {
-            	department.getExternalStatusTypes().remove(t);
-            	hibSession.remove(t);
-           }
+            if (syncDependents) {
+	            for (ExternalDepartmentStatusType t: statuses) {
+	            	department.getExternalStatusTypes().remove(t);
+	            	hibSession.remove(t);
+	            }
+            }
             
             if (department.getUniqueId() == null) {
             	hibSession.persist(department);

@@ -73,6 +73,17 @@ import org.unitime.timetable.util.Formats;
 @GwtRpcImplements(SessionEditRequest.class)
 public class SessionEditBackend implements GwtRpcImplementation<SessionEditRequest, SessionEditResponse> {
 
+	// The holidays string is one character per calendar day, anchored at the first
+	// day of getStartMonth() (see Session.getHoliday), and stored in the
+	// holidays varchar(400) column. Cap the editable span at 13 months: LOAD emits
+	// at most this many days and SAVE clamps to it, so the round-tripped string can
+	// never overflow the column. 13 consecutive months is at most 397 days, which
+	// fits 400 with margin. Days beyond the cap (typically far-out event dates) are
+	// simply not holiday-editable; Session.getHoliday reads any day past the end of
+	// the string as "no holiday", so a shorter string stays consistent everywhere.
+	private static final int MAX_HOLIDAYS_MONTHS = 13;
+	private static final int MAX_HOLIDAYS_LENGTH = 400;
+
 	@Override
 	public SessionEditResponse execute(SessionEditRequest request, SessionContext context) {
 		if (request.getOperation() == null)
@@ -174,7 +185,9 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 		EventDateMapping.Class2EventDateMap map = EventDateMapping.getMapping(session.getUniqueId());
 
 		int startMonth = session.getStartMonth();
-		int endMonth = session.getEndMonth();
+		// Cap the span at 13 months so the emitted day list (and the string the
+		// client rebuilds from it) fits the holidays column -- see MAX_HOLIDAYS_MONTHS.
+		int endMonth = Math.min(session.getEndMonth(), startMonth + MAX_HOLIDAYS_MONTHS - 1);
 		int startYear = session.getSessionStartYear();
 		for (int m = startMonth; m <= endMonth; m++) {
 			int daysOfMonth = DateUtils.getNrDaysOfMonth(m, startYear);
@@ -272,9 +285,16 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 			session.setNotificationsBeginDate(notifBegin);
 			session.setNotificationsEndDate(notifEnd);
 			// Holidays: the client rebuilds the per-day string in the same order LOAD
-			// emitted it. Only overwrite when provided (older clients omit it).
-			if (request.getHolidays() != null)
-				session.setHolidays(request.getHolidays());
+			// emitted it. Only overwrite when provided (older clients omit it). LOAD
+			// already caps the span at 13 months; clamp defensively so a malformed or
+			// oversized string can never truncate on the DB (a shorter string reads as
+			// "no holiday" past its end -- see Session.getHoliday).
+			if (request.getHolidays() != null) {
+				String holidays = request.getHolidays();
+				if (holidays.length() > MAX_HOLIDAYS_LENGTH)
+					holidays = holidays.substring(0, MAX_HOLIDAYS_LENGTH);
+				session.setHolidays(holidays);
+			}
 
 			hibSession.merge(session);
 
