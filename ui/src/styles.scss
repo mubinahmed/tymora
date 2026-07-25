@@ -797,6 +797,7 @@ a.link:hover { text-decoration: underline; }
 .hol-dow { text-align: center; font-size: 0.65rem; font-weight: 600; color: var(--ut-muted); padding-bottom: 0.15rem; }
 .hol-blank { aspect-ratio: 1; }
 .hol-day {
+  position: relative;
   aspect-ratio: 1;
   border: 1px solid var(--ut-border);
   border-radius: 4px;
@@ -811,4 +812,17 @@ a.link:hover { text-decoration: underline; }
 .hol-day.hol-editable { cursor: pointer; }
 .hol-day.hol-editable:hover { outline: 2px solid var(--ut-blue); outline-offset: -1px; }
 .hol-day:disabled { opacity: 0.85; }
+/* non-editable class/event-date hint dot (top-right corner) */
+.hol-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+/* legend swatches for the overlays */
+.hol-dot-key { width: 0.7rem; height: 0.7rem; border-radius: 50%; box-shadow: 0 0 0 1px var(--ut-border-strong); }
+.hol-border-key { width: 0.85rem; height: 0.85rem; border-radius: 3px; border: 2px solid; background: var(--ut-card); }
 

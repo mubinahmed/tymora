@@ -22,6 +22,8 @@ package org.unitime.timetable.server.admin;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.hibernate.Transaction;
 import org.unitime.timetable.gwt.command.client.GwtRpcException;
@@ -35,6 +37,7 @@ import org.unitime.timetable.model.ChangeLog;
 import org.unitime.timetable.model.ClassDurationType;
 import org.unitime.timetable.model.DatePattern;
 import org.unitime.timetable.model.DepartmentStatusType;
+import org.unitime.timetable.model.EventDateMapping;
 import org.unitime.timetable.model.InstructionalMethod;
 import org.unitime.timetable.model.Session;
 import org.unitime.timetable.model.StudentSectioningQueue;
@@ -151,9 +154,25 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 	private static void fillHolidays(SessionEditResponse response, Session session) {
 		response.setHolidayNames(Arrays.asList(Session.getHolidayNames()));
 		response.setHolidayColors(Arrays.asList(Session.sHolidayTypeColors));
+		// Non-editable overlay legend: class dates (#c0c) and event dates (#0cc),
+		// mirroring the color hints of the legacy getHolidaysHtml.
+		response.setOverlayNames(Arrays.asList("Class date", "Event date"));
+		response.setOverlayColors(Arrays.asList("#cc00cc", "#00cccc"));
 		if (session.getSessionBeginDateTime() == null || session.getSessionEndDateTime() == null)
 			return;
+
 		SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd");
+		// Boundary marker dates -> key (matches the legacy border colors).
+		Map<String, String> boundaries = new HashMap<String, String>();
+		putBoundary(boundaries, iso, session.getSessionBeginDateTime(), "sessionBegin");
+		putBoundary(boundaries, iso, session.getSessionEndDateTime(), "sessionEnd");
+		putBoundary(boundaries, iso, session.getClassesEndDateTime(), "classesEnd");
+		putBoundary(boundaries, iso, session.getExamBeginDate(), "examBegin");
+		putBoundary(boundaries, iso, session.getEventBeginDate(), "eventBegin");
+		putBoundary(boundaries, iso, session.getEventEndDate(), "eventEnd");
+
+		EventDateMapping.Class2EventDateMap map = EventDateMapping.getMapping(session.getUniqueId());
+
 		int startMonth = session.getStartMonth();
 		int endMonth = session.getEndMonth();
 		int startYear = session.getSessionStartYear();
@@ -161,9 +180,19 @@ public class SessionEditBackend implements GwtRpcImplementation<SessionEditReque
 			int daysOfMonth = DateUtils.getNrDaysOfMonth(m, startYear);
 			for (int d = 1; d <= daysOfMonth; d++) {
 				Date date = DateUtils.getDate(d, m, startYear);
-				response.addHolidayDay(new HolidayDay(iso.format(date), session.getHoliday(d, m)));
+				HolidayDay hd = new HolidayDay(iso.format(date), session.getHoliday(d, m));
+				if (map != null)
+					hd.setOverlay(map.hasClassDate(date) ? 1 : (map.hasEventDate(date) ? 2 : 0));
+				hd.setBoundary(boundaries.get(iso.format(date)));
+				response.addHolidayDay(hd);
 			}
 		}
+	}
+
+	// putIfAbsent + precedence order (session begin first) mirrors the legacy
+	// else-if border chain: the first-matching boundary wins on a date collision.
+	private static void putBoundary(Map<String, String> map, SimpleDateFormat iso, Date date, String key) {
+		if (date != null) map.putIfAbsent(iso.format(date), key);
 	}
 
 	protected SessionEditResponse save(SessionEditRequest request, SessionContext context) {

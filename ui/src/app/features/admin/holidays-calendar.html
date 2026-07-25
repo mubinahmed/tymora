@@ -4,7 +4,13 @@
       @for (l of legend(); track $index) {
         <span class="hol-key"><span class="hol-swatch" [style.background]="l.color"></span>{{ l.label }}</span>
       }
-      <span class="hol-hint">Click a day to cycle its type.</span>
+      @for (o of overlayLegend(); track $index) {
+        <span class="hol-key"><span class="hol-dot-key" [style.background]="o.color"></span>{{ o.label }}</span>
+      }
+      @for (b of boundaryLegend(); track b.key) {
+        <span class="hol-key"><span class="hol-border-key" [style.border-color]="b.color"></span>{{ b.label }}</span>
+      }
+      <span class="hol-hint">Click a day to cycle its type. Dots &amp; borders are read-only.</span>
     </div>
 
     <div class="holidays-months">
@@ -25,10 +31,16 @@
                 [class.hol-editable]="!disabled()"
                 [style.background]="colorFor(cell.value)"
                 [style.color]="cell.value === 0 ? 'var(--ut-text)' : '#fff'"
-                [attr.title]="names()[cell.value]"
+                [style.border]="cell.boundary ? '2px solid ' + boundaryColorFor(cell.boundary) : null"
+                [attr.title]="cellTitle(cell)"
                 [disabled]="disabled()"
                 (click)="cycle(cell)"
-              >{{ cell.day }}</button>
+              >
+                {{ cell.day }}
+                @if (cell.overlay > 0) {
+                  <span class="hol-dot" [style.background]="overlayColorFor(cell.overlay)"></span>
+                }
+              </button>
             }
           </div>
         </div>

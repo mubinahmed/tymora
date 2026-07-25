@@ -75,6 +75,8 @@ public class SessionEditInterface implements IsSerializable {
 	public static class HolidayDay implements IsSerializable {
 		private String iDate;
 		private int iValue;
+		private int iOverlay; // non-editable hint: 0 none, 1 class date, 2 event date
+		private String iBoundary; // non-editable boundary marker key (or null)
 
 		public HolidayDay() {}
 		public HolidayDay(String date, int value) { iDate = date; iValue = value; }
@@ -84,6 +86,12 @@ public class SessionEditInterface implements IsSerializable {
 
 		public int getValue() { return iValue; }
 		public void setValue(int value) { iValue = value; }
+
+		public int getOverlay() { return iOverlay; }
+		public void setOverlay(int overlay) { iOverlay = overlay; }
+
+		public String getBoundary() { return iBoundary; }
+		public void setBoundary(String boundary) { iBoundary = boundary; }
 	}
 
 	public static class SessionEditRequest implements GwtRpcRequest<SessionEditResponse> {
@@ -215,6 +223,8 @@ public class SessionEditInterface implements IsSerializable {
 		private List<HolidayDay> iHolidayDays = new ArrayList<HolidayDay>();
 		private List<String> iHolidayNames = new ArrayList<String>();
 		private List<String> iHolidayColors = new ArrayList<String>();
+		private List<String> iOverlayNames = new ArrayList<String>();
+		private List<String> iOverlayColors = new ArrayList<String>();
 
 		public SessionEditResponse() {}
 
@@ -313,6 +323,12 @@ public class SessionEditInterface implements IsSerializable {
 
 		public List<String> getHolidayColors() { return iHolidayColors; }
 		public void setHolidayColors(List<String> colors) { iHolidayColors = colors; }
+
+		public List<String> getOverlayNames() { return iOverlayNames; }
+		public void setOverlayNames(List<String> names) { iOverlayNames = names; }
+
+		public List<String> getOverlayColors() { return iOverlayColors; }
+		public void setOverlayColors(List<String> colors) { iOverlayColors = colors; }
 	}
 }
 
