@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -48,6 +48,7 @@ export class SelectRole implements OnInit {
   private rpc = inject(RpcService);
   private page = inject(PageService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -56,6 +57,8 @@ export class SelectRole implements OnInit {
 
   protected readonly authorities = computed<AuthorityInfo[]>(() => this.data()?.authorities ?? []);
   protected readonly multiRole = computed(() => new Set(this.authorities().map((a) => a.role)).size > 1);
+  /** A session is already active (reached via "Change Role", not a forced login). */
+  protected readonly hasCurrent = computed(() => this.data()?.currentId != null);
 
   ngOnInit(): void {
     this.page.set('Change Role');
@@ -104,5 +107,10 @@ export class SelectRole implements OnInit {
 
   goSignin(): void {
     window.location.assign(new URL('signin', document.baseURI).href);
+  }
+
+  /** Back out to the dashboard, keeping the currently-active session (Change Role). */
+  cancel(): void {
+    this.router.navigateByUrl('/home');
   }
 }

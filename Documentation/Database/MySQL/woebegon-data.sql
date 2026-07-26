@@ -2204,7 +2204,11 @@ insert into `distribution_type` values
 	(1376217,'SAME_D_R_T','Same Days-Room-Time','0',46,'P43210R','Given classes must be taught at the same time of day, on the same days and in the same room.<br>Note that this constraint is the same as Meet Together constraint, except it does not allow for room sharing. In other words, it is only useful when these classes are taught during non-overlapping date patterns.<br>When prohibited or (strongly) discouraged: Any pair of classes classes cannot be taught on the same days during the same time in the same room.','Same Days-Room-Time',0,0),
 	(1376218,'SAME_WEEKS','Same Weeks','0',47,'P43210R','Given classes must be taught during the same weeks (i.e., must have the same date pattern).<br>When prohibited or (strongly) discouraged: any two classes must have non overlapping date patterns.','Same Weeks',0,0),
 	(1474515,'EX_SHARE_ROOM','Can Share Room','0',48,'2R','Given examinations can share a room (use the same room during the same period) if the room is big enough.  If examinations of different seating type are sharing a room, the more restrictive seating type is used to check the room size.','Share Room',0,1),
-	(1572816,'NO_CONFLICT','Ignore Student Conflicts','0',49,'2R','All student conflicts between the given classes are to be ignored.','No Conflicts',0,0);
+	(1572816,'NO_CONFLICT','Ignore Student Conflicts','0',49,'2R','All student conflicts between the given classes are to be ignored.','No Conflicts',0,0),
+	(1572817,'MAX_HRS_DAY(3)','At Most 3 Hours A Day','0',50,'210R','Classes are to be placed in a way that there is no more than three hours in any day.','At Most 3 Hrs',1,0),
+	(1572818,'MAX_HRS_DAY(4)','At Most 4 Hours A Day','0',51,'210R','Classes are to be placed in a way that there is no more than four hours in any day.','At Most 4 Hrs',1,0),
+	(1572819,'_MaxBlock:120:20_','Max 2h Blocks','0',52,'210R','There needs to be a break of more than 20 minutes after each block of at most 2 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.','2h Blocks',1,0),
+	(1572820,'_MaxBlock:180:20_','Max 3h Blocks','0',53,'210R','There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.','3h Blocks',1,0);
 
 insert into `event` values
 	(226646,'BIOL 101 Pso 3',4,4,NULL,226645,223973,NULL,0,NULL,NULL,NULL,NULL),

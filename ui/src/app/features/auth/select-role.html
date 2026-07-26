@@ -2,12 +2,15 @@
   <div class="role-card">
     <div class="role-head">
       <span class="role-icon"><i class="pi pi-id-card"></i></span>
-      <div>
+      <div class="role-head-text">
         <h1>{{ multiRole() ? 'Select role & session' : 'Select academic session' }}</h1>
         @if (data()?.name) {
-          <p>Signed in as <strong>{{ data()!.name }}</strong> — choose which role to work as.</p>
+          <p>Signed in as <strong>{{ data()!.name }}</strong> — choose which {{ multiRole() ? 'role and session' : 'academic session' }} to work in.</p>
         }
       </div>
+      @if (hasCurrent()) {
+        <p-button label="Cancel" icon="pi pi-times" severity="secondary" [text]="true" (onClick)="cancel()" />
+      }
     </div>
 
     @if (loading()) {

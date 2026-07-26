@@ -15710,4 +15710,52 @@
 		<pgsql onFail="next">alter table %SCHEMA%.room_join_room_feature add primary key (room_id, feature_id)</pgsql>
 		<pgsql onFail="next">alter table %SCHEMA%.event_join_event_contact add primary key (event_id, event_contact_id)</pgsql>
 	</update>
+	<update version="273" date="27-Jul-2026" comment="School scheduling constraints (max hours per day, max consecutive block)">
+		<!--
+			Adds distribution constraint types requested for K-12/secondary scheduling:
+			  * MAX_HRS_DAY(3), MAX_HRS_DAY(4) - extend the existing "At Most N Hours A Day"
+			    family (5-8 already shipped) downward for shorter school days. Resolved by
+			    cpsolver's GroupConstraint.getConstraintType (MAX_HRS_DAY(n), n=3..10).
+			  * _MaxBlock:120:20_, _MaxBlock:180:20_ - cap the length of a back-to-back block
+			    of teaching (max consecutive teaching hours). Resolved by cpsolver's
+			    MaxBlockFlexibleConstraint (reference _MaxBlock:<maxMinutes>:<minBreakMinutes>_).
+			All are instructor preferences (instructor_pref=1) so they can be attached to a
+			teacher and apply to every class that teacher owns. See TimetableDatabaseLoader
+			.createGroupConstraint for the reference->constraint dispatch.
+		-->
+		<plsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_DAY(3)', 'At Most 3 Hours A Day', 0, 50, '210R', 'Classes are to be placed in a way that there is no more than three hours in any day.', 'At Most 3 Hrs', 1, 0)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_DAY(4)', 'At Most 4 Hours A Day', 0, 51, '210R', 'Classes are to be placed in a way that there is no more than four hours in any day.', 'At Most 4 Hrs', 1, 0)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%SCHEMA%.ref_table_seq.nextval, '_MaxBlock:120:20_', 'Max 2h Blocks', 0, 52, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 2 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '2h Blocks', 1, 0)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%SCHEMA%.ref_table_seq.nextval, '_MaxBlock:180:20_', 'Max 3h Blocks', 0, 53, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '3h Blocks', 1, 0)
+		]]></plsql>
+		<mysql into="ID">select 32767 * next_hi from %SCHEMA%.hibernate_unique_key</mysql>
+		<mysql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%ID% + 0, 'MAX_HRS_DAY(3)', 'At Most 3 Hours A Day', 0, 50, '210R', 'Classes are to be placed in a way that there is no more than three hours in any day.', 'At Most 3 Hrs', 1, 0),
+			(%ID% + 1, 'MAX_HRS_DAY(4)', 'At Most 4 Hours A Day', 0, 51, '210R', 'Classes are to be placed in a way that there is no more than four hours in any day.', 'At Most 4 Hrs', 1, 0),
+			(%ID% + 2, '_MaxBlock:120:20_', 'Max 2h Blocks', 0, 52, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 2 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '2h Blocks', 1, 0),
+			(%ID% + 3, '_MaxBlock:180:20_', 'Max 3h Blocks', 0, 53, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '3h Blocks', 1, 0)
+		]]></mysql>
+		<mysql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</mysql>
+		<pgsql into="ID">select 32767 * next_hi from %SCHEMA%.hibernate_unique_key</pgsql>
+		<pgsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%ID% + 0, 'MAX_HRS_DAY(3)', 'At Most 3 Hours A Day', 0, 50, '210R', 'Classes are to be placed in a way that there is no more than three hours in any day.', 'At Most 3 Hrs', 1, 0),
+			(%ID% + 1, 'MAX_HRS_DAY(4)', 'At Most 4 Hours A Day', 0, 51, '210R', 'Classes are to be placed in a way that there is no more than four hours in any day.', 'At Most 4 Hrs', 1, 0),
+			(%ID% + 2, '_MaxBlock:120:20_', 'Max 2h Blocks', 0, 52, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 2 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '2h Blocks', 1, 0),
+			(%ID% + 3, '_MaxBlock:180:20_', 'Max 3h Blocks', 0, 53, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '3h Blocks', 1, 0)
+		]]></pgsql>
+		<pgsql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</pgsql>
+	</update>
 </dbupdate>

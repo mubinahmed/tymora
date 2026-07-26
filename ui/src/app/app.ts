@@ -1,5 +1,6 @@
-import { Component, OnInit, computed, effect, inject } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
@@ -28,8 +29,18 @@ export class App implements OnInit {
   protected readonly session = this.auth.session;
   protected readonly version = this.auth.version;
 
-  /** Show the app chrome only once signed in; login renders full-page. */
-  protected readonly authenticated = computed(() => !!this.user()?.name);
+  /** Current router URL (tracked so full-page screens can suppress the shell). */
+  private readonly url = signal(this.router.url);
+
+  /**
+   * The role/session picker takes over the whole page: no shell, no menu — the
+   * menu must not be available until a session is selected. (Login is already
+   * full-page because it renders while unauthenticated.)
+   */
+  private readonly onPicker = computed(() => this.url().split('?')[0].startsWith('/select-role'));
+
+  /** Show the app chrome only once signed in AND not on the session picker. */
+  protected readonly authenticated = computed(() => !!this.user()?.name && !this.onPicker());
 
   protected readonly userLabel = computed(() => {
     const u = this.user();
@@ -50,6 +61,12 @@ export class App implements OnInit {
   protected readonly subtitle = computed(() => this.page.title() || 'Timetabling');
 
   constructor() {
+    // Track the active URL so the shell can be suppressed on full-page screens
+    // (the session picker). Root App lives for the whole app, so no teardown.
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe((e) => this.url.set(e.urlAfterRedirects));
+
     // Load the menu as soon as the user is authenticated. Reacting to the user
     // signal (rather than only in ngOnInit) covers BOTH a cold load with an
     // existing session AND an in-app (SPA) login — after which the root App is

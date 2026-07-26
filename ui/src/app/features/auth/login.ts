@@ -9,6 +9,11 @@ import { AuthService } from '../../core/auth.service';
 import { PageService } from '../../core/page.service';
 import { RpcService } from '../../core/rpc.service';
 
+/** Subset of SelectPrimaryRoleResponse used to decide the post-login landing. */
+interface RoleList {
+  authorities?: { id?: string; session?: string; initiative?: string; current?: boolean }[];
+}
+
 /**
  * Angular login screen. Posts to Spring Security's form-login endpoint via
  * AuthService.login and, on success, returns to the originally-requested route.
@@ -53,25 +58,35 @@ export class Login implements OnInit {
     this.submitting.set(true);
     this.failed.set(false);
     this.auth.login(username ?? '', password ?? '').subscribe((ok) => {
+      // A session is only "selected" once a current authority is active. When one
+      // is (ok), go straight to the dashboard. When none is, decide by how many
+      // academic sessions the account spans:
+      //   - exactly one  -> select it automatically (no picker), then enter the app;
+      //   - more than one -> send them to the picker (the shell/menu stays hidden
+      //     there until a session is chosen).
       if (ok) {
         this.submitting.set(false);
         this.goBack();
         return;
       }
-      // The credentials may be valid but the account holds several roles with no
-      // default (no active authority yet) — the login looks "unauthenticated" to
-      // the app. If the role picker can list authorities, the login worked: send
-      // them there. Otherwise the credentials were wrong.
       this.rpc
-        .execute<{ authorities?: unknown[] }>('SelectPrimaryRoleRequest', { operation: 'LOAD' })
+        .execute<RoleList>('SelectPrimaryRoleRequest', { operation: 'LOAD' })
         .subscribe({
           next: (r) => {
-            this.submitting.set(false);
-            if (r?.authorities?.length) {
+            const auths = r?.authorities ?? [];
+            if (!auths.length) {
+              this.submitting.set(false);
+              this.failed.set(true);
+              return;
+            }
+            const sessions = new Set(auths.map((a) => `${a.initiative ?? ''}|${a.session ?? ''}`)).size;
+            if (sessions === 1) {
+              const chosen = auths.find((a) => a.current) ?? auths[0];
+              this.autoSelect(chosen.id);
+            } else {
+              this.submitting.set(false);
               const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
               this.router.navigate(['/select-role'], returnUrl ? { queryParams: { returnUrl } } : {});
-            } else {
-              this.failed.set(true);
             }
           },
           error: () => {
@@ -80,6 +95,32 @@ export class Login implements OnInit {
           },
         });
     });
+  }
+
+  /**
+   * Single-session accounts don't get a picker: make the (only) session's authority
+   * current, then hard-reload into the app so the new identity applies everywhere.
+   */
+  private autoSelect(authorityId: string | undefined): void {
+    if (!authorityId) {
+      this.submitting.set(false);
+      this.failed.set(true);
+      return;
+    }
+    this.rpc
+      .execute<RoleList>('SelectPrimaryRoleRequest', { operation: 'SELECT', authorityId })
+      .subscribe({
+        next: () => {
+          const base = document.baseURI;
+          const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+          const target = returnUrl ? new URL(returnUrl.replace(/^\//, ''), base).href : new URL('home', base).href;
+          window.location.assign(target);
+        },
+        error: () => {
+          this.submitting.set(false);
+          this.failed.set(true);
+        },
+      });
   }
 
   private goBack(): void {
