@@ -109,6 +109,8 @@ export class MenuService {
     // Struts pages that already have an equivalent migrated Angular editor.
     'subjectList.action': '/admin/subjectArea',
     'departmentList.action': '/departments',
+    // Change Role (the menu entry carries the ?list=Y query in its page key).
+    'selectPrimaryRole.action?list=Y': '/select-role',
   };
 
   readonly items = signal<MenuItem[]>([]);

@@ -7,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../core/auth.service';
 import { PageService } from '../../core/page.service';
+import { RpcService } from '../../core/rpc.service';
 
 /**
  * Angular login screen. Posts to Spring Security's form-login endpoint via
@@ -25,6 +26,7 @@ export class Login implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private page = inject(PageService);
+  private rpc = inject(RpcService);
 
   protected readonly submitting = signal(false);
   protected readonly failed = signal(false);
@@ -51,9 +53,32 @@ export class Login implements OnInit {
     this.submitting.set(true);
     this.failed.set(false);
     this.auth.login(username ?? '', password ?? '').subscribe((ok) => {
-      this.submitting.set(false);
-      if (ok) this.goBack();
-      else this.failed.set(true);
+      if (ok) {
+        this.submitting.set(false);
+        this.goBack();
+        return;
+      }
+      // The credentials may be valid but the account holds several roles with no
+      // default (no active authority yet) — the login looks "unauthenticated" to
+      // the app. If the role picker can list authorities, the login worked: send
+      // them there. Otherwise the credentials were wrong.
+      this.rpc
+        .execute<{ authorities?: unknown[] }>('SelectPrimaryRoleRequest', { operation: 'LOAD' })
+        .subscribe({
+          next: (r) => {
+            this.submitting.set(false);
+            if (r?.authorities?.length) {
+              const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+              this.router.navigate(['/select-role'], returnUrl ? { queryParams: { returnUrl } } : {});
+            } else {
+              this.failed.set(true);
+            }
+          },
+          error: () => {
+            this.submitting.set(false);
+            this.failed.set(true);
+          },
+        });
     });
   }
 

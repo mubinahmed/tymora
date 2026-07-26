@@ -68,6 +68,54 @@ html.dark .dash-launch-icon {
   color: var(--ut-blue-soft);
 }
 
+/* ---- change-role / select-primary-role screen ---- */
+.role-page {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+.role-card {
+  width: 100%;
+  max-width: 44rem;
+  background: var(--ut-card);
+  border: 1px solid var(--ut-border);
+  border-radius: var(--ut-radius);
+  box-shadow: var(--ut-shadow-card);
+  padding: 1.5rem 1.75rem 1.75rem;
+}
+.role-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  margin-bottom: 1.1rem;
+}
+.role-head h1 { margin: 0 0 0.25rem; font-size: 1.25rem; font-weight: 700; color: var(--ut-ink); }
+.role-head p { margin: 0; color: var(--ut-muted); font-size: 0.9rem; }
+.role-icon {
+  flex: none;
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--ut-blue-pale);
+  color: var(--ut-navy);
+  font-size: 1.2rem;
+}
+html.dark .role-icon { color: var(--ut-blue-soft); }
+.role-row.role-current { background: var(--ut-blue-pale); }
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ut-blue-strong);
+}
+html.dark .role-badge { color: var(--ut-blue-soft); }
+
 * { box-sizing: border-box; }
 
 html,

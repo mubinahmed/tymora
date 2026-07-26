@@ -9,6 +9,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login').then((m) => m.Login),
   },
   {
+    // Change Role / select primary authority. NO authGuard: a multi-role account
+    // with no default has a valid session but no active authority yet (so the app
+    // considers it "not signed in") and must still reach this screen to pick one.
+    path: 'select-role',
+    loadComponent: () => import('./features/auth/select-role').then((m) => m.SelectRole),
+  },
+  {
     path: 'home',
     canActivate: [authGuard],
     loadComponent: () => import('./features/home/home').then((m) => m.Home),
