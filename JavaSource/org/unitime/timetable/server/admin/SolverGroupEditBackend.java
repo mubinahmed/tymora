@@ -33,6 +33,7 @@ import org.unitime.timetable.gwt.command.client.GwtRpcException;
 import org.unitime.timetable.gwt.command.server.GwtRpcImplementation;
 import org.unitime.timetable.gwt.command.server.GwtRpcImplements;
 import org.unitime.timetable.gwt.shared.SolverGroupEditInterface.DepartmentInfo;
+import org.unitime.timetable.gwt.shared.SolverGroupEditInterface.ManagerInfo;
 import org.unitime.timetable.gwt.shared.SolverGroupEditInterface.Operation;
 import org.unitime.timetable.gwt.shared.SolverGroupEditInterface.SolverGroupEditRequest;
 import org.unitime.timetable.gwt.shared.SolverGroupEditInterface.SolverGroupEditResponse;
@@ -46,6 +47,7 @@ import org.unitime.timetable.model.TimetableManager;
 import org.unitime.timetable.model.dao.DepartmentDAO;
 import org.unitime.timetable.model.dao.SessionDAO;
 import org.unitime.timetable.model.dao.SolverGroupDAO;
+import org.unitime.timetable.model.dao.TimetableManagerDAO;
 import org.unitime.timetable.security.SessionContext;
 import org.unitime.timetable.security.rights.Right;
 
@@ -100,6 +102,14 @@ public class SolverGroupEditBackend implements GwtRpcImplementation<SolverGroupE
 		for (Department d: Department.findAllBeingUsed(sessionId))
 			pool.put(d.getUniqueId(), d);
 
+		// Manager pool: every manager with a department in this session (same source
+		// as the legacy form). A group's own managers are added below in case one
+		// somehow lacks a current session department but is still assigned.
+		Map<Long, TimetableManager> mgrPool = new LinkedHashMap<Long, TimetableManager>();
+		for (TimetableManager m: TimetableManagerDAO.getInstance().findAll())
+			if (!m.departmentsForSession(sessionId).isEmpty())
+				mgrPool.put(m.getUniqueId(), m);
+
 		for (SolverGroup group: SolverGroup.findBySessionId(sessionId)) {
 			SolverGroupInfo info = new SolverGroupInfo();
 			info.setUniqueId(group.getUniqueId());
@@ -116,6 +126,11 @@ public class SolverGroupEditBackend implements GwtRpcImplementation<SolverGroupE
 			for (String d: depts)
 				sb.append(sb.length() > 0 ? ", " : "").append(d);
 			info.setDepartments(sb.toString());
+			if (group.getTimetableManagers() != null)
+				for (TimetableManager m: group.getTimetableManagers()) {
+					info.addManagerId(m.getUniqueId());
+					mgrPool.put(m.getUniqueId(), m);
+				}
 			boolean hasSolutions = (group.getSolutions() != null && !group.getSolutions().isEmpty());
 			info.setCommitted(group.getCommittedSolution() != null);
 			info.setCanEdit(true);
@@ -143,7 +158,31 @@ public class SolverGroupEditBackend implements GwtRpcImplementation<SolverGroupE
 			di.setSolverGroupId(d.getSolverGroup() == null ? null : d.getSolverGroup().getUniqueId());
 			response.addDepartment(di);
 		}
+
+		List<TimetableManager> sortedMgrs = new ArrayList<TimetableManager>(mgrPool.values());
+		sortedMgrs.sort(new Comparator<TimetableManager>() {
+			@Override
+			public int compare(TimetableManager a, TimetableManager b) {
+				int cmp = managerLabel(a, sessionId).compareToIgnoreCase(managerLabel(b, sessionId));
+				if (cmp != 0) return cmp;
+				return a.getUniqueId().compareTo(b.getUniqueId());
+			}
+		});
+		for (TimetableManager m: sortedMgrs) {
+			ManagerInfo mi = new ManagerInfo();
+			mi.setUniqueId(m.getUniqueId());
+			mi.setLabel(managerLabel(m, sessionId));
+			response.addManager(mi);
+		}
 		return response;
+	}
+
+	/** "Name (DEPT, DEPT)" — manager name plus its department codes in this session. */
+	private static String managerLabel(TimetableManager m, Long sessionId) {
+		StringBuilder codes = new StringBuilder();
+		for (Department d: new TreeSet<Department>(m.departmentsForSession(sessionId)))
+			codes.append(codes.length() > 0 ? ", " : "").append(d.getDeptCode());
+		return m.getName() + (codes.length() == 0 ? "" : " (" + codes + ")");
 	}
 
 	protected void save(SolverGroupEditRequest request, SessionContext context, Long sessionId) {
@@ -185,6 +224,7 @@ public class SolverGroupEditBackend implements GwtRpcImplementation<SolverGroupE
 			// each must belong to this session and to no other solver group (a
 			// department belongs to at most one solver group per session).
 			List<Department> selected = resolveDepartments(request.getDepartmentIds(), hibSession, sessionId, group);
+			List<TimetableManager> selectedManagers = resolveManagers(request.getManagerIds(), hibSession);
 
 			if (create) {
 				Session session = SessionDAO.getInstance().get(sessionId, hibSession);
@@ -201,6 +241,12 @@ public class SolverGroupEditBackend implements GwtRpcImplementation<SolverGroupE
 					group.getDepartments().add(dept);
 					dept.setSolverGroup(group);
 					hibSession.merge(dept);
+				}
+				// Assign the selected timetable managers (many-to-many).
+				for (TimetableManager mgr: selectedManagers) {
+					group.getTimetableManagers().add(mgr);
+					mgr.getSolverGroups().add(group);
+					hibSession.merge(mgr);
 				}
 				ChangeLog.addChange(hibSession, context, group,
 						ChangeLog.Source.SOLVER_GROUP_EDIT, ChangeLog.Operation.CREATE, null, null);
@@ -230,6 +276,25 @@ public class SolverGroupEditBackend implements GwtRpcImplementation<SolverGroupE
 						dept.setSolverGroup(null);
 						hibSession.merge(dept);
 					}
+				}
+				// Reconcile timetable managers (always editable, mirroring the legacy
+				// form which updates managers even when departments are locked).
+				if (group.getTimetableManagers() == null)
+					group.setTimetableManagers(new HashSet<TimetableManager>());
+				HashSet<TimetableManager> oldManagers = new HashSet<TimetableManager>(group.getTimetableManagers());
+				for (TimetableManager mgr: selectedManagers) {
+					if (oldManagers.remove(mgr)) {
+						// already a member -> unchanged
+					} else {
+						group.getTimetableManagers().add(mgr);
+						mgr.getSolverGroups().add(group);
+						hibSession.merge(mgr);
+					}
+				}
+				for (TimetableManager mgr: oldManagers) {
+					group.getTimetableManagers().remove(mgr);
+					mgr.getSolverGroups().remove(group);
+					hibSession.merge(mgr);
 				}
 				hibSession.merge(group);
 				ChangeLog.addChange(hibSession, context, group,
@@ -270,6 +335,25 @@ public class SolverGroupEditBackend implements GwtRpcImplementation<SolverGroupE
 				throw new GwtRpcException("Department " + dept.getDeptCode()
 						+ " is already assigned to solver group " + current.getAbbv() + ".");
 			result.add(dept);
+		}
+		return result;
+	}
+
+	/**
+	 * Load the selected timetable managers, collapsing duplicate ids. Managers are a
+	 * many-to-many relation (a manager may serve several solver groups), so there is
+	 * no exclusivity check — only existence.
+	 */
+	protected List<TimetableManager> resolveManagers(List<Long> managerIds, org.hibernate.Session hibSession) {
+		List<TimetableManager> result = new ArrayList<TimetableManager>();
+		if (managerIds == null) return result;
+		HashSet<Long> seen = new HashSet<Long>();
+		for (Long mgrId: managerIds) {
+			if (mgrId == null || !seen.add(mgrId)) continue;
+			TimetableManager mgr = TimetableManagerDAO.getInstance().get(mgrId, hibSession);
+			if (mgr == null)
+				throw new GwtRpcException("One of the selected managers no longer exists.");
+			result.add(mgr);
 		}
 		return result;
 	}

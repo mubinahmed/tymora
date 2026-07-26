@@ -77,7 +77,7 @@ export class SimpleEdit {
   protected readonly title = signal('Administration');
 
   protected readonly dialogVisible = signal(false);
-  protected readonly edit = signal<{ uniqueId?: number; values: string[]; deletable: boolean } | null>(null);
+  protected readonly edit = signal<{ uniqueId?: number; values: string[]; deletable: boolean; order?: number } | null>(null);
   protected readonly saving = signal(false);
 
   /** visible (non-hidden) fields with their index into the values array */
@@ -153,14 +153,31 @@ export class SimpleEdit {
   // ---- edit dialog ----------------------------------------------------------
   openCreate(): void {
     const fields = this.data()?.fields ?? [];
-    this.edit.set({ values: fields.map((f) => f.default ?? ''), deletable: true });
+    this.edit.set({ values: fields.map((f) => this.newValue(f)), deletable: true });
     this.dialogVisible.set(true);
+  }
+
+  /**
+   * Initial value for a field in a NEW record. A list field with no explicit
+   * default takes its first option, mirroring the legacy GWT dropdowns: leaving
+   * it as '' submits an empty string, which blows up id parsing on the server
+   * (e.g. Long.valueOf("") -> "For input string: \"\"" when saving a subject
+   * area with no funding department).
+   */
+  private newValue(field: SimpleEditInterface_Field): string {
+    if (field.default != null) return field.default;
+    if (field.type === 'list') return field.values?.[0]?.value ?? '';
+    return '';
   }
   openEdit(record: SimpleEditInterface_Record): void {
     this.edit.set({
       uniqueId: record.uniqueId,
       values: [...(record.values ?? [])],
       deletable: record.deletable !== false,
+      // Preserve the row's order so the update round-trips it. Ordered admin
+      // types (room types, event statuses, ...) read it back on save and would
+      // otherwise write a null ord (a NOT-NULL column) -> save failure.
+      order: record.order,
     });
     this.dialogVisible.set(true);
   }
@@ -175,7 +192,7 @@ export class SimpleEdit {
   save(): void {
     const e = this.edit();
     if (!e) return;
-    const record: SimpleEditInterface_Record = { uniqueId: e.uniqueId, values: e.values, deletable: e.deletable };
+    const record: SimpleEditInterface_Record = { uniqueId: e.uniqueId, values: e.values, deletable: e.deletable, order: e.order };
     this.saving.set(true);
     this.rpc.execute<SimpleEditInterface_Record>(RPC.saveRecord, { type: this.type(), record }).subscribe({
       next: () => {

@@ -20,6 +20,7 @@ interface SolverGroupInfo {
   abbv: string;
   departments: string;
   departmentIds: number[];
+  managerIds: number[];
   departmentsEditable: boolean;
   committed: boolean;
   canEdit: boolean;
@@ -33,11 +34,18 @@ interface DepartmentInfo {
   solverGroupId?: number | null;
 }
 
+/** Mirrors SolverGroupEditInterface.ManagerInfo. */
+interface ManagerInfo {
+  uniqueId: number;
+  label: string;
+}
+
 /** Mirrors SolverGroupEditInterface.SolverGroupEditResponse. */
 interface SolverGroupEditResponse {
   canAdd: boolean;
   groups: SolverGroupInfo[];
   departments: DepartmentInfo[];
+  managers: ManagerInfo[];
 }
 
 type Operation = 'LOAD' | 'SAVE' | 'DELETE';
@@ -49,15 +57,17 @@ interface SolverGroupEditRequest {
   name?: string;
   abbv?: string;
   departmentIds?: number[];
+  managerIds?: number[];
 }
 
 const RPC = 'SolverGroupEditRequest';
 
 /**
  * Create / edit / delete solver groups for the current academic session
- * (migration of solverGroupEdit.action). Only the name and abbreviation are
- * edited here; department membership, timetable managers and solutions are
- * managed elsewhere and left untouched on save.
+ * (migration of solverGroupEdit.action). Name, abbreviation, department
+ * membership and timetable-manager membership are all edited here (aligned with
+ * the legacy form). Departments become read-only once the group has solutions;
+ * managers stay editable. Solutions are managed elsewhere.
  */
 @Component({
   selector: 'app-solver-groups-edit',
@@ -117,10 +127,18 @@ export class SolverGroupsEdit {
     return this.allDepartments().filter((d) => d.solverGroupId == null || d.solverGroupId === id);
   });
 
+  /**
+   * All managers in the session that can belong to a solver group. Unlike
+   * departments, managers are a many-to-many pool (a manager may serve several
+   * groups), so the whole pool is selectable for any group.
+   */
+  protected readonly allManagers = computed<ManagerInfo[]>(() => this.data()?.managers ?? []);
+
   protected readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(50)]],
     abbv: ['', [Validators.required, Validators.maxLength(50)]],
     departmentIds: [[] as number[]],
+    managerIds: [[] as number[]],
   });
 
   constructor() {
@@ -146,7 +164,7 @@ export class SolverGroupsEdit {
   add(): void {
     this.editingId.set(null);
     this.departmentsEditable.set(true);
-    this.form.reset({ name: '', abbv: '', departmentIds: [] });
+    this.form.reset({ name: '', abbv: '', departmentIds: [], managerIds: [] });
     this.form.controls.departmentIds.enable();
     this.dialogVisible.set(true);
   }
@@ -154,7 +172,12 @@ export class SolverGroupsEdit {
   edit(g: SolverGroupInfo): void {
     this.editingId.set(g.uniqueId);
     this.departmentsEditable.set(g.departmentsEditable);
-    this.form.reset({ name: g.name, abbv: g.abbv, departmentIds: [...(g.departmentIds ?? [])] });
+    this.form.reset({
+      name: g.name,
+      abbv: g.abbv,
+      departmentIds: [...(g.departmentIds ?? [])],
+      managerIds: [...(g.managerIds ?? [])],
+    });
     if (g.departmentsEditable) this.form.controls.departmentIds.enable();
     else this.form.controls.departmentIds.disable();
     this.dialogVisible.set(true);
@@ -176,6 +199,7 @@ export class SolverGroupsEdit {
       name: (v.name ?? '').trim(),
       abbv: (v.abbv ?? '').trim(),
       departmentIds: v.departmentIds ?? [],
+      managerIds: v.managerIds ?? [],
     };
     this.saving.set(true);
     this.rpc.execute<SolverGroupEditResponse>(RPC, request).subscribe({

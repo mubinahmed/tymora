@@ -66,7 +66,7 @@
   <p-dialog
     [header]="isEdit() ? 'Edit Solver Group' : 'New Solver Group'"
     [modal]="true"
-    [style]="{ width: '32rem' }"
+    [style]="{ width: '36rem' }"
     [visible]="dialogVisible()"
     (visibleChange)="dialogVisible.set($event)"
   >
@@ -106,9 +106,26 @@
           <small class="hint">Only departments not already assigned to another solver group are listed.</small>
         }
       </div>
+      <div class="field">
+        <label for="sg-mgrs">Managers</label>
+        <p-multiSelect
+          inputId="sg-mgrs"
+          formControlName="managerIds"
+          [options]="allManagers()"
+          optionLabel="label"
+          optionValue="uniqueId"
+          [filter]="true"
+          filterBy="label"
+          display="chip"
+          placeholder="Select managers"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+        />
+        <small class="hint">Selected managers are assigned to this group; unselected ones are the not-assigned pool. A manager may serve several groups.</small>
+      </div>
       <p-message
         severity="info"
-        text="Managers and solutions are managed on the legacy Solver Groups page and are not changed here."
+        text="Solutions are managed on the Course Timetabling pages and are not changed here."
       />
     </form>
 
