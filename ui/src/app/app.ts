@@ -67,7 +67,20 @@ export class App implements OnInit {
   }
 
   logout(): void {
-    this.auth.logout().subscribe(() => this.router.navigate(['/signin']));
+    // End the session WITHOUT following Spring Security's 302 -> /login.action.
+    // Angular's HttpClient (XHR) transparently follows that redirect, and in this
+    // setup the followed request re-establishes a session, so the immediate
+    // ensureLoaded() re-check still sees the signed-in user and bounces
+    // /signin -> /home. redirect:'manual' stops the follow: the backend still
+    // invalidates the server session and the browser still applies the JSESSIONID
+    // deletion from the 302. We then hard-navigate to the Angular login so the
+    // whole SPA (signals, the shareReplay'd auth cache) is torn down and re-checks
+    // auth from a clean slate. URLs resolve against document.baseURI (the
+    // <base href>), matching how HttpClient resolves the api/* calls.
+    const base = document.baseURI;
+    fetch(new URL('logout.action', base).href, { credentials: 'include', redirect: 'manual', cache: 'no-store' })
+      .catch(() => {})
+      .finally(() => window.location.assign(new URL('signin', base).href));
   }
 
   toggleTheme(): void {
