@@ -624,7 +624,44 @@
 			</condition>
 		</item>
 	</menu>
-	<!-- 
+	<menu name="Relief Planning">
+		<condition>
+			<or>
+				<hasPermission name="ReliefPlanning" authority="any"/>
+				<hasPermission name="StaffAbsences" authority="any"/>
+				<hasPermission name="MyLeaveRequests" authority="any"/>
+			</or>
+			<not>
+				<hasRole name="Anonymous"/>
+			</not>
+		</condition>
+		<item name="Relief Board" page="reliefBoard" type="gwt">
+			<condition>
+				<hasPermission name="ReliefPlanning"/>
+			</condition>
+		</item>
+		<item name="Staff Absences" page="staffAbsences" type="gwt">
+			<condition>
+				<hasPermission name="StaffAbsences"/>
+			</condition>
+		</item>
+		<item name="My Leave" page="myLeave" type="gwt">
+			<condition>
+				<hasPermission name="MyLeaveRequests"/>
+			</condition>
+		</item>
+		<item name="Rules Configuration" page="reliefConfig" type="gwt">
+			<condition>
+				<hasPermission name="ReliefPlanning"/>
+			</condition>
+		</item>
+		<item name="Absence Report" page="reliefReport" type="gwt">
+			<condition>
+				<hasPermission name="ReliefPlanning"/>
+			</condition>
+		</item>
+	</menu>
+	<!--
 	<menu name="OLD Events">
 		<condition>
 			<or>
@@ -997,6 +1034,12 @@
 				<parameter name="type">position</parameter>
 				<condition>
 					<hasPermission name="PositionTypes"/>
+				</condition>
+			</item>
+			<item name="Absence Reasons" page="admin" type="gwt">
+				<parameter name="type">absenceReason</parameter>
+				<condition>
+					<hasPermission name="AbsenceReasons"/>
 				</condition>
 			</item>
 			<item name="Teaching Responsibilities" page="admin" type="gwt">

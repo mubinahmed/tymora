@@ -15758,4 +15758,259 @@
 		]]></pgsql>
 		<pgsql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</pgsql>
 	</update>
+	<update version="274" date="27-Jul-2026" comment="Relief Planning module (staff absences, relief assignments, absence reasons, config)">
+		<!--
+			Relief (cover) planning module. Four new tables:
+			  absence_reason        - global lookup of staff-absence reasons (SimpleEdit admin)
+			  staff_absence         - a staff member's absence for a date range in a session
+			  relief_assignment     - one vacated lesson + the relief teacher assigned to cover it
+			  relief_configuration  - per-session relief allocation policy
+			See org.unitime.timetable.model.{AbsenceReason,StaffAbsence,ReliefAssignment,ReliefConfiguration}.
+		-->
+
+		<!-- ===== absence_reason ===== -->
+		<plsql>
+			create table %SCHEMA%.absence_reason (
+				uniqueid number(20,0) constraint nn_absence_reason_id not null,
+				reference varchar2(20 char) constraint nn_absence_reason_ref not null,
+				label varchar2(60 char),
+				sort_order number(10) constraint nn_absence_reason_ord not null
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.absence_reason add constraint pk_absence_reason primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.absence_reason (
+				uniqueid decimal(20,0) primary key not null,
+				reference varchar(20) not null,
+				label varchar(60),
+				sort_order decimal(10) not null
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.absence_reason (
+				uniqueid bigint not null,
+				reference varchar(20) not null,
+				label varchar(60),
+				sort_order integer not null
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.absence_reason add constraint pk_absence_reason primary key (uniqueid)</pgsql>
+
+		<!-- ===== staff_absence ===== -->
+		<plsql>
+			create table %SCHEMA%.staff_absence (
+				uniqueid number(20,0) constraint nn_staff_absence_id not null,
+				session_id number(20,0) constraint nn_staff_absence_sess not null,
+				external_uid varchar2(40 char) constraint nn_staff_absence_ext not null,
+				name varchar2(100 char),
+				reason_id number(20,0),
+				start_date date constraint nn_staff_absence_start not null,
+				end_date date constraint nn_staff_absence_end not null,
+				note varchar2(2048 char),
+				status number(10) constraint nn_staff_absence_status not null,
+				requestor_uid varchar2(40 char),
+				time_stamp timestamp
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.staff_absence add constraint pk_staff_absence primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.staff_absence (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				external_uid varchar(40) not null,
+				name varchar(100),
+				reason_id decimal(20,0),
+				start_date date not null,
+				end_date date not null,
+				note varchar(2048),
+				status decimal(10) not null,
+				requestor_uid varchar(40),
+				time_stamp datetime
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.staff_absence (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				external_uid varchar(40) not null,
+				name varchar(100),
+				reason_id bigint,
+				start_date date not null,
+				end_date date not null,
+				note varchar(2048),
+				status integer not null,
+				requestor_uid varchar(40),
+				time_stamp timestamp
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.staff_absence add constraint pk_staff_absence primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.staff_absence add constraint fk_staff_absence_session foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<sql>alter table %SCHEMA%.staff_absence add constraint fk_staff_absence_reason foreign key (reason_id) references %SCHEMA%.absence_reason (uniqueid) on delete set null</sql>
+
+		<!-- ===== relief_assignment ===== -->
+		<plsql>
+			create table %SCHEMA%.relief_assignment (
+				uniqueid number(20,0) constraint nn_relief_asg_id not null,
+				session_id number(20,0) constraint nn_relief_asg_sess not null,
+				absence_id number(20,0) constraint nn_relief_asg_abs not null,
+				class_id number(20,0) constraint nn_relief_asg_class not null,
+				meeting_date date constraint nn_relief_asg_date not null,
+				start_period number(10) constraint nn_relief_asg_start not null,
+				stop_period number(10) constraint nn_relief_asg_stop not null,
+				location_perm_id number(20,0),
+				relief_uid varchar2(40 char),
+				relief_name varchar2(100 char),
+				status number(10) constraint nn_relief_asg_status not null,
+				assigned_by varchar2(100 char),
+				note varchar2(1000 char),
+				time_stamp timestamp
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.relief_assignment add constraint pk_relief_assignment primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.relief_assignment (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				absence_id decimal(20,0) not null,
+				class_id decimal(20,0) not null,
+				meeting_date date not null,
+				start_period decimal(10) not null,
+				stop_period decimal(10) not null,
+				location_perm_id decimal(20,0),
+				relief_uid varchar(40),
+				relief_name varchar(100),
+				status decimal(10) not null,
+				assigned_by varchar(100),
+				note varchar(1000),
+				time_stamp datetime
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.relief_assignment (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				absence_id bigint not null,
+				class_id bigint not null,
+				meeting_date date not null,
+				start_period integer not null,
+				stop_period integer not null,
+				location_perm_id bigint,
+				relief_uid varchar(40),
+				relief_name varchar(100),
+				status integer not null,
+				assigned_by varchar(100),
+				note varchar(1000),
+				time_stamp timestamp
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.relief_assignment add constraint pk_relief_assignment primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.relief_assignment add constraint fk_relief_asg_session foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<sql>alter table %SCHEMA%.relief_assignment add constraint fk_relief_asg_absence foreign key (absence_id) references %SCHEMA%.staff_absence (uniqueid) on delete cascade</sql>
+		<sql>alter table %SCHEMA%.relief_assignment add constraint fk_relief_asg_class foreign key (class_id) references %SCHEMA%.class_ (uniqueid) on delete cascade</sql>
+
+		<!-- ===== relief_configuration ===== -->
+		<plsql>
+			create table %SCHEMA%.relief_configuration (
+				uniqueid number(20,0) constraint nn_relief_cfg_id not null,
+				session_id number(20,0) constraint nn_relief_cfg_sess not null,
+				weekly_cap number(10),
+				prefer_continuity number(1),
+				exclude_non_teaching number(1),
+				same_dept_first number(1),
+				exempt_uids varchar2(2048 char)
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.relief_configuration add constraint pk_relief_configuration primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.relief_configuration (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				weekly_cap decimal(10),
+				prefer_continuity decimal(1),
+				exclude_non_teaching decimal(1),
+				same_dept_first decimal(1),
+				exempt_uids varchar(2048)
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.relief_configuration (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				weekly_cap integer,
+				prefer_continuity integer,
+				exclude_non_teaching integer,
+				same_dept_first integer,
+				exempt_uids varchar(2048)
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.relief_configuration add constraint pk_relief_configuration primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.relief_configuration add constraint fk_relief_cfg_session foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+
+		<!-- ===== seed absence reasons (Montfort ITQ list) ===== -->
+		<plsql><![CDATA[
+			insert into %SCHEMA%.absence_reason (uniqueid, reference, label, sort_order) values (%SCHEMA%.ref_table_seq.nextval, 'MEDICAL', 'Medical Leave', 0)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.absence_reason (uniqueid, reference, label, sort_order) values (%SCHEMA%.ref_table_seq.nextval, 'HOSPITAL', 'Hospitalisation Leave', 1)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.absence_reason (uniqueid, reference, label, sort_order) values (%SCHEMA%.ref_table_seq.nextval, 'PD', 'Professional Development', 2)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.absence_reason (uniqueid, reference, label, sort_order) values (%SCHEMA%.ref_table_seq.nextval, 'UPA', 'UPA', 3)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.absence_reason (uniqueid, reference, label, sort_order) values (%SCHEMA%.ref_table_seq.nextval, 'DUTY', 'Official Duties', 4)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.absence_reason (uniqueid, reference, label, sort_order) values (%SCHEMA%.ref_table_seq.nextval, 'CHILDCARE', 'Child Care Leave', 5)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.absence_reason (uniqueid, reference, label, sort_order) values (%SCHEMA%.ref_table_seq.nextval, 'NOPAY', 'No Pay Leave', 6)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.absence_reason (uniqueid, reference, label, sort_order) values (%SCHEMA%.ref_table_seq.nextval, 'RESERVIST', 'Reservist', 7)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.absence_reason (uniqueid, reference, label, sort_order) values (%SCHEMA%.ref_table_seq.nextval, 'OTHER', 'Other', 8)
+		]]></plsql>
+		<mysql into="ID">select 32767 * next_hi from %SCHEMA%.hibernate_unique_key</mysql>
+		<mysql><![CDATA[
+			insert into %SCHEMA%.absence_reason (uniqueid, reference, label, sort_order) values
+			(%ID% + 0, 'MEDICAL', 'Medical Leave', 0),
+			(%ID% + 1, 'HOSPITAL', 'Hospitalisation Leave', 1),
+			(%ID% + 2, 'PD', 'Professional Development', 2),
+			(%ID% + 3, 'UPA', 'UPA', 3),
+			(%ID% + 4, 'DUTY', 'Official Duties', 4),
+			(%ID% + 5, 'CHILDCARE', 'Child Care Leave', 5),
+			(%ID% + 6, 'NOPAY', 'No Pay Leave', 6),
+			(%ID% + 7, 'RESERVIST', 'Reservist', 7),
+			(%ID% + 8, 'OTHER', 'Other', 8)
+		]]></mysql>
+		<mysql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</mysql>
+		<pgsql into="ID">select 32767 * next_hi from %SCHEMA%.hibernate_unique_key</pgsql>
+		<pgsql><![CDATA[
+			insert into %SCHEMA%.absence_reason (uniqueid, reference, label, sort_order) values
+			(%ID% + 0, 'MEDICAL', 'Medical Leave', 0),
+			(%ID% + 1, 'HOSPITAL', 'Hospitalisation Leave', 1),
+			(%ID% + 2, 'PD', 'Professional Development', 2),
+			(%ID% + 3, 'UPA', 'UPA', 3),
+			(%ID% + 4, 'DUTY', 'Official Duties', 4),
+			(%ID% + 5, 'CHILDCARE', 'Child Care Leave', 5),
+			(%ID% + 6, 'NOPAY', 'No Pay Leave', 6),
+			(%ID% + 7, 'RESERVIST', 'Reservist', 7),
+			(%ID% + 8, 'OTHER', 'Other', 8)
+		]]></pgsql>
+		<pgsql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</pgsql>
+
+		<!-- ===== seed rights (grant to roles that already hold the analogous right) ===== -->
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'AbsenceReasons' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'PositionTypes'</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'AbsenceReasonEdit' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'PositionTypeEdit'</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'StaffAbsences' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'PositionTypes'</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'StaffAbsenceEdit' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'PositionTypeEdit'</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'ReliefPlanning' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'PositionTypes'</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'ReliefPlanningEdit' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'PositionTypeEdit'</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'MyLeaveRequests' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'InstructorPreferences' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyLeaveRequests')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'MyLeaveRequests' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'PositionTypes' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyLeaveRequests')</sql>
+	</update>
 </dbupdate>

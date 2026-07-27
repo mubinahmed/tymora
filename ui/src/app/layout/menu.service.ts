@@ -32,6 +32,12 @@ export class MenuService {
     teachingAssignments: '/teachingAssignments',
     events: '/events',
     availability: '/room-availability',
+    // Relief Planning module (Angular screens + additive command beans)
+    reliefBoard: '/relief-board',
+    staffAbsences: '/staff-absences',
+    myLeave: '/my-leave',
+    reliefConfig: '/relief-config',
+    reliefReport: '/relief-report',
     // Wave 1 GWT-backed screens
     traveltimes: '/travel-times',
     password: '/change-password',

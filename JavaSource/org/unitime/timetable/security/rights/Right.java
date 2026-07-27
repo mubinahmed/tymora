@@ -539,6 +539,14 @@ public enum Right {
 	PositionTypes,
 	PositionTypeEdit,
 
+	AbsenceReasons,
+	AbsenceReasonEdit,
+	StaffAbsences,
+	StaffAbsenceEdit,
+	ReliefPlanning,
+	ReliefPlanningEdit,
+	MyLeaveRequests,
+
 	StudentSchedulingStatusTypes,
 	StudentSchedulingStatusTypeEdit,
     

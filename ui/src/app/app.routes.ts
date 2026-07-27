@@ -552,5 +552,31 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/reports/enrollment-audit-report').then((m) => m.EnrollmentAuditReport),
   },
+  // ---- Relief Planning module ----
+  {
+    path: 'relief-board',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/relief/relief-board').then((m) => m.ReliefBoard),
+  },
+  {
+    path: 'staff-absences',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/relief/staff-absences').then((m) => m.StaffAbsences),
+  },
+  {
+    path: 'my-leave',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/relief/my-leave').then((m) => m.MyLeave),
+  },
+  {
+    path: 'relief-config',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/relief/relief-config').then((m) => m.ReliefConfig),
+  },
+  {
+    path: 'relief-report',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/relief/relief-report').then((m) => m.ReliefReport),
+  },
   { path: '**', redirectTo: 'home' },
 ];
