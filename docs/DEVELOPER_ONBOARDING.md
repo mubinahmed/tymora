@@ -125,6 +125,150 @@ Produces **`target/UniTime.war`** (and an exploded copy under
 with a reachable database. This is exactly what CI runs
 (`.github/workflows/maven.yml`, on push/PR to `master`).
 
+### Option D — Fully local, no Docker (local MySQL + Tomcat + Angular dev server)
+
+Everything on bare metal: a MySQL server you installed yourself, the backend
+in a plain Tomcat 9, and the Angular app via `ng serve`. Pick **one** shell —
+Git Bash or PowerShell — and stick to it for every step below; the JDBC URL's
+`&` characters need different escaping in each, and switching shells mid-way
+is the most common way this breaks.
+
+> ⚠️ **`mvn jetty:run-war` does not work on this repo.** The `jetty-maven-plugin`
+> execution wired into `pom.xml` looks like a ready-made dev server, but the
+> project's packaging is `jar` (§4 explains why: it also produces a solver-server
+> jar), and Jetty's `run-war` goal silently **skips** on non-`war` packaging —
+> printing `BUILD SUCCESS` and `Skipping UniTime : packaging type [jar] is
+> unsupported` while starting nothing. Verified live 2026-08-26; use the Tomcat
+> steps below instead.
+
+**1. Install & seed MySQL 8.x locally**
+
+```sql
+-- in a mysql shell (mysql -u root -p)
+CREATE DATABASE timetable CHARACTER SET utf8mb4;
+CREATE USER 'timetable'@'localhost' IDENTIFIED BY 'unitime';
+GRANT ALL PRIVILEGES ON timetable.* TO 'timetable'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Git Bash:
+
+```bash
+# schema, then ONE of the two data sets below (same pair the Docker image loads)
+mysql -u timetable -punitime timetable < Documentation/Database/MySQL/schema.sql
+mysql -u timetable -punitime timetable < Documentation/Database/MySQL/woebegon-data.sql  # demo dataset (recommended)
+# — or, for a bare install with no sample courses/rooms/people —
+# mysql -u timetable -punitime timetable < Documentation/Database/MySQL/blank-data.sql
+```
+
+PowerShell (native Windows redirection `<` doesn't feed stdin the way bash's
+does, so pipe the file content instead):
+
+```powershell
+Get-Content Documentation\Database\MySQL\schema.sql | mysql -u timetable -punitime timetable
+Get-Content Documentation\Database\MySQL\woebegon-data.sql | mysql -u timetable -punitime timetable
+```
+
+**2. Point the backend at it**
+
+Don't edit the checked-in `JavaSource/hibernate.cfg.xml` (it has placeholder
+dev credentials pointing at a Docker-host IP — see the security note in §5).
+Override the connection at runtime instead, the same way Docker does via
+`JAVA_OPTS`. Note the escaped `&` — this matters once you hand the value to
+Tomcat's startup script (step 4 explains why), and the escape character
+**differs by shell**:
+
+```
+# Git Bash — backslash-escape
+-Dconnection.url=jdbc:mysql://localhost:3306/timetable?useSSL=false\&useUnicode=true\&characterEncoding=utf-8\&allowPublicKeyRetrieval=true
+
+# PowerShell / cmd.exe — caret-escape
+-Dconnection.url=jdbc:mysql://localhost:3306/timetable?useSSL=false^&useUnicode=true^&characterEncoding=utf-8^&allowPublicKeyRetrieval=true
+
+-Dconnection.username=timetable
+-Dconnection.password=unitime
+```
+
+**3. Build the WAR**
+
+Git Bash:
+
+```bash
+export JAVA_HOME="/c/Program Files/Java/jdk-17"   # repo targets Java 17; machine default JAVA_HOME may be JDK 8
+mvn -B package -D ignore.symbol.file              # builds target/UniTime.war — the GWT compile step is slow
+```
+
+PowerShell:
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
+mvn -B package -D ignore.symbol.file
+```
+
+**4. Get a Tomcat 9 and deploy the WAR**
+
+No local Tomcat install needed beforehand — download and unzip one (this
+doesn't go through Maven/the JDK's own truststore, so it's unaffected by any
+corporate-proxy PKIX issues that block `mvn dependency:*` fetches).
+
+Git Bash:
+
+```bash
+curl -LO https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.121/bin/apache-tomcat-9.0.121.zip
+unzip -q apache-tomcat-9.0.121.zip
+cd apache-tomcat-9.0.121
+
+rm -rf webapps/ROOT webapps/ROOT.war
+cp ../target/UniTime.war webapps/ROOT.war   # ROOT.war = root context, matches proxy.conf.json
+
+export JAVA_HOME="/c/Program Files/Java/jdk-17"
+export JAVA_OPTS='-Dconnection.url=jdbc:mysql://localhost:3306/timetable?useSSL=false\&useUnicode=true\&characterEncoding=utf-8\&allowPublicKeyRetrieval=true -Dconnection.username=timetable -Dconnection.password=unitime'
+./bin/catalina.sh run
+```
+
+`catalina.sh` passes `$JAVA_OPTS` through `eval`, so an **unescaped** `&` in the
+JDBC URL is parsed as "background this command", splitting the java invocation
+apart with `command not found` errors — hence the `\&`. (The same escaping is
+not needed for `mvn -D...` on its own, since that's a single already-parsed
+shell argument; it only bites once a value is re-parsed by a script like
+`catalina.sh`.)
+
+PowerShell (using `catalina.bat` — same idea, different script and escape
+character: `catalina.bat` is a batch file, so it's parsed by `cmd.exe`, which
+treats an unescaped `&` in an expanded `%JAVA_OPTS%` as a command separator
+just like it does on a raw `cmd.exe` command line — hence `^&` instead of `\&`):
+
+```powershell
+Invoke-WebRequest https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.121/bin/apache-tomcat-9.0.121.zip -OutFile tomcat9.zip
+Expand-Archive tomcat9.zip -DestinationPath .
+Set-Location apache-tomcat-9.0.121
+
+Remove-Item webapps\ROOT,webapps\ROOT.war -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item ..\target\UniTime.war webapps\ROOT.war
+
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
+$env:JAVA_OPTS = '-Dconnection.url=jdbc:mysql://localhost:3306/timetable?useSSL=false^&useUnicode=true^&characterEncoding=utf-8^&allowPublicKeyRetrieval=true -Dconnection.username=timetable -Dconnection.password=unitime'
+.\bin\catalina.bat run
+```
+
+Both were verified live 2026-08-26 (Git Bash + `catalina.sh`, and PowerShell +
+`catalina.bat`) against the same local MySQL — each starts cleanly with the
+full JDBC URL intact once escaped correctly, and fails with `command not
+found` / `'useUnicode' is not recognized...` without the escape. Stop with
+Ctrl+C, or `./bin/shutdown.sh` (Git Bash) / `.\bin\shutdown.bat` (PowerShell).
+
+Backend is now at **http://localhost:8080** (first request is slow — the WAR
+is unpacked and Spring/Hibernate/GWT initialize on startup; tail
+`logs/catalina.<date>.log` for `Server startup in [...] milliseconds`). Log in
+as `admin`/`admin` (or another demo user from `Documentation/Docker/README.md`,
+if you loaded `woebegon-data.sql`).
+
+**5. Run the Angular UI**
+
+`ui/src/proxy.conf.json` already targets `http://localhost:8080`, so no changes
+are needed if you followed step 4 as-is — see [`ui/README.md`](../ui/README.md#run-dev)
+for the `npm install && npm start` steps. Open **http://localhost:4200**.
+
 ---
 
 ## 4. The build in detail

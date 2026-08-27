@@ -133,6 +133,7 @@ import org.unitime.timetable.model.dao.SolutionDAO;
 import org.unitime.timetable.model.dao.SolverGroupDAO;
 import org.unitime.timetable.model.dao.TimetableManagerDAO;
 import org.unitime.timetable.onlinesectioning.status.db.DbFindEnrollmentInfoAction.DbStudentMatcher;
+import org.unitime.timetable.solver.constraint.MaxHoursPerWeekConstraint;
 import org.unitime.timetable.solver.course.weights.ClassWeightProvider;
 import org.unitime.timetable.solver.course.weights.DefaultClassWeights;
 import org.unitime.timetable.solver.curricula.LastLikeStudentCourseDemands;
@@ -1770,6 +1771,9 @@ public class TimetableDatabaseLoader extends TimetableLoader {
     	} else if (IgnoreStudentConflictsConstraint.REFERENCE.equals(type.getReference())) {
     		if (PreferenceLevel.sRequired.equals(pref.getPrefProlog()))
     			gc = new IgnoreStudentConflictsConstraint();
+    	} else if (MaxHoursPerWeekConstraint.matches(type.getReference())) {
+    		if (PreferenceLevel.sRequired.equals(pref.getPrefProlog()))
+    			gc = MaxHoursPerWeekConstraint.create(type.getReference());
     	} else {
     		GroupConstraint.ConstraintTypeInterface gcType = GroupConstraint.getConstraintType(type.getReference());
     		if (gcType == null) {

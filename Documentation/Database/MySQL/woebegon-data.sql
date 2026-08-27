@@ -2208,7 +2208,12 @@ insert into `distribution_type` values
 	(1572817,'MAX_HRS_DAY(3)','At Most 3 Hours A Day','0',50,'210R','Classes are to be placed in a way that there is no more than three hours in any day.','At Most 3 Hrs',1,0),
 	(1572818,'MAX_HRS_DAY(4)','At Most 4 Hours A Day','0',51,'210R','Classes are to be placed in a way that there is no more than four hours in any day.','At Most 4 Hrs',1,0),
 	(1572819,'_MaxBlock:120:20_','Max 2h Blocks','0',52,'210R','There needs to be a break of more than 20 minutes after each block of at most 2 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.','2h Blocks',1,0),
-	(1572820,'_MaxBlock:180:20_','Max 3h Blocks','0',53,'210R','There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.','3h Blocks',1,0);
+	(1572820,'_MaxBlock:180:20_','Max 3h Blocks','0',53,'210R','There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.','3h Blocks',1,0),
+	(1572821,'MAX_HRS_WEEK(20)','At Most 20 Hours A Week','0',54,'210R','Classes are to be placed in a way that there is no more than twenty hours in any week, in total, for the instructor.','At Most 20 Hrs/Wk',1,0),
+	(1572822,'MAX_HRS_WEEK(25)','At Most 25 Hours A Week','0',55,'210R','Classes are to be placed in a way that there is no more than twenty-five hours in any week, in total, for the instructor.','At Most 25 Hrs/Wk',1,0),
+	(1572823,'MAX_HRS_WEEK(30)','At Most 30 Hours A Week','0',56,'210R','Classes are to be placed in a way that there is no more than thirty hours in any week, in total, for the instructor.','At Most 30 Hrs/Wk',1,0),
+	(1572824,'MAX_HRS_WEEK(35)','At Most 35 Hours A Week','0',57,'210R','Classes are to be placed in a way that there is no more than thirty-five hours in any week, in total, for the instructor.','At Most 35 Hrs/Wk',1,0),
+	(1572825,'MAX_HRS_WEEK(40)','At Most 40 Hours A Week','0',58,'210R','Classes are to be placed in a way that there is no more than forty hours in any week, in total, for the instructor.','At Most 40 Hrs/Wk',1,0);
 
 insert into `event` values
 	(226646,'BIOL 101 Pso 3',4,4,NULL,226645,223973,NULL,0,NULL,NULL,NULL,NULL),

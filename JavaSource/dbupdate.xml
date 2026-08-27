@@ -16013,4 +16013,63 @@
 		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'MyLeaveRequests' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'InstructorPreferences' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyLeaveRequests')</sql>
 		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'MyLeaveRequests' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'PositionTypes' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyLeaveRequests')</sql>
 	</update>
+
+	<update version="275" date="27-Aug-2026" comment="School scheduling constraints (max hours per week)">
+		<!--
+			Adds a MAX_HRS_WEEK(n) distribution constraint type for K-12/secondary
+			teacher workload management ("manage teachers' workload such as maximum
+			hours per week"). Unlike MAX_HRS_DAY (see update 273), the vendored
+			cpsolver library has no per-week hours constraint, so this reference is
+			resolved by a project-local Constraint implementation instead of
+			cpsolver's GroupConstraint enum - see
+			org.unitime.timetable.solver.constraint.MaxHoursPerWeekConstraint and its
+			dispatch in TimetableDatabaseLoader.createGroupConstraint. As with
+			SAME_INSTR and IgnoreStudentConflictsConstraint, only the Required
+			preference level actually activates enforcement; allowed_pref is kept as
+			'210R' for consistency with those existing distribution types even though
+			Preferred/Discouraged levels are not enforced.
+			All are instructor preferences (instructor_pref=1) so they can be
+			attached to a teacher and apply to every class that teacher owns.
+		-->
+		<plsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(20)', 'At Most 20 Hours A Week', 0, 54, '210R', 'Classes are to be placed in a way that there is no more than twenty hours in any week, in total, for the instructor.', 'At Most 20 Hrs/Wk', 1, 0)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(25)', 'At Most 25 Hours A Week', 0, 55, '210R', 'Classes are to be placed in a way that there is no more than twenty-five hours in any week, in total, for the instructor.', 'At Most 25 Hrs/Wk', 1, 0)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(30)', 'At Most 30 Hours A Week', 0, 56, '210R', 'Classes are to be placed in a way that there is no more than thirty hours in any week, in total, for the instructor.', 'At Most 30 Hrs/Wk', 1, 0)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(35)', 'At Most 35 Hours A Week', 0, 57, '210R', 'Classes are to be placed in a way that there is no more than thirty-five hours in any week, in total, for the instructor.', 'At Most 35 Hrs/Wk', 1, 0)
+		]]></plsql>
+		<plsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(40)', 'At Most 40 Hours A Week', 0, 58, '210R', 'Classes are to be placed in a way that there is no more than forty hours in any week, in total, for the instructor.', 'At Most 40 Hrs/Wk', 1, 0)
+		]]></plsql>
+		<mysql into="ID">select 32767 * next_hi from %SCHEMA%.hibernate_unique_key</mysql>
+		<mysql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%ID% + 0, 'MAX_HRS_WEEK(20)', 'At Most 20 Hours A Week', 0, 54, '210R', 'Classes are to be placed in a way that there is no more than twenty hours in any week, in total, for the instructor.', 'At Most 20 Hrs/Wk', 1, 0),
+			(%ID% + 1, 'MAX_HRS_WEEK(25)', 'At Most 25 Hours A Week', 0, 55, '210R', 'Classes are to be placed in a way that there is no more than twenty-five hours in any week, in total, for the instructor.', 'At Most 25 Hrs/Wk', 1, 0),
+			(%ID% + 2, 'MAX_HRS_WEEK(30)', 'At Most 30 Hours A Week', 0, 56, '210R', 'Classes are to be placed in a way that there is no more than thirty hours in any week, in total, for the instructor.', 'At Most 30 Hrs/Wk', 1, 0),
+			(%ID% + 3, 'MAX_HRS_WEEK(35)', 'At Most 35 Hours A Week', 0, 57, '210R', 'Classes are to be placed in a way that there is no more than thirty-five hours in any week, in total, for the instructor.', 'At Most 35 Hrs/Wk', 1, 0),
+			(%ID% + 4, 'MAX_HRS_WEEK(40)', 'At Most 40 Hours A Week', 0, 58, '210R', 'Classes are to be placed in a way that there is no more than forty hours in any week, in total, for the instructor.', 'At Most 40 Hrs/Wk', 1, 0)
+		]]></mysql>
+		<mysql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</mysql>
+		<pgsql into="ID">select 32767 * next_hi from %SCHEMA%.hibernate_unique_key</pgsql>
+		<pgsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
+			(%ID% + 0, 'MAX_HRS_WEEK(20)', 'At Most 20 Hours A Week', 0, 54, '210R', 'Classes are to be placed in a way that there is no more than twenty hours in any week, in total, for the instructor.', 'At Most 20 Hrs/Wk', 1, 0),
+			(%ID% + 1, 'MAX_HRS_WEEK(25)', 'At Most 25 Hours A Week', 0, 55, '210R', 'Classes are to be placed in a way that there is no more than twenty-five hours in any week, in total, for the instructor.', 'At Most 25 Hrs/Wk', 1, 0),
+			(%ID% + 2, 'MAX_HRS_WEEK(30)', 'At Most 30 Hours A Week', 0, 56, '210R', 'Classes are to be placed in a way that there is no more than thirty hours in any week, in total, for the instructor.', 'At Most 30 Hrs/Wk', 1, 0),
+			(%ID% + 3, 'MAX_HRS_WEEK(35)', 'At Most 35 Hours A Week', 0, 57, '210R', 'Classes are to be placed in a way that there is no more than thirty-five hours in any week, in total, for the instructor.', 'At Most 35 Hrs/Wk', 1, 0),
+			(%ID% + 4, 'MAX_HRS_WEEK(40)', 'At Most 40 Hours A Week', 0, 58, '210R', 'Classes are to be placed in a way that there is no more than forty hours in any week, in total, for the instructor.', 'At Most 40 Hrs/Wk', 1, 0)
+		]]></pgsql>
+		<pgsql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</pgsql>
+	</update>
 </dbupdate>
