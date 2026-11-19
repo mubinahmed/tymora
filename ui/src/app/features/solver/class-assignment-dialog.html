@@ -1,0 +1,368 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [maximizable]="true"
+  [dismissableMask]="false"
+  [draggable]="false"
+  [style]="{ width: 'min(1180px, 96vw)' }"
+  [contentStyle]="{ 'max-height': '78vh' }"
+  styleClass="asg-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="asg-title">
+      <i class="pi pi-calendar-plus"></i>
+      <div>
+        <div class="asg-title-main">{{ className() }}</div>
+        <div class="asg-title-sub">
+          {{ instructors() || 'No instructor' }}
+          @if (details()?.class?.roomCap) { · {{ details()!.class!.roomCap }} seats needed }
+        </div>
+      </div>
+      @if (details()) {
+        @if (isAssigned()) {
+          <p-tag value="Assigned" severity="success" [rounded]="true" />
+        } @else {
+          <p-tag value="Not assigned" severity="danger" [rounded]="true" />
+        }
+      }
+    </div>
+  </ng-template>
+
+  @if (loading() && !details()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  } @else if (details(); as d) {
+    @if (!solver()) {
+      <p-message severity="info" styleClass="asg-msg">
+        <span>
+          Read-only: alternatives, impact preview and changes need the course timetabling solver loaded in memory.
+          <a class="link" routerLink="/solver" (click)="close()">Open the solver page</a> and load a solution first.
+        </span>
+      </p-message>
+    } @else {
+      <div class="asg-mode">
+        <i class="pi pi-info-circle"></i>
+        Changes are made in the in-memory solver solution. Nothing is saved until you save or commit the solution
+        on <a class="link" routerLink="/saved-timetables" (click)="close()">Saved Timetables</a>.
+      </div>
+    }
+
+    @if (pendingRequests().length) {
+      <p-message severity="warn" styleClass="asg-msg">
+        <span>
+          @for (r of pendingRequests(); track r.id) {
+            <div>
+              <b>Change request pending approval</b> from {{ r.requestedName }} ({{ r.requestedTs | date: 'd MMM, HH:mm' }}): {{ r.reason }}
+            </div>
+          }
+          <a class="link" routerLink="/change-requests" (click)="close()">Open Change Requests</a>
+        </span>
+      </p-message>
+    }
+
+    <!-- 1. current placement and why it conflicts -->
+    <section class="asg-section">
+      <h3><span class="num">1</span> Current placement</h3>
+      <div class="asg-grid">
+        <div><div class="dt">Time</div><div class="dd">{{ d.time ? timeName(d.time, true) : 'Not assigned' }}</div></div>
+        <div><div class="dt">Room</div><div class="dd">{{ d.time ? (roomsName(d.room) || '—') : '—' }}</div></div>
+        @if (d.initialTime && !(d.time && timeName(d.initialTime) === timeName(d.time))) {
+          <div><div class="dt">Initial (before solving)</div><div class="dd">{{ timeName(d.initialTime) }} {{ roomsName(d.initialRoom) }}</div></div>
+        }
+      </div>
+      @if (d.conflict) {
+        <p-message severity="warn" [text]="'Why it is not placed: ' + d.conflict" styleClass="asg-msg" />
+      }
+      @if (d.studentConflicts?.length || d.distributionConflicts?.length || d.btbInstructorConflicts?.length) {
+        <div class="asg-conflicts">
+          @for (c of d.studentConflicts ?? []; track $index) {
+            <div class="conf">
+              <i class="pi pi-users"></i>
+              <b>{{ c.info?.jenrl }}</b> student{{ c.info?.jenrl === 1 ? '' : 's' }} also in
+              <b>{{ c.other?.class?.name }}</b> ({{ timeName(c.other?.time) }} {{ roomsName(c.other?.room) }})
+              @if (studentConflictFlags(c); as f) { <span class="flag">{{ f }}</span> }
+            </div>
+          }
+          @for (c of d.distributionConflicts ?? []; track $index) {
+            @if (!c.info?.isSatisfied) {
+              <div class="conf">
+                <i class="pi pi-sitemap"></i>
+                Distribution <b [style.color]="prefColor(c.info?.preference)">{{ c.info?.name || c.info?.type }}</b> violated with
+                {{ classNames(c.other) }}
+              </div>
+            }
+          }
+          @for (c of d.btbInstructorConflicts ?? []; track $index) {
+            <div class="conf">
+              <i class="pi pi-user"></i>
+              Instructor back-to-back with <b>{{ c.other?.class?.name }}</b> ({{ timeName(c.other?.time) }})
+            </div>
+          }
+        </div>
+      } @else if (d.time) {
+        <div class="asg-ok"><i class="pi pi-check-circle"></i> No conflicts in the current placement.</div>
+      }
+    </section>
+
+    @if (solver()) {
+      <!-- 2. choose a new time and room -->
+      <section class="asg-section">
+        <h3><span class="num">2</span> Choose a time and room</h3>
+        <div class="asg-pick">
+          <div class="asg-pick-col">
+            <div class="asg-pick-head">Available times ({{ times().length }})</div>
+            <div class="asg-list">
+              @for (t of times(); track trackTime($index, t)) {
+                <button type="button" class="asg-item" [class.sel]="isTimeSelected(t)" [class.strike]="t.strike"
+                  [disabled]="t.strike" (click)="selectTime(t)"
+                  [pTooltip]="t.strike ? 'Not available' : intPrefName(t.pref)" tooltipPosition="left">
+                  <span [style.color]="intPrefColor(t.pref)">{{ timeName(t) }}</span>
+                  <span class="muted">{{ t.datePattern?.datePatternName }}</span>
+                  @if (isCurrentTime(t)) { <span class="badge">current</span> }
+                  @if (isInitialTime(t) && !isCurrentTime(t)) { <span class="badge alt">initial</span> }
+                </button>
+              } @empty {
+                <div class="empty-state">No times available.</div>
+              }
+            </div>
+          </div>
+          <div class="asg-pick-col">
+            <div class="asg-pick-head">
+              @if (nrRooms() > 0) {
+                Rooms — pick {{ nrRooms() }} ({{ selectedRoomIds().length }} selected, {{ selectedRoomCapacity() }} seats)
+              } @else { Rooms — this class needs no room }
+            </div>
+            <div class="asg-list">
+              @for (r of rooms(); track r.roomId) {
+                <button type="button" class="asg-item" [class.sel]="isRoomSelected(r)" [class.strike]="r.strike"
+                  (click)="toggleRoom(r)" [pTooltip]="intPrefName(r.pref)" tooltipPosition="left">
+                  <span [style.color]="intPrefColor(r.pref)">{{ r.name }}</span>
+                  <span class="muted">{{ r.size }} seats</span>
+                  @if (isCurrentRoom(r)) { <span class="badge">current</span> }
+                </button>
+              } @empty {
+                @if (nrRooms() > 0) { <div class="empty-state">No rooms available.</div> }
+              }
+            </div>
+          </div>
+        </div>
+        <div class="asg-legend">
+          Colours show preferences: <span style="color:#3c3cb4">required</span> · <span style="color:#0f821e">strongly preferred</span> ·
+          <span style="color:#32c814">preferred</span> · <span style="color:#c49a0a">discouraged</span> ·
+          <span style="color:#f06428">strongly discouraged</span> · <span style="color:#c81e14">prohibited</span>
+        </div>
+      </section>
+
+      <!-- 3. impact before confirmation -->
+      <section class="asg-section">
+        <h3><span class="num">3</span> Impact of the change <span class="h-note">shown before anything is changed</span></h3>
+        @if (previewing()) {
+          <div class="center small"><p-progressSpinner strokeWidth="4" /></div>
+        } @else if (previewError()) {
+          <p-message severity="error" styleClass="asg-msg">
+            <span><b>This placement is not allowed:</b> {{ previewError() }}</span>
+          </p-message>
+        } @else if (preview(); as p) {
+          @if (p.differentAssignments?.length) {
+            <div class="asg-subhead">Classes that move ({{ p.differentAssignments!.length }})</div>
+            <p-table [value]="p.differentAssignments!" styleClass="p-datatable-sm">
+              <ng-template pTemplate="header">
+                <tr><th>Class</th><th>Time</th><th>Room</th></tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-c>
+                <tr>
+                  <td>{{ c.class?.name }}</td>
+                  <td>{{ fromTo(c).fromTime }} <i class="pi pi-arrow-right arrow"></i> <b>{{ fromTo(c).toTime }}</b></td>
+                  <td>{{ fromTo(c).fromRoom || '—' }} <i class="pi pi-arrow-right arrow"></i> <b>{{ fromTo(c).toRoom || '—' }}</b></td>
+                </tr>
+              </ng-template>
+            </p-table>
+          } @else {
+            <div class="asg-ok"><i class="pi pi-info-circle"></i> The selection matches the current placement.</div>
+          }
+
+          @if (p.unresolvedConflicts?.length) {
+            <div class="asg-subhead danger">Classes that would lose their placement ({{ p.unresolvedConflicts!.length }})</div>
+            <div class="asg-conflicts">
+              @for (c of p.unresolvedConflicts!; track $index) {
+                <div class="conf danger">
+                  <i class="pi pi-times-circle"></i>
+                  <b>{{ c.class?.name }}</b> ({{ timeName(c.time) }} {{ roomsName(c.room) }}) becomes unassigned
+                </div>
+              }
+            </div>
+          }
+
+          @if (p.studentConflicts?.length || p.distributionConflicts?.length || p.btbInstructorConflicts?.length) {
+            <div class="asg-subhead">Conflicts after the change</div>
+            <div class="asg-conflicts">
+              @for (c of p.studentConflicts ?? []; track $index) {
+                <div class="conf">
+                  <i class="pi pi-users"></i>
+                  <b>{{ c.info?.jenrl }}</b> student{{ c.info?.jenrl === 1 ? '' : 's' }}:
+                  {{ c.other?.class?.name }} &amp; {{ c.another?.class?.name }}
+                  @if (studentConflictFlags(c); as f) { <span class="flag">{{ f }}</span> }
+                </div>
+              }
+              @for (c of p.distributionConflicts ?? []; track $index) {
+                <div class="conf">
+                  <i class="pi pi-sitemap"></i>
+                  <b [style.color]="prefColor(c.info?.preference)">{{ c.info?.name || c.info?.type }}</b>
+                  {{ c.info?.isSatisfied ? 'satisfied' : 'violated' }}:
+                  {{ classNames(c.other) }}
+                </div>
+              }
+              @for (c of p.btbInstructorConflicts ?? []; track $index) {
+                <div class="conf">
+                  <i class="pi pi-user"></i>
+                  Instructor back-to-back: {{ c.other?.class?.name }} &amp; {{ c.another?.class?.name }}
+                </div>
+              }
+            </div>
+          }
+
+          <div class="asg-subhead">Effect on the timetable</div>
+          <div class="asg-metrics">
+            <div class="metric" [class]="deltaClass(p.unassignedVariables ?? 0, p.baseUnassignedVariables ?? 0)">
+              <div class="dt">Not-assigned classes</div>
+              <div class="dd">{{ delta(p.unassignedVariables ?? 0, p.baseUnassignedVariables ?? 0) }}</div>
+            </div>
+            <div class="metric" [class]="deltaClass(p.value ?? 0, p.baseValue ?? 0)">
+              <div class="dt">Overall solution value</div>
+              <div class="dd">{{ delta(p.value ?? 0, p.baseValue ?? 0) }}</div>
+            </div>
+            @for (c of criteria(); track c.name) {
+              <div class="metric" [class]="deltaClass(c.value, c.base)">
+                <div class="dt">{{ c.name }}</div>
+                <div class="dd">{{ delta(c.value, c.base) }}</div>
+              </div>
+            }
+          </div>
+          <div class="asg-legend">Lower is better: <span class="better">green</span> improves the timetable, <span class="worse">red</span> makes it worse.</div>
+        } @else if (!selectionComplete()) {
+          <div class="empty-state">Pick a time and {{ nrRooms() === 1 ? 'a room' : nrRooms() + ' rooms' }} above, or choose one of the alternatives below.</div>
+        } @else {
+          <div class="empty-state">Pick a different time or room to see the impact.</div>
+        }
+      </section>
+
+      <!-- 4. alternatives -->
+      <section class="asg-section">
+        <h3><span class="num">4</span> Alternatives <span class="h-note">computed by the solver</span></h3>
+        <div class="asg-options">
+          <label>Depth <p-inputNumber [(ngModel)]="depth" [min]="1" [max]="6" inputStyleClass="w-num" /></label>
+          <label>Time limit (s) <p-inputNumber [(ngModel)]="timeLimit" [min]="1" [max]="60" inputStyleClass="w-num" /></label>
+          <label class="chk"><p-checkbox [(ngModel)]="allowBreakHard" [binary]="true" /> Allow breaking hard constraints</label>
+          <label class="chk"><p-checkbox [(ngModel)]="sameTimeOnly" [binary]="true" /> Same time</label>
+          <label class="chk"><p-checkbox [(ngModel)]="sameRoomOnly" [binary]="true" /> Same room</label>
+          <span class="spacer"></span>
+          <p-button label="Find alternatives" icon="pi pi-search" size="small" [loading]="computing()" (onClick)="computeSuggestions()" />
+        </div>
+        @if (suggestions(); as s) {
+          @if (s.suggestions?.length) {
+            <p-table [value]="s.suggestions!" styleClass="p-datatable-sm asg-click" [rowHover]="true">
+              <ng-template pTemplate="header">
+                <tr><th style="width:7rem">Value</th><th>Changes</th><th style="width:7rem">Unassigned</th><th style="width:8rem">Student conf.</th><th style="width:6rem"></th></tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-x>
+                <tr (click)="pickSuggestion(x)" [class.sel-row]="preview() === x">
+                  <td [class]="deltaClass(x.value, x.baseValue)">{{ delta(x.value ?? 0, x.baseValue ?? 0) }}</td>
+                  <td class="wrap">{{ suggestionSummary(x) }}</td>
+                  <td>{{ x.unresolvedConflicts?.length || 0 }}</td>
+                  <td>{{ studentConflictCount(x) }}</td>
+                  <td><p-button label="Preview" size="small" [text]="true" (onClick)="pickSuggestion(x); $event.stopPropagation()" /></td>
+                </tr>
+              </ng-template>
+            </p-table>
+          } @else {
+            <div class="empty-state">
+              No alternatives found ({{ s.nrCombinationsConsidered }} combinations considered{{ s.timeoutReached ? ', time limit reached' : '' }}).
+              <a class="link" (click)="computeSuggestions(true)">Search deeper</a>@if (!allowBreakHard) { or allow breaking hard constraints}.
+            </div>
+          }
+          @if (s.suggestions?.length) {
+            <div class="asg-legend">
+              {{ s.suggestions!.length }} alternative(s) from {{ s.nrCombinationsConsidered }} combinations (depth {{ s.depth }}{{ s.timeoutReached ? ', time limit reached' : '' }}).
+              <a class="link" (click)="computeSuggestions(true)">Search deeper</a>
+            </div>
+          }
+        }
+        <div class="asg-placements">
+          @if (placements(); as list) {
+            <div class="asg-subhead">All placements of this class ({{ list.length }})</div>
+            <p-table [value]="list" styleClass="p-datatable-sm asg-click" [rowHover]="true" [scrollable]="true" scrollHeight="16rem">
+              <ng-template pTemplate="header">
+                <tr><th>Time</th><th>Room</th><th>Conflicts</th></tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-p>
+                <tr (click)="pickPlacement(p)">
+                  <td [style.color]="intPrefColor(p.time?.pref)">{{ timeName(p.time) }}</td>
+                  <td>{{ roomsName(p.room) }}</td>
+                  <td>{{ placementConflicts(p) || 'none' }}</td>
+                </tr>
+              </ng-template>
+            </p-table>
+          } @else {
+            <p-button label="Show all placements with their conflicts" icon="pi pi-table" size="small" severity="secondary" [text]="true"
+              [loading]="placementsLoading()" (onClick)="loadPlacements()" />
+          }
+        </div>
+      </section>
+    }
+  }
+
+  <ng-template pTemplate="footer">
+    @if (confirming()) {
+      <div class="asg-confirm-panel">
+        <div class="asg-confirm-head">
+          <i class="pi pi-exclamation-triangle"></i>
+          @if (confirming() === 'unassign') {
+            <span>Unassign <b>{{ className() }}</b>? It will have no time or room in the in-memory solution.</span>
+          } @else {
+            <span>
+              {{ pendingAssignments().length }} class(es) will be updated in the in-memory solution
+              @if (preview()?.unresolvedConflicts?.length) { and {{ preview()!.unresolvedConflicts!.length }} will become unassigned}.
+            </span>
+          }
+        </div>
+        <label class="asg-reason">
+          <span>Reason for the change <span class="req">*</span></span>
+          <textarea pTextarea [(ngModel)]="reason" rows="2" maxlength="2000" [autoResize]="true"
+            placeholder="e.g. Lecturer requested a morning slot; room EDUC 103 under repair"></textarea>
+        </label>
+        @if (needsApproval()) {
+          <div class="asg-approval-note">
+            <i class="pi pi-lock"></i>
+            This change needs approval. It is sent to an approver and is <b>not applied</b> until they approve it.
+          </div>
+        } @else {
+          <div class="asg-approval-note muted">
+            <i class="pi pi-check-circle"></i> You can apply this change directly; it is recorded with your reason as self-approved.
+          </div>
+        }
+        <div class="asg-footer">
+          <span class="muted">The reason, your name and the time are recorded with the change.</span>
+          <span class="spacer"></span>
+          <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="confirming.set(false)" />
+          <p-button [label]="needsApproval() ? 'Submit for approval' : (confirming() === 'unassign' ? 'Confirm unassignment' : 'Confirm assignment')"
+            [icon]="needsApproval() ? 'pi pi-send' : 'pi pi-check'" [loading]="assigning()" [disabled]="!reasonValid()" (onClick)="confirm()" />
+        </div>
+      </div>
+    } @else {
+      <div class="asg-footer">
+        @if (solver() && isAssigned() && details()?.canUnassign) {
+          <p-button label="Unassign class…" icon="pi pi-times" severity="danger" [text]="true" [loading]="assigning()" (onClick)="askUnassign()" />
+        }
+        <span class="spacer"></span>
+        @if (preview() || previewError()) {
+          <p-button label="Reset selection" severity="secondary" [text]="true" (onClick)="clearSelection()" />
+        }
+        <p-button label="Close" severity="secondary" [outlined]="true" (onClick)="close()" />
+        @if (solver()) {
+          <p-button label="Assign…" icon="pi pi-check" [disabled]="!canAssign()" (onClick)="askAssign()" />
+        }
+      </div>
+    }
+  </ng-template>
+</p-dialog>

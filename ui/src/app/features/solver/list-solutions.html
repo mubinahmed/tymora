@@ -19,6 +19,12 @@
     </div>
   }
 
+  <div class="ls-compare">
+    <i class="pi pi-clone"></i>
+    <span>Compare two saved timetables side by side: statistics and class-by-class differences.</span>
+    <a class="link" routerLink="/solution-compare" [queryParams]="compareParams()">Compare timetables</a>
+  </div>
+
   <!-- Currently loaded solution -->
   @if (currentSolution(); as cur) {
     <p-card styleClass="ls-card">

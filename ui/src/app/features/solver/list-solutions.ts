@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
+import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
@@ -43,6 +44,7 @@ interface Col {
 @Component({
   selector: 'app-list-solutions',
   imports: [
+    RouterLink,
     FormsModule,
     TableModule,
     ButtonModule,
@@ -95,6 +97,11 @@ export class ListSolutions implements OnInit {
   protected readonly currentSolution = computed<SolutionInfo | null>(() => this.response()?.currentSolution ?? null);
   protected readonly selectedSolutions = computed<SolutionInfo[]>(() => this.response()?.selectedSolutions ?? []);
   protected readonly rows = computed<TableRowInterface[]>(() => this.response()?.rows ?? []);
+  /** query parameters for the side-by-side comparison: the first two selected solutions, if any */
+  protected readonly compareParams = computed(() => {
+    const ids = this.rows().filter((r) => r.selected === true && r.id != null).map((r) => r.id!);
+    return ids.length >= 2 ? { a: ids[0], b: ids[1] } : {};
+  });
   protected readonly hosts = computed<string[]>(() => this.response()?.hosts ?? []);
   protected readonly configurations = computed(() => this.response()?.configurations ?? []);
   protected readonly owners = computed(() => this.response()?.solverOwners ?? []);

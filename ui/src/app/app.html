@@ -17,6 +17,14 @@
         </a>
       }
 
+      @if (changes.visible()) {
+        <a class="cr-bell" routerLink="/change-requests"
+          [title]="changes.badge() ? (changes.pendingCount() + ' change request(s) awaiting a decision, ' + changes.unseenDecisions() + ' new decision(s) on your requests') : 'Change requests'">
+          <i class="pi pi-bell"></i>
+          @if (changes.badge()) { <span class="cr-badge">{{ changes.badge() }}</span> }
+        </a>
+      }
+
       @if (session()?.session) {
         <div class="session-pill" title="Academic session">
           <i class="pi pi-calendar"></i>

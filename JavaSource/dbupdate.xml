@@ -16072,4 +16072,172 @@
 		]]></pgsql>
 		<pgsql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</pgsql>
 	</update>
+
+	<update version="276" date="31-Aug-2026" comment="Relief handover notes (absent teacher instructions/links/attachments for the reliever)">
+		<!--
+			Adds handover_note: free-form instructions, an optional single link, and/or
+			an optional single file attachment that an absent teacher (or an admin on
+			their behalf) shares for whoever covers their lessons. Several notes may be
+			attached to one staff_absence. See org.unitime.timetable.model.HandoverNote.
+			Also adds the MyReliefDuties right for the teacher-facing "My Relief Duties"
+			self-service screen (read-only: own covering assignments + the shared
+			handover for each), granted alongside MyLeaveRequests.
+		-->
+		<plsql>
+			create table %SCHEMA%.handover_note (
+				uniqueid number(20,0) constraint nn_handover_note_id not null,
+				session_id number(20,0) constraint nn_handover_note_sess not null,
+				absence_id number(20,0) constraint nn_handover_note_abs not null,
+				text_note varchar2(4000 char),
+				link_url varchar2(500 char),
+				link_label varchar2(200 char),
+				attached_name varchar2(260 char),
+				attached_content_type varchar2(100 char),
+				attached_size number(10),
+				attached_file blob,
+				created_by varchar2(40 char),
+				created_by_name varchar2(100 char),
+				time_stamp timestamp constraint nn_handover_note_ts not null
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.handover_note add constraint pk_handover_note primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.handover_note (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				absence_id decimal(20,0) not null,
+				text_note varchar(4000),
+				link_url varchar(500),
+				link_label varchar(200),
+				attached_name varchar(260),
+				attached_content_type varchar(100),
+				attached_size decimal(10),
+				attached_file mediumblob,
+				created_by varchar(40),
+				created_by_name varchar(100),
+				time_stamp datetime not null
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.handover_note (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				absence_id bigint not null,
+				text_note varchar(4000),
+				link_url varchar(500),
+				link_label varchar(200),
+				attached_name varchar(260),
+				attached_content_type varchar(100),
+				attached_size integer,
+				attached_file bytea,
+				created_by varchar(40),
+				created_by_name varchar(100),
+				time_stamp timestamp not null
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.handover_note add constraint pk_handover_note primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.handover_note add constraint fk_handover_note_session foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<sql>alter table %SCHEMA%.handover_note add constraint fk_handover_note_absence foreign key (absence_id) references %SCHEMA%.staff_absence (uniqueid) on delete cascade</sql>
+
+		<!-- ===== seed rights ===== -->
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'MyReliefDuties' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'MyLeaveRequests' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyReliefDuties')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'MyReliefDuties' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'PositionTypes' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyReliefDuties')</sql>
+	</update>
+	<update version="277" date="19-Nov-2026" comment="Reason and approval step for class and examination assignment changes">
+		<!--
+			Adds assignment_change: one row per class or examination assignment change made from the
+			Angular assignment dialogs. It records the reason given, who requested the change, the
+			approval decision (who, when, note) and the outcome of applying it, and serves as the audit
+			trail of the change. See org.unitime.timetable.model.AssignmentChange.
+			Status: Pending, Applied (approved and applied, or applied directly by an approver),
+			Rejected, Cancelled (withdrawn by the requester), Failed (approved but could not be applied).
+			Rights: AssignmentChangeRequests (see/submit change requests) goes to every role that can
+			change class or exam assignments (Suggestions or ExaminationAssignment);
+			AssignmentChangeApprove (approve/reject, and apply own changes directly) goes to roles that
+			can edit permissions (Administrator) and to the Session Administrator role.
+		-->
+		<plsql>
+			create table %SCHEMA%.assignment_change (
+				uniqueid number(20,0) constraint nn_asg_change_id not null,
+				session_id number(20,0) constraint nn_asg_change_sess not null,
+				change_type varchar2(10 char) constraint nn_asg_change_type not null,
+				change_mode varchar2(10 char) constraint nn_asg_change_mode not null,
+				status varchar2(10 char) constraint nn_asg_change_status not null,
+				subject_id number(20,0),
+				subject_name varchar2(200 char),
+				solver_key varchar2(100 char),
+				summary varchar2(4000 char),
+				payload clob,
+				reason varchar2(2000 char) constraint nn_asg_change_reason not null,
+				requested_by varchar2(40 char),
+				requested_name varchar2(100 char),
+				requested_ts timestamp constraint nn_asg_change_rts not null,
+				decided_by varchar2(40 char),
+				decided_name varchar2(100 char),
+				decided_ts timestamp,
+				decision_note varchar2(2000 char),
+				result_message varchar2(2000 char),
+				requester_seen number(1) default 1
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.assignment_change add constraint pk_assignment_change primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.assignment_change (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				change_type varchar(10) not null,
+				change_mode varchar(10) not null,
+				status varchar(10) not null,
+				subject_id decimal(20,0),
+				subject_name varchar(200),
+				solver_key varchar(100),
+				summary varchar(4000),
+				payload longtext,
+				reason varchar(2000) not null,
+				requested_by varchar(40),
+				requested_name varchar(100),
+				requested_ts datetime not null,
+				decided_by varchar(40),
+				decided_name varchar(100),
+				decided_ts datetime,
+				decision_note varchar(2000),
+				result_message varchar(2000),
+				requester_seen boolean default true
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.assignment_change (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				change_type varchar(10) not null,
+				change_mode varchar(10) not null,
+				status varchar(10) not null,
+				subject_id bigint,
+				subject_name varchar(200),
+				solver_key varchar(100),
+				summary varchar(4000),
+				payload text,
+				reason varchar(2000) not null,
+				requested_by varchar(40),
+				requested_name varchar(100),
+				requested_ts timestamp not null,
+				decided_by varchar(40),
+				decided_name varchar(100),
+				decided_ts timestamp,
+				decision_note varchar(2000),
+				result_message varchar(2000),
+				requester_seen boolean default true
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.assignment_change add constraint pk_assignment_change primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.assignment_change add constraint fk_assignment_change_session foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<mysql>create index idx_asg_change_status on %SCHEMA%.assignment_change(session_id, status)</mysql>
+		<plsql>create index %SCHEMA%.idx_asg_change_status on %SCHEMA%.assignment_change(session_id, status)</plsql>
+		<pgsql>create index idx_asg_change_status on %SCHEMA%.assignment_change(session_id, status)</pgsql>
+
+		<!-- ===== seed rights ===== -->
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'AssignmentChangeRequests' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value in ('Suggestions', 'ExaminationAssignment') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AssignmentChangeRequests')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'AssignmentChangeApprove' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'PermissionEdit' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AssignmentChangeApprove')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'AssignmentChangeApprove' from %SCHEMA%.roles r where r.reference = 'Session Admin' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AssignmentChangeApprove')</sql>
+	</update>
 </dbupdate>

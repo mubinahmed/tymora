@@ -1,0 +1,28 @@
+.xr-page { display: grid; gap: 0.9rem; min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.xr-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  label { display: grid; gap: 0.25rem; font-size: 0.75rem; font-weight: 600; color: var(--ut-muted); }
+  label.chk { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 500; color: var(--ut-text); font-size: 0.85rem; padding-bottom: 0.5rem; }
+  .spacer { flex: 1; }
+}
+.xr-quick { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.xr-chip {
+  cursor: pointer;
+  font-size: 0.78rem;
+  border: 1px solid var(--ut-border-strong);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  color: var(--ut-text);
+  &:hover { border-color: var(--ut-blue); color: var(--ut-blue); }
+  &.on { background: var(--ut-blue-pale); border-color: var(--ut-blue); color: var(--ut-blue); font-weight: 600; }
+}
+.muted { color: var(--ut-muted); font-size: 0.8rem; }
+.xr-title { font-weight: 600; }
+.xr-sort { cursor: pointer; user-select: none; white-space: nowrap; .pi { font-size: 0.7rem; margin-left: 0.25rem; color: var(--ut-blue); } }
+.xr-cell { white-space: pre; vertical-align: top; }
+:host ::ng-deep .xr-table .p-datatable-table-container { overflow-x: auto; }
+.xr-link { cursor: pointer; }
+.xr-hint { display: flex; gap: 0.4rem; align-items: center; .pi { color: var(--ut-blue); } }

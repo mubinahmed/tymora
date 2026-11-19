@@ -42,7 +42,10 @@ import org.unitime.timetable.gwt.server.CalendarServlet.Params;
 import org.unitime.timetable.gwt.server.CalendarServlet.QParams;
 import org.unitime.timetable.model.Event;
 import org.unitime.timetable.model.EventNote;
+import org.unitime.timetable.model.HandoverNote;
 import org.unitime.timetable.model.dao.EventDAO;
+import org.unitime.timetable.model.dao.HandoverNoteDAO;
+import org.unitime.timetable.model.dao.ReliefAssignmentDAO;
 import org.unitime.timetable.security.SessionContext;
 import org.unitime.timetable.security.context.HttpSessionContext;
 import org.unitime.timetable.security.rights.Right;
@@ -101,6 +104,30 @@ public class UploadServlet extends HttpServlet {
 			}
 		}
 		
+		if (params.getParameter("handover") != null) {
+			Long noteId = Long.valueOf(params.getParameter("handover"));
+			HandoverNote note = HandoverNoteDAO.getInstance().get(noteId);
+			if (note != null && note.getAttachedName() != null && !note.getAttachedName().isEmpty()) {
+				SessionContext sessionContext = getSessionContext();
+				String uid = (sessionContext.getUser() == null ? null : sessionContext.getUser().getExternalUserId());
+				boolean allowed = sessionContext.hasPermission(Right.StaffAbsenceEdit)
+						|| (uid != null && uid.equals(note.getAbsence().getExternalUniqueId()))
+						|| (uid != null && ReliefAssignmentDAO.getInstance().isReliefForAbsence(
+								HandoverNoteDAO.getInstance().getSession(), note.getAbsence().getUniqueId(), uid));
+				if (!allowed)
+					throw new ServletException("You are not allowed to download this file.");
+
+				response.setContentType(note.getAttachedContentType());
+				response.setHeader( "Content-Disposition", "attachment; filename=\"" + note.getAttachedName() + "\"" );
+				OutputStream out = response.getOutputStream();
+				out.write(note.getAttachedFile());
+				out.flush();
+				out.close();
+
+				return;
+			}
+		}
+
 		throw new ServletException("Nothing to download.");
 	}
 	

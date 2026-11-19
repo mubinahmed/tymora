@@ -58,4 +58,27 @@ public class ReliefAssignmentDAO extends _RootDAO<ReliefAssignment,Long> {
 				.setParameter("to", to)
 				.list();
 	}
+
+	/** A relief teacher's own covering assignments in a session within the [from, to] date range (inclusive). */
+	public List<ReliefAssignment> findBySessionAndReliefUidAndRange(org.hibernate.Session hibSession, Long sessionId, String reliefUid, Date from, Date to) {
+		return hibSession.createQuery(
+				"from ReliefAssignment r where r.session.uniqueId = :sessionId and r.reliefUid = :reliefUid " +
+				"and r.meetingDate >= :from and r.meetingDate <= :to order by r.meetingDate, r.startPeriod", ReliefAssignment.class)
+				.setParameter("sessionId", sessionId)
+				.setParameter("reliefUid", reliefUid)
+				.setParameter("from", from)
+				.setParameter("to", to)
+				.list();
+	}
+
+	/** True if the given staff member is (or was) assigned as relief for at least one lesson vacated by this absence. */
+	public boolean isReliefForAbsence(org.hibernate.Session hibSession, Long absenceId, String reliefUid) {
+		if (absenceId == null || reliefUid == null || reliefUid.isEmpty()) return false;
+		Long count = hibSession.createQuery(
+				"select count(r) from ReliefAssignment r where r.absence.uniqueId = :absenceId and r.reliefUid = :reliefUid", Long.class)
+				.setParameter("absenceId", absenceId)
+				.setParameter("reliefUid", reliefUid)
+				.uniqueResult();
+		return count != null && count > 0;
+	}
 }

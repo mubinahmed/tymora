@@ -39,7 +39,46 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 public class StaffAbsenceInterface implements IsSerializable {
 
 	public static enum Operation implements IsSerializable {
-		LOAD, SAVE, DELETE, APPROVE, REJECT
+		LOAD, SAVE, DELETE, APPROVE, REJECT, ADD_NOTE, DELETE_NOTE
+	}
+
+	/**
+	 * One piece of relief handover shared by the absent teacher (or an admin on
+	 * their behalf) for use by whoever covers their lessons: free-form text, an
+	 * optional single link, and/or an optional single file attachment stashed via
+	 * the two-step {@code /upload} flow (see {@code UploadServlet}).
+	 */
+	public static class HandoverNoteInfo implements IsSerializable {
+		private Long iId;
+		private String iTextNote;
+		private String iLinkUrl;
+		private String iLinkLabel;
+		private String iAttachedName;
+		private Integer iAttachedSize;
+		private String iCreatedByName;
+		private String iTimeStamp;
+		private boolean iCanDelete;
+
+		public HandoverNoteInfo() {}
+
+		public Long getId() { return iId; }
+		public void setId(Long id) { iId = id; }
+		public String getTextNote() { return iTextNote; }
+		public void setTextNote(String textNote) { iTextNote = textNote; }
+		public String getLinkUrl() { return iLinkUrl; }
+		public void setLinkUrl(String linkUrl) { iLinkUrl = linkUrl; }
+		public String getLinkLabel() { return iLinkLabel; }
+		public void setLinkLabel(String linkLabel) { iLinkLabel = linkLabel; }
+		public String getAttachedName() { return iAttachedName; }
+		public void setAttachedName(String attachedName) { iAttachedName = attachedName; }
+		public Integer getAttachedSize() { return iAttachedSize; }
+		public void setAttachedSize(Integer attachedSize) { iAttachedSize = attachedSize; }
+		public String getCreatedByName() { return iCreatedByName; }
+		public void setCreatedByName(String createdByName) { iCreatedByName = createdByName; }
+		public String getTimeStamp() { return iTimeStamp; }
+		public void setTimeStamp(String timeStamp) { iTimeStamp = timeStamp; }
+		public boolean isCanDelete() { return iCanDelete; }
+		public void setCanDelete(boolean canDelete) { iCanDelete = canDelete; }
 	}
 
 	/** A single staff-absence record. */
@@ -55,6 +94,8 @@ public class StaffAbsenceInterface implements IsSerializable {
 		private int iStatus;
 		private String iStatusLabel;
 		private boolean iCanEdit;
+		private List<HandoverNoteInfo> iNotes = new ArrayList<HandoverNoteInfo>();
+		private boolean iCanShareHandover;
 
 		public AbsenceInfo() {}
 
@@ -80,6 +121,10 @@ public class StaffAbsenceInterface implements IsSerializable {
 		public void setStatusLabel(String statusLabel) { iStatusLabel = statusLabel; }
 		public boolean isCanEdit() { return iCanEdit; }
 		public void setCanEdit(boolean canEdit) { iCanEdit = canEdit; }
+		public List<HandoverNoteInfo> getNotes() { return iNotes; }
+		public void addNote(HandoverNoteInfo n) { iNotes.add(n); }
+		public boolean isCanShareHandover() { return iCanShareHandover; }
+		public void setCanShareHandover(boolean canShareHandover) { iCanShareHandover = canShareHandover; }
 	}
 
 	/** A selectable option (absence reason or staff member). */
@@ -101,6 +146,10 @@ public class StaffAbsenceInterface implements IsSerializable {
 		private boolean iMineOnly;
 		private Long iId;
 		private AbsenceInfo iAbsence;
+		private Long iAbsenceId;
+		private Long iNoteId;
+		private HandoverNoteInfo iNote;
+		private boolean iUseUploadedFile;
 
 		public StaffAbsenceRequest() {}
 
@@ -116,6 +165,18 @@ public class StaffAbsenceInterface implements IsSerializable {
 		public void setId(Long id) { iId = id; }
 		public AbsenceInfo getAbsence() { return iAbsence; }
 		public void setAbsence(AbsenceInfo absence) { iAbsence = absence; }
+		/** Target absence for ADD_NOTE/DELETE_NOTE. */
+		public Long getAbsenceId() { return iAbsenceId; }
+		public void setAbsenceId(Long absenceId) { iAbsenceId = absenceId; }
+		/** Target note for DELETE_NOTE. */
+		public Long getNoteId() { return iNoteId; }
+		public void setNoteId(Long noteId) { iNoteId = noteId; }
+		/** Note payload for ADD_NOTE (text/link fields only; the attachment comes from the uploaded-file slot). */
+		public HandoverNoteInfo getNote() { return iNote; }
+		public void setNote(HandoverNoteInfo note) { iNote = note; }
+		/** ADD_NOTE: attach whatever file was just POSTed to /upload for this HTTP session. */
+		public boolean isUseUploadedFile() { return iUseUploadedFile; }
+		public void setUseUploadedFile(boolean useUploadedFile) { iUseUploadedFile = useUploadedFile; }
 
 		@Override
 		public String toString() { return "StaffAbsence[" + iOperation + "]"; }

@@ -193,6 +193,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/reports/limit-and-projection-snapshot').then((m) => m.LimitAndProjectionSnapshot),
   },
   {
+    path: 'change-requests',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/approval/change-requests').then((m) => m.ChangeRequests),
+  },
+  {
     path: 'assignment-history',
     canActivate: [authGuard],
     loadComponent: () => import('./features/solver/assignment-history').then((m) => m.AssignmentHistory),
@@ -206,6 +211,11 @@ export const routes: Routes = [
     path: 'solver-log',
     canActivate: [authGuard],
     loadComponent: () => import('./features/solver/solver-log').then((m) => m.SolverLog),
+  },
+  {
+    path: 'solution-compare',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/solver/solution-compare').then((m) => m.SolutionCompare),
   },
   {
     path: 'saved-timetables',
@@ -567,6 +577,11 @@ export const routes: Routes = [
     path: 'my-leave',
     canActivate: [authGuard],
     loadComponent: () => import('./features/relief/my-leave').then((m) => m.MyLeave),
+  },
+  {
+    path: 'my-relief-duties',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/relief/my-relief-duties').then((m) => m.MyReliefDuties),
   },
   {
     path: 'relief-config',

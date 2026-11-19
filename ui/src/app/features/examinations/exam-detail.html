@@ -77,7 +77,10 @@
       <p-button label="Back to examinations" severity="secondary" [text]="true" icon="pi pi-arrow-left"
         routerLink="/examinations-list" />
       <span class="spacer"></span>
+      <p-button label="Assign / alternatives" icon="pi pi-calendar-plus" severity="secondary" [outlined]="true"
+        (onClick)="assignVisible.set(true)" />
       <p-button label="Edit examination" icon="pi pi-pencil" [routerLink]="['/exam-edit', d.examId]" />
     </div>
   </div>
+  <app-exam-assignment-dialog [(visible)]="assignVisible" [examId]="d.examId ?? null" (assigned)="load()" />
 }

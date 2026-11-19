@@ -60,6 +60,30 @@
   }
   .help:hover { color: #fff; }
 
+  .cr-bell {
+    position: relative;
+    color: var(--ut-blue-soft);
+    display: inline-flex;
+    font-size: 1.1rem;
+    border-bottom: 0;
+    &:hover { color: #fff; }
+    .cr-badge {
+      position: absolute;
+      top: -0.45rem;
+      right: -0.6rem;
+      min-width: 1.05rem;
+      height: 1.05rem;
+      padding: 0 0.25rem;
+      border-radius: 999px;
+      background: #e5484d;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      line-height: 1.05rem;
+      text-align: center;
+    }
+  }
+
   .session-pill {
     display: flex;
     align-items: center;

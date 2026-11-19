@@ -1509,6 +1509,16 @@ public enum ApplicationProperty {
 	@Description("Email Notifications: data exchange emails")
 	EmailNotificationDataExchange("unitime.email.notif.data"),
 
+	@DefaultValue("all")
+	@Values({"all", "database", "none"})
+	@Description("Assignment changes: which class/examination assignment changes made by users without the AssignmentChangeApprove right need approval (all = every change; database = only examination changes saved directly to the database; none = no approval, a reason is still recorded)")
+	AssignmentApprovalPolicy("tmtbl.assignment.approval"),
+
+	@Type(Boolean.class)
+	@DefaultValue("true")
+	@Description("Assignment changes: send emails to approvers when a change request is submitted and to the requester when it is decided (needs a configured mail server)")
+	AssignmentApprovalEmails("tmtbl.assignment.approval.email"),
+
 	@Description("Contact Us: email address (if not used, unitime.email.notif is used instead)")
 	@Replaces({"unitime.email.notif"})
 	EmailInquiryAddress("unitime.email.inquiry"),

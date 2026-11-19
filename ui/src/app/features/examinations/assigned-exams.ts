@@ -6,6 +6,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TooltipModule } from 'primeng/tooltip';
+import { ExamAssignmentDialog } from './exam-assignment-dialog';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
@@ -57,6 +59,8 @@ interface AssignedExamsRequest {
     SelectModule,
     MessageModule,
     ProgressSpinnerModule,
+    TooltipModule,
+    ExamAssignmentDialog,
   ],
   templateUrl: './assigned-exams.html',
 })
@@ -68,6 +72,8 @@ export class AssignedExams implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly data = signal<AssignedExamsResponse | null>(null);
   protected readonly filter = signal('');
+  protected readonly dialogVisible = signal(false);
+  protected readonly dialogExamId = signal<number | null>(null);
 
   protected examTypeId: number | null = null;
 
@@ -91,6 +97,12 @@ export class AssignedExams implements OnInit {
 
   onExamTypeChange(): void {
     this.load();
+  }
+
+  openAssign(examId: number | undefined): void {
+    if (examId == null) return;
+    this.dialogExamId.set(examId);
+    this.dialogVisible.set(true);
   }
 
   reload(): void {

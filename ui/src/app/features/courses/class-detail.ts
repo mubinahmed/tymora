@@ -9,6 +9,7 @@ import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 import { ClassDetailRequest, ClassDetailResponse } from './class-detail.models';
+import { ClassAssignmentDialog } from '../solver/class-assignment-dialog';
 
 /**
  * Class Detail (legacy classDetail.action) — read view of a single class, backed
@@ -17,7 +18,7 @@ import { ClassDetailRequest, ClassDetailResponse } from './class-detail.models';
  */
 @Component({
   selector: 'app-class-detail',
-  imports: [RouterLink, ButtonModule, TagModule, TableModule, MessageModule, ProgressSpinnerModule],
+  imports: [RouterLink, ButtonModule, TagModule, TableModule, MessageModule, ProgressSpinnerModule, ClassAssignmentDialog],
   templateUrl: './class-detail.html',
 })
 export class ClassDetail implements OnInit {
@@ -29,11 +30,17 @@ export class ClassDetail implements OnInit {
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly data = signal<ClassDetailResponse | null>(null);
+  protected readonly assignVisible = signal(false);
 
   protected readonly offeringId = computed(() => this.data()?.offeringId ?? null);
 
   ngOnInit(): void {
     this.page.set('Class Detail');
+    this.load();
+  }
+
+  /** reload after the assignment dialog changed the class */
+  protected load(): void {
     const cid = this.id() == null ? NaN : Number(this.id());
     if (!Number.isFinite(cid)) {
       this.error.set('No class was specified.');

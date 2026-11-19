@@ -1,58 +1,84 @@
-@if (loading()) {
-  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
-} @else if (error()) {
-  <p-message severity="error" [text]="error()!" />
-  <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="reload()" /></div>
-} @else if (data(); as d) {
-  <p-table
-    [value]="rows()"
-    [paginator]="rows().length > 25"
-    [rows]="25"
-    [rowsPerPageOptions]="[25, 50, 100]"
-    styleClass="p-datatable-sm p-datatable-striped"
-  >
-    <ng-template pTemplate="caption">
-      <div class="tbl-caption">
-        <p-select
-          [options]="examTypeOptions()"
-          [(ngModel)]="examTypeId"
-          (onChange)="onExamTypeChange()"
-          placeholder="Examination type"
-          [style]="{ minWidth: '14rem' }"
-        />
-        <span class="spacer"></span>
-        <span>{{ rows().length }} assigned exam(s)</span>
-        <input
-          pInputText
-          type="text"
-          placeholder="Filter…"
-          [value]="filter()"
-          (input)="filter.set($any($event.target).value)"
-        />
-        <p-button label="CSV" icon="pi pi-download" severity="secondary" [text]="true" (onClick)="exportCsv()" [disabled]="!rows().length" />
-      </div>
-    </ng-template>
+<div class="xr-page">
+  <div class="xr-filters">
+    <label>
+      <span>Report</span>
+      <p-select [options]="reportGroups()" [(ngModel)]="report" [group]="true" optionGroupLabel="label" optionGroupChildren="items"
+        optionLabel="label" optionValue="value" [filter]="true" filterBy="label" (onChange)="load()" [style]="{ minWidth: '20rem' }" />
+    </label>
+    <label>
+      <span>Examination type</span>
+      <p-select [options]="examTypeOptions()" [(ngModel)]="examTypeId" (onChange)="load()" [style]="{ minWidth: '9rem' }" />
+    </label>
+    <label>
+      <span>Subject area</span>
+      <p-select [options]="subjectOptions()" [(ngModel)]="subjectAreaId" placeholder="Select…" [filter]="subjectOptions().length > 8"
+        (onChange)="load()" [style]="{ minWidth: '9rem' }" />
+    </label>
+    <label>
+      <span>Filter</span>
+      <input pInputText [(ngModel)]="filter" placeholder="Exam, room, student or instructor" (keydown.enter)="load()" style="width: 15rem" />
+    </label>
+    <label class="chk"><p-checkbox [(ngModel)]="showSections" [binary]="true" (onChange)="load()" /> Show classes / courses</label>
+    <span class="spacer"></span>
+    <p-button label="Apply" icon="pi pi-filter" size="small" severity="secondary" (onClick)="load()" />
+  </div>
 
-    <ng-template pTemplate="header">
-      <tr>
-        @for (col of columns(); track $index) {
-          <th>{{ col }}</th>
-        }
-      </tr>
-    </ng-template>
+  <div class="xr-quick">
+    <span class="muted">Clash reports:</span>
+    @for (r of clashLinks(); track r.name) {
+      <a class="xr-chip" [class.on]="report === r.name" (click)="pickReport(r.name)">{{ r.label }}</a>
+    }
+  </div>
 
-    <ng-template pTemplate="body" let-row>
-      <tr>
-        @for (col of columns(); track $index) {
-          <td>{{ row.cells?.[$index] ?? '' }}</td>
-        }
-      </tr>
-    </ng-template>
+  @if (loading()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (error()) {
+    <p-message severity="error" [text]="error()!" />
+    <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="load()" /></div>
+  } @else if (data(); as d) {
+    @if (d.message && !d.rows?.length) {
+      <div class="empty-state">{{ d.message }}</div>
+    } @else {
+      <p-table [value]="rows()" [paginator]="rows().length > 50" [rows]="50" [rowsPerPageOptions]="[50, 100, 250]"
+        styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines xr-table" [rowHover]="linkedRows()"
+        [scrollable]="true" scrollHeight="flex" [tableStyle]="{ 'min-width': 'max-content' }">
+        <ng-template pTemplate="caption">
+          <div class="tbl-caption">
+            <span class="xr-title">{{ reportLabel() }}</span>
+            <p-tag [value]="d.solverData ? 'Loaded exam solver' : 'Committed assignments'" [severity]="d.solverData ? 'info' : 'secondary'"
+              [pTooltip]="d.solverData ? 'Computed from the examination solver loaded in memory' : 'Computed from the examination assignments saved in the database'" />
+            <span class="spacer"></span>
+            <span>{{ rows().length }} row(s) · {{ d.nrExams }} exam(s)</span>
+            <p-button label="CSV" icon="pi pi-download" severity="secondary" [text]="true" (onClick)="exportCsv()" [disabled]="!rows().length" />
+          </div>
+        </ng-template>
+        <ng-template pTemplate="header">
+          <tr>
+            @for (col of columns(); track $index) {
+              <th class="xr-sort" [style.text-align]="align($index)" (click)="sortBy($index)">
+                {{ col }}
+                @if (sortCol() === $index) { <i class="pi" [class.pi-sort-amount-up-alt]="sortAsc()" [class.pi-sort-amount-down]="!sortAsc()"></i> }
+              </th>
+            }
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr [class.xr-link]="row.examId != null" (click)="openExam(row)"
+            [pTooltip]="row.examId != null ? 'Open in the examination assignment dialog' : ''" tooltipPosition="top" [showDelay]="600">
+            @for (col of columns(); track $index) {
+              <td class="xr-cell" [style.text-align]="align($index)">{{ row.cells?.[$index] ?? '' }}</td>
+            }
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td [attr.colspan]="columns().length || 1">{{ d.message || 'Nothing to report.' }}</td></tr>
+        </ng-template>
+      </p-table>
+      @if (linkedRows()) {
+        <div class="muted xr-hint"><i class="pi pi-info-circle"></i> Click a row to open the examination and resolve the clash in the assignment dialog.</div>
+      }
+    }
+  }
+</div>
 
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td [attr.colspan]="columns().length || 1">No assigned exams for this examination type.</td>
-      </tr>
-    </ng-template>
-  </p-table>
-}
+<app-exam-assignment-dialog [(visible)]="dialogVisible" [examId]="dialogExamId()" (assigned)="load()" />

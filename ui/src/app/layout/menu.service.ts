@@ -36,8 +36,11 @@ export class MenuService {
     reliefBoard: '/relief-board',
     staffAbsences: '/staff-absences',
     myLeave: '/my-leave',
+    myReliefDuties: '/my-relief-duties',
     reliefConfig: '/relief-config',
     reliefReport: '/relief-report',
+    // Reason and approval step for assignment changes
+    changeRequests: '/change-requests',
     // Wave 1 GWT-backed screens
     traveltimes: '/travel-times',
     password: '/change-password',

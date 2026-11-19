@@ -1,0 +1,126 @@
+<div class="sc-page">
+  <div class="sc-pick">
+    <label>
+      <span><span class="sc-badge a">A</span> Timetable</span>
+      <p-select [options]="options()" [(ngModel)]="solutionA" optionLabel="label" optionValue="value" placeholder="Pick a saved timetable" [style]="{ minWidth: '22rem' }" />
+    </label>
+    <p-button icon="pi pi-arrow-right-arrow-left" [text]="true" severity="secondary" pTooltip="Swap A and B" (onClick)="swap()" [disabled]="solutionA == null || solutionB == null" />
+    <label>
+      <span><span class="sc-badge b">B</span> Timetable</span>
+      <p-select [options]="options()" [(ngModel)]="solutionB" optionLabel="label" optionValue="value" placeholder="Pick a saved timetable" [style]="{ minWidth: '22rem' }" />
+    </label>
+    <p-button label="Compare" icon="pi pi-clone" (onClick)="compare()" [disabled]="solutionA == null || solutionB == null || solutionA === solutionB" />
+    <span class="spacer"></span>
+    <a class="link" routerLink="/saved-timetables">Saved Timetables</a>
+  </div>
+
+  @if (loading()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  } @else if (data(); as d) {
+    @if (!compared()) {
+      <div class="empty-state">{{ d.message || 'Pick two saved timetables to compare.' }}</div>
+    } @else {
+      <div class="sc-heads">
+        @for (s of [d.a!, d.b!]; track $index) {
+          <div class="sc-head">
+            <span class="sc-badge" [class.a]="$index === 0" [class.b]="$index === 1">{{ $index === 0 ? 'A' : 'B' }}</span>
+            <div>
+              <div class="sc-head-title">{{ s.ownerName }} <span class="muted">({{ s.owner }})</span></div>
+              <div class="muted">
+                Saved {{ s.created | date: 'd MMM y, HH:mm' }}{{ s.creator ? ' by ' + s.creator : '' }} · {{ s.nrAssignments }} classes placed
+                @if (s.committed) { · <b>committed</b>{{ s.commitDate ? ' ' + (s.commitDate | date: 'd MMM y') : '' }} }
+              </div>
+              @if (s.note) { <div class="sc-note">{{ s.note }}</div> }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="sc-summary">
+        <div class="sc-stat"><div class="dd">{{ differing() }}</div><div class="dt">classes differ</div></div>
+        <div class="sc-stat"><div class="dd">{{ d.timeChanged }}</div><div class="dt">time only</div></div>
+        <div class="sc-stat"><div class="dd">{{ d.roomChanged }}</div><div class="dt">room only</div></div>
+        <div class="sc-stat"><div class="dd">{{ d.timeAndRoomChanged }}</div><div class="dt">time and room</div></div>
+        <div class="sc-stat"><div class="dd">{{ d.onlyA }} / {{ d.onlyB }}</div><div class="dt">only in A / only in B</div></div>
+        <div class="sc-stat"><div class="dd">{{ d.same }}</div><div class="dt">identical</div></div>
+      </div>
+
+      <section class="sc-section">
+        <div class="sc-section-head">
+          <h3>Solution statistics</h3>
+          <span class="spacer"></span>
+          <label class="chk"><input type="checkbox" [checked]="metricsDiffOnly()" (change)="metricsDiffOnly.set(!metricsDiffOnly())" /> Only differences</label>
+        </div>
+        <p-table [value]="metrics()" styleClass="p-datatable-sm p-datatable-gridlines">
+          <ng-template pTemplate="header">
+            <tr><th>Statistic</th><th class="r"><span class="sc-badge a">A</span></th><th class="r"><span class="sc-badge b">B</span></th><th class="r" style="width:8rem">B − A</th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-m>
+            <tr [class.sc-diff]="(m.valueA ?? '') !== (m.valueB ?? '')">
+              <td>{{ m.name }}</td>
+              <td class="r">{{ m.valueA ?? '—' }}</td>
+              <td class="r">{{ m.valueB ?? '—' }}</td>
+              <td class="r" [class]="metricDelta(m).cls">{{ metricDelta(m).text }}</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage"><tr><td colspan="4">No statistics were saved with these timetables.</td></tr></ng-template>
+        </p-table>
+        <div class="muted sc-legend">Green: B is better than A; red: B is worse (for most statistics lower is better). Solver run statistics (time, iterations, memory, speed) are not judged.</div>
+      </section>
+
+      <section class="sc-section">
+        <div class="sc-section-head">
+          <h3>Class placements</h3>
+          <p-select [options]="filterOptions()" [ngModel]="changeFilter()" (ngModelChange)="changeFilter.set($event)" optionLabel="label" optionValue="value" [style]="{ minWidth: '14rem' }" />
+          <input pInputText placeholder="Search class, room, instructor…" [ngModel]="search()" (ngModelChange)="search.set($event)" style="width: 16rem" />
+          <span class="spacer"></span>
+          <span class="muted">{{ rows().length }} class(es)</span>
+          <p-button label="CSV" icon="pi pi-download" severity="secondary" [text]="true" (onClick)="exportCsv()" [disabled]="!rows().length" />
+        </div>
+        <p-table [value]="rows()" styleClass="p-datatable-sm p-datatable-gridlines sc-table" [paginator]="rows().length > 50" [rows]="50"
+          [scrollable]="true" [tableStyle]="{ 'min-width': '72rem' }">
+          <ng-template pTemplate="header">
+            <tr>
+              <th rowspan="2">Class</th>
+              <th rowspan="2">Difference</th>
+              <th colspan="4" class="sc-col-a"><span class="sc-badge a">A</span> {{ d.a!.owner }} · {{ d.a!.created | date: 'd MMM y, HH:mm' }}</th>
+              <th colspan="4" class="sc-col-b"><span class="sc-badge b">B</span> {{ d.b!.owner }} · {{ d.b!.created | date: 'd MMM y, HH:mm' }}</th>
+            </tr>
+            <tr>
+              <th class="sc-col-a">Time</th><th class="sc-col-a">Room</th><th class="sc-col-a">Instructor</th><th class="sc-col-a r" pTooltip="Student conflicts of the placement">Conf.</th>
+              <th class="sc-col-b">Time</th><th class="sc-col-b">Room</th><th class="sc-col-b">Instructor</th><th class="sc-col-b r" pTooltip="Student conflicts of the placement">Conf.</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-r>
+            <tr>
+              <td>
+                <a class="link" [routerLink]="['/class-detail', r.classId]">{{ r.className }}</a>
+                @if (r.department) { <div class="muted">{{ r.department }}</div> }
+              </td>
+              <td><p-tag [value]="changeLabel(r.change)" [severity]="changeSeverity(r.change)" /></td>
+              @if (r.change === 'ONLY_B') {
+                <td colspan="4" class="sc-col-a muted">not placed</td>
+              } @else {
+                <td class="sc-col-a" [class.sc-hl]="r.change === 'TIME' || r.change === 'TIME_AND_ROOM'">{{ r.timeA }}@if (r.dateA) { <div class="muted">{{ r.dateA }}</div> }</td>
+                <td class="sc-col-a" [class.sc-hl]="r.change === 'ROOM' || r.change === 'TIME_AND_ROOM'">{{ r.roomA }}</td>
+                <td class="sc-col-a">{{ r.instructorA }}</td>
+                <td class="sc-col-a r">{{ r.studentConflictsA ?? '' }}</td>
+              }
+              @if (r.change === 'ONLY_A') {
+                <td colspan="4" class="sc-col-b muted">not placed</td>
+              } @else {
+                <td class="sc-col-b" [class.sc-hl]="r.change === 'TIME' || r.change === 'TIME_AND_ROOM'">{{ r.timeB }}@if (r.dateB) { <div class="muted">{{ r.dateB }}</div> }</td>
+                <td class="sc-col-b" [class.sc-hl]="r.change === 'ROOM' || r.change === 'TIME_AND_ROOM'">{{ r.roomB }}</td>
+                <td class="sc-col-b">{{ r.instructorB }}</td>
+                <td class="sc-col-b r" [class]="conflictDelta(r)">{{ r.studentConflictsB ?? '' }}</td>
+              }
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage"><tr><td colspan="10">No classes match.</td></tr></ng-template>
+        </p-table>
+      </section>
+    }
+  }
+</div>

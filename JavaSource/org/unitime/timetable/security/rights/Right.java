@@ -546,6 +546,12 @@ public enum Right {
 	ReliefPlanning,
 	ReliefPlanningEdit,
 	MyLeaveRequests,
+	MyReliefDuties,
+
+	/** see and submit class / examination assignment change requests (Change Requests page) */
+	AssignmentChangeRequests,
+	/** approve or reject assignment change requests; own changes are applied directly */
+	AssignmentChangeApprove,
 
 	StudentSchedulingStatusTypes,
 	StudentSchedulingStatusTypeEdit,

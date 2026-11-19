@@ -117,7 +117,10 @@
       <p-button label="Back to offering" severity="secondary" [text]="true" icon="pi pi-arrow-left"
         [routerLink]="offeringId() ? ['/offering-detail', offeringId()] : ['/offerings']" />
       <span class="spacer"></span>
+      <p-button label="Assign / alternatives" icon="pi pi-calendar-plus" severity="secondary" [outlined]="true"
+        (onClick)="assignVisible.set(true)" />
       <p-button label="Edit class" icon="pi pi-pencil" [routerLink]="['/class-edit', d.classId]" />
     </div>
   </div>
+  <app-class-assignment-dialog [(visible)]="assignVisible" [classId]="d.classId ?? null" (assigned)="load()" />
 }

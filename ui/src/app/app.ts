@@ -1,17 +1,18 @@
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet, RouterLink } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { AuthService } from './core/auth.service';
+import { ChangeRequestsService } from './core/change-requests.service';
 import { PageService } from './core/page.service';
 import { ThemeService } from './core/theme.service';
 import { MenuService } from './layout/menu.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, PanelMenuModule, ButtonModule, ToastModule],
+  imports: [RouterOutlet, RouterLink, PanelMenuModule, ButtonModule, ToastModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -21,6 +22,8 @@ export class App implements OnInit {
   private router = inject(Router);
   private theme = inject(ThemeService);
   protected page = inject(PageService);
+  /** change-request badge (pending decisions for approvers, decided requests for requesters) */
+  protected changes = inject(ChangeRequestsService);
 
   protected readonly isDark = this.theme.isDark;
 
@@ -75,6 +78,19 @@ export class App implements OnInit {
     effect(() => {
       if (this.auth.user()?.name) this.menu.load();
     });
+
+    // Change-request badge: refresh on sign-in / role switch, on every navigation and every minute.
+    effect(() => {
+      if (this.auth.user()?.name) this.changes.refresh();
+    });
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe(() => {
+        if (this.auth.user()?.name) this.changes.refresh();
+      });
+    setInterval(() => {
+      if (this.auth.user()?.name && typeof document !== 'undefined' && !document.hidden) this.changes.refresh();
+    }, 60000);
   }
 
   ngOnInit(): void {

@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.unitime.timetable.gwt.command.client.GwtRpcRequest;
 import org.unitime.timetable.gwt.command.client.GwtRpcResponse;
+import org.unitime.timetable.gwt.shared.StaffAbsenceInterface.HandoverNoteInfo;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
@@ -77,6 +78,7 @@ public class ReliefBoardInterface implements IsSerializable {
 		private int iStatus;
 		private String iStatusLabel;
 		private List<CandidateInfo> iCandidates = new ArrayList<CandidateInfo>();
+		private List<HandoverNoteInfo> iHandoverNotes = new ArrayList<HandoverNoteInfo>();
 
 		public LessonInfo() {}
 		public Long getId() { return iId; }
@@ -101,6 +103,8 @@ public class ReliefBoardInterface implements IsSerializable {
 		public void setStatusLabel(String statusLabel) { iStatusLabel = statusLabel; }
 		public List<CandidateInfo> getCandidates() { return iCandidates; }
 		public void addCandidate(CandidateInfo c) { iCandidates.add(c); }
+		public List<HandoverNoteInfo> getHandoverNotes() { return iHandoverNotes; }
+		public void addHandoverNote(HandoverNoteInfo n) { iHandoverNotes.add(n); }
 	}
 
 	public static class ReliefBoardRequest implements GwtRpcRequest<ReliefBoardResponse> {

@@ -1,11 +1,12 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
-import { ApiError, TableInterface } from '../../core/models';
+import { ApiError, TableInterface, TableRowInterface } from '../../core/models';
 import { RpcTable } from '../../shared/rpc-table';
+import { ClassAssignmentDialog } from './class-assignment-dialog';
 
 /**
  * Generic solver reporting screen: calls a TableInterface-returning command
@@ -15,7 +16,7 @@ import { RpcTable } from '../../shared/rpc-table';
  */
 @Component({
   selector: 'app-solver-report',
-  imports: [ButtonModule, MessageModule, ProgressSpinnerModule, RpcTable],
+  imports: [ButtonModule, MessageModule, ProgressSpinnerModule, RpcTable, ClassAssignmentDialog],
   templateUrl: './solver-report.html',
 })
 export class SolverReport {
@@ -31,6 +32,19 @@ export class SolverReport {
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly table = signal<TableInterface | null>(null);
+
+  /** class reports whose rows are class ids: clicking a row opens the class assignment dialog */
+  protected readonly classRows = computed(() =>
+    ['NotAssignedClassesRequest', 'AssignedClassesRequest'].includes(this.rpcName()),
+  );
+  protected readonly dialogVisible = signal(false);
+  protected readonly dialogClassId = signal<number | null>(null);
+
+  protected openClass(row: TableRowInterface): void {
+    if (row.id == null) return;
+    this.dialogClassId.set(row.id);
+    this.dialogVisible.set(true);
+  }
 
   constructor() {
     effect(() => {

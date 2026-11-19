@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { TableModule } from 'primeng/table';
 import { MessageModule } from 'primeng/message';
 import { TableInterface, TableRowInterface } from '../core/models';
@@ -23,6 +23,9 @@ interface Col {
 })
 export class RpcTable {
   readonly table = input.required<TableInterface | null>();
+  /** when set, rows with an id are clickable and emit rowClick (e.g. open a dialog) */
+  readonly clickable = input(false);
+  readonly rowClick = output<TableRowInterface>();
 
   protected readonly cols = computed<Col[]>(() =>
     (this.table()?.header ?? [])
@@ -31,6 +34,10 @@ export class RpcTable {
       .map((c) => ({ index: c.index, name: c.h.name ?? '', align: this.align(c.h.alignment) })),
   );
   protected readonly rows = computed<TableRowInterface[]>(() => this.table()?.rows ?? []);
+
+  protected onRow(row: TableRowInterface): void {
+    if (this.clickable() && row.id != null) this.rowClick.emit(row);
+  }
 
   private align(a?: string): string {
     const s = (a ?? '').toUpperCase();

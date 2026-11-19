@@ -1,0 +1,66 @@
+.sc-page { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+.sc-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem 0.9rem;
+  label { display: grid; gap: 0.25rem; font-size: 0.75rem; font-weight: 600; color: var(--ut-muted); }
+  .spacer { flex: 1; }
+}
+.sc-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: #2563eb;
+  &.b { background: #9333ea; }
+}
+.sc-heads { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 0.75rem; }
+.sc-head {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  border: 1px solid var(--ut-border);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  background: var(--ut-card);
+  .sc-head-title { font-weight: 600; color: var(--ut-ink); }
+  .sc-note { font-size: 0.82rem; font-style: italic; margin-top: 0.2rem; color: var(--ut-text); }
+}
+.sc-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.6rem; }
+.sc-stat {
+  border: 1px solid var(--ut-border);
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
+  background: var(--ut-card);
+  .dd { font-size: 1.3rem; font-weight: 600; color: var(--ut-ink); font-variant-numeric: tabular-nums; }
+  .dt { font-size: 0.75rem; color: var(--ut-muted); }
+}
+.sc-section { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
+.sc-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  h3 { margin: 0; font-size: 0.95rem; color: var(--ut-ink); }
+  .spacer { flex: 1; }
+  .chk { display: inline-flex; gap: 0.35rem; align-items: center; font-size: 0.82rem; color: var(--ut-text); }
+}
+.muted { color: var(--ut-muted); font-size: 0.78rem; }
+.r { text-align: right; font-variant-numeric: tabular-nums; }
+.better { color: #0f821e; font-weight: 600; }
+.worse { color: #c81e14; font-weight: 600; }
+.sc-diff > td:first-child { font-weight: 600; }
+.sc-legend { margin-top: 0.1rem; }
+:host ::ng-deep .sc-table .p-datatable-table-container { overflow-x: auto; }
+:host ::ng-deep .sc-table td, :host ::ng-deep .sc-table th { white-space: nowrap; vertical-align: top; }
+.sc-section { min-width: 0; }
+.sc-col-a { background: rgba(37, 99, 235, 0.04); }
+.sc-col-b { background: rgba(147, 51, 234, 0.04); }
+.sc-hl { font-weight: 600; color: var(--ut-ink); box-shadow: inset 3px 0 0 #c49a0a; }
+.link { cursor: pointer; }

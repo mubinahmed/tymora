@@ -31,8 +31,11 @@ import org.unitime.timetable.gwt.shared.ReliefBoardInterface.CandidateInfo;
 import org.unitime.timetable.gwt.shared.ReliefBoardInterface.LessonInfo;
 import org.unitime.timetable.gwt.shared.ReliefBoardInterface.ReliefBoardRequest;
 import org.unitime.timetable.gwt.shared.ReliefBoardInterface.ReliefBoardResponse;
+import org.unitime.timetable.gwt.shared.StaffAbsenceInterface.HandoverNoteInfo;
+import org.unitime.timetable.model.HandoverNote;
 import org.unitime.timetable.model.Location;
 import org.unitime.timetable.model.ReliefAssignment;
+import org.unitime.timetable.model.dao.HandoverNoteDAO;
 import org.unitime.timetable.model.dao.ReliefAssignmentDAO;
 import org.unitime.timetable.security.SessionContext;
 import org.unitime.timetable.security.rights.Right;
@@ -125,6 +128,10 @@ public class ReliefBoardBackend implements GwtRpcImplementation<ReliefBoardReque
 			l.setStatus(a.getStatus() == null ? 0 : a.getStatus());
 			l.setStatusLabel(a.status().name());
 
+			if (a.getAbsence() != null)
+				for (HandoverNote n: HandoverNoteDAO.getInstance().findByAbsence(hibSession, a.getAbsence().getUniqueId()))
+					l.addHandoverNote(toHandoverNoteInfo(n));
+
 			Long deptId = ReliefGenerationHelper.affectedDeptId(a.getClazz());
 			for (Candidate c: ReliefGenerationHelper.rankedCandidates(ctx, a.getStartPeriod(), a.getStopPeriod(), deptId, a.getReliefUid()))
 				l.addCandidate(new CandidateInfo(c.uid, c.name, c.sameDept, c.weekLoad));
@@ -192,6 +199,21 @@ public class ReliefBoardBackend implements GwtRpcImplementation<ReliefBoardReque
 				"from Location l where l.permanentId = :pid and l.session.uniqueId = :sid", Location.class)
 				.setParameter("pid", permId).setParameter("sid", sessionId).setMaxResults(1).uniqueResult();
 		return loc == null ? "" : loc.getLabel();
+	}
+
+	/** Read-only view of a handover note (this board does not offer note management). */
+	static HandoverNoteInfo toHandoverNoteInfo(HandoverNote n) {
+		HandoverNoteInfo ni = new HandoverNoteInfo();
+		ni.setId(n.getUniqueId());
+		ni.setTextNote(n.getTextNote());
+		ni.setLinkUrl(n.getLinkUrl());
+		ni.setLinkLabel(n.getLinkLabel());
+		ni.setAttachedName(n.getAttachedName());
+		ni.setAttachedSize(n.getAttachedSize());
+		ni.setCreatedByName(n.getCreatedByName());
+		ni.setTimeStamp(n.getTimeStamp() == null ? null : new SimpleDateFormat("yyyy-MM-dd HH:mm").format(n.getTimeStamp()));
+		ni.setCanDelete(false);
+		return ni;
 	}
 
 	private static String timeText(int start, int stop) {

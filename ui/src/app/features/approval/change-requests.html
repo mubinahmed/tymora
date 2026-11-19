@@ -1,0 +1,106 @@
+<div class="cr-page">
+  <div class="cr-head">
+    <p-selectButton [options]="filters()" [(ngModel)]="filter" optionLabel="label" optionValue="value" [allowEmpty]="false" (onChange)="onFilter()" />
+    <span class="spacer"></span>
+    <span class="cr-policy" pTooltip="tmtbl.assignment.approval application property">
+      <i class="pi pi-shield"></i>
+      @switch (changes.info()?.policy) {
+        @case ('none') { No approval needed; every change is recorded with its reason. }
+        @case ('database') { Approval needed for examination changes saved directly to the database. }
+        @default { Approval needed for every class and examination change by users who are not approvers. }
+      }
+    </span>
+    <p-button icon="pi pi-refresh" [text]="true" severity="secondary" pTooltip="Refresh" (onClick)="load()" />
+  </div>
+
+  @if (loading()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  } @else {
+    <p-table [value]="rows()" styleClass="p-datatable-sm" [paginator]="rows().length > 25" [rows]="25" dataKey="id">
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width:9rem">Requested</th>
+          <th>Change</th>
+          <th style="width:22%">Reason</th>
+          <th style="width:16rem">Status</th>
+          <th style="width:11rem"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-r>
+        <tr>
+          <td>
+            <div>{{ r.requestedTs | date: 'd MMM y, HH:mm' }}</div>
+            <div class="muted">{{ r.requestedName }}</div>
+          </td>
+          <td>
+            <div class="cr-subject">
+              <a class="link" (click)="openSubject(r)" pTooltip="Open in the assignment dialog">{{ r.subjectName }}</a>
+              <span class="cr-kind">{{ modeLabel(r) }}</span>
+            </div>
+            @for (l of summaryLines(r); track $index) { <div class="cr-line">{{ l }}</div> }
+          </td>
+          <td class="wrap">{{ r.reason }}</td>
+          <td>
+            <p-tag [value]="r.selfApproved ? 'Applied (self-approved)' : status(r.status).label" [severity]="status(r.status).severity" />
+            @if (r.decidedName && r.status !== 'PENDING') {
+              <div class="muted cr-decision">
+                {{ r.status === 'CANCELLED' ? 'Withdrawn' : r.selfApproved ? 'By' : 'Decided by' }} {{ r.decidedName }}, {{ r.decidedTs | date: 'd MMM, HH:mm' }}
+              </div>
+            }
+            @if (r.decisionNote && !r.selfApproved) { <div class="cr-note">“{{ r.decisionNote }}”</div> }
+            @if (r.resultMessage) { <div class="cr-result">{{ r.resultMessage }}</div> }
+          </td>
+          <td class="cr-actions">
+            @if (r.canDecide) {
+              <p-button label="Approve" icon="pi pi-check" size="small" (onClick)="openDecision(r, true)" />
+              <p-button label="Reject" icon="pi pi-times" size="small" severity="danger" [outlined]="true" (onClick)="openDecision(r, false)" />
+            }
+            @if (r.canCancel) {
+              <p-button label="Withdraw" icon="pi pi-undo" size="small" severity="secondary" [text]="true" (onClick)="withdraw(r)" />
+            }
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="5" class="empty">
+          @if (filter === 'PENDING') { No change requests are waiting{{ canApprove() ? ' for a decision' : '' }}. } @else { No changes recorded yet. }
+        </td></tr>
+      </ng-template>
+    </p-table>
+  }
+</div>
+
+<p-dialog [visible]="!!deciding()" (visibleChange)="!$event && deciding.set(null)" [modal]="true" [draggable]="false"
+  [header]="deciding()?.approve ? 'Approve change request' : 'Reject change request'" [style]="{ width: 'min(620px, 94vw)' }">
+  @if (deciding(); as d) {
+    <div class="cr-decide">
+      <div><b>{{ d.row.subjectName }}</b> · requested by {{ d.row.requestedName }}</div>
+      <div class="cr-box">
+        @for (l of summaryLines(d.row); track $index) { <div class="cr-line">{{ l }}</div> }
+      </div>
+      <div><span class="muted">Reason:</span> {{ d.row.reason }}</div>
+      @if (d.approve) {
+        <p-message severity="info" styleClass="w-full">
+          <span>
+            @if (d.row.mode === 'DATABASE') { The change is saved to the database now and recorded in the change log. }
+            @else { The change is applied to {{ d.row.requestedName }}'s in-memory solver solution; it fails if that solver is no longer loaded. }
+          </span>
+        </p-message>
+      }
+      <label class="cr-note-input">
+        <span>{{ d.approve ? 'Note (optional)' : 'Why is it rejected?' }} @if (!d.approve) { <span class="req">*</span> }</span>
+        <textarea pTextarea [(ngModel)]="note" rows="3" maxlength="2000" [autoResize]="true"></textarea>
+      </label>
+    </div>
+  }
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="deciding.set(null)" />
+    <p-button [label]="deciding()?.approve ? 'Approve and apply' : 'Reject'" [icon]="deciding()?.approve ? 'pi pi-check' : 'pi pi-times'"
+      [severity]="deciding()?.approve ? 'primary' : 'danger'" [loading]="saving()" [disabled]="!noteValid()" (onClick)="decide()" />
+  </ng-template>
+</p-dialog>
+
+<app-class-assignment-dialog [(visible)]="classDialog" [classId]="subjectId()" (assigned)="load()" />
+<app-exam-assignment-dialog [(visible)]="examDialog" [examId]="subjectId()" (assigned)="load()" />

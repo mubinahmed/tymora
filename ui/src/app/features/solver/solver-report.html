@@ -4,5 +4,11 @@
   <p-message severity="error" [text]="error()!" />
   <div class="mt"><p-button label="Retry" icon="pi pi-refresh" (onClick)="load()" /></div>
 } @else {
-  <app-rpc-table [table]="table()" />
+  @if (classRows() && table()?.rows?.length) {
+    <p class="report-hint"><i class="pi pi-info-circle"></i> Click a class to see why it is placed where it is, its alternatives and the impact of moving it.</p>
+  }
+  <app-rpc-table [table]="table()" [clickable]="classRows()" (rowClick)="openClass($event)" />
+}
+@if (classRows()) {
+  <app-class-assignment-dialog [(visible)]="dialogVisible" [classId]="dialogClassId()" (assigned)="load()" />
 }

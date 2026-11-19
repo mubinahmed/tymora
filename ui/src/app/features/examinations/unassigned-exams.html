@@ -38,6 +38,7 @@
         @for (col of columns(); track $index) {
           <th>{{ col }}</th>
         }
+        <th style="width:3.5rem"></th>
       </tr>
     </ng-template>
 
@@ -46,13 +47,19 @@
         @for (col of columns(); track $index) {
           <td>{{ row.cells?.[$index] ?? '' }}</td>
         }
+        <td>
+          <p-button icon="pi pi-calendar-plus" size="small" [text]="true" pTooltip="Assign / alternatives" tooltipPosition="left"
+            (onClick)="openAssign(row.id)" />
+        </td>
       </tr>
     </ng-template>
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td [attr.colspan]="columns().length || 1">No not-assigned exams.</td>
+        <td [attr.colspan]="(columns().length || 0) + 1">No not-assigned exams.</td>
       </tr>
     </ng-template>
   </p-table>
 }
+
+<app-exam-assignment-dialog [(visible)]="dialogVisible" [examId]="dialogExamId()" (assigned)="reload()" />

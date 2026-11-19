@@ -915,3 +915,28 @@ a.link:hover { text-decoration: underline; }
 .hol-dot-key { width: 0.7rem; height: 0.7rem; border-radius: 50%; box-shadow: 0 0 0 1px var(--ut-border-strong); }
 .hol-border-key { width: 0.85rem; height: 0.85rem; border-radius: 3px; border: 2px solid; background: var(--ut-card); }
 
+
+/* clickable rows in the generic RPC table (e.g. class reports opening the assignment dialog) */
+.rpc-click { cursor: pointer; }
+.report-hint {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+  color: var(--ut-muted);
+  .pi { color: var(--ut-blue); }
+}
+
+/* Saved Timetables: link to the side-by-side comparison */
+.ls-compare {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--ut-muted);
+  margin-bottom: 0.75rem;
+  .pi { color: var(--ut-blue); }
+  .link { font-weight: 600; }
+}

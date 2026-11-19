@@ -14,11 +14,14 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 import { RpcService } from '../../core/rpc.service';
+import { HandoverNotes, HandoverNoteInfo } from './handover-notes';
 
 /**
  * Teacher self-service "My Leave" (StaffAbsenceRequest with mineOnly). A teacher
  * submits their own leave requests (which start pending until an administrator
- * approves them) and can withdraw a request while it is still pending.
+ * approves them), can withdraw a request while it is still pending, and can share
+ * relief handover — detailed instructions, a link, and/or an attachment — for
+ * whoever ends up covering their lessons (ITQ 6.6).
  */
 type Operation = 'LOAD' | 'SAVE' | 'DELETE';
 
@@ -32,6 +35,8 @@ interface AbsenceInfo {
   status?: number;
   statusLabel?: string;
   canEdit?: boolean;
+  canShareHandover?: boolean;
+  notes?: HandoverNoteInfo[];
 }
 interface Option { id: string; label: string; }
 interface StaffAbsenceRequest { operation: Operation; mineOnly: boolean; id?: number; absence?: AbsenceInfo; }
@@ -41,7 +46,7 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; }
   selector: 'app-my-leave',
   imports: [
     FormsModule, TableModule, ButtonModule, SelectModule, DatePickerModule, TextareaModule,
-    DialogModule, TagModule, MessageModule, ProgressSpinnerModule, ConfirmDialogModule,
+    DialogModule, TagModule, MessageModule, ProgressSpinnerModule, ConfirmDialogModule, HandoverNotes,
   ],
   providers: [ConfirmationService],
   template: `
@@ -58,7 +63,7 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; }
       } @else {
         <p-table [value]="absences()" styleClass="p-datatable-sm p-datatable-gridlines" [rowHover]="true">
           <ng-template pTemplate="header">
-            <tr><th>Reason</th><th>From</th><th>To</th><th>Note</th><th>Status</th><th style="width: 8rem;"></th></tr>
+            <tr><th>Reason</th><th>From</th><th>To</th><th>Note</th><th>Status</th><th style="width: 14rem;"></th></tr>
           </ng-template>
           <ng-template pTemplate="body" let-a>
             <tr>
@@ -67,7 +72,11 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; }
               <td>{{ a.endDate }}</td>
               <td>{{ a.note }}</td>
               <td><p-tag [value]="a.statusLabel" [severity]="statusSeverity(a.status)" /></td>
-              <td>
+              <td class="actions">
+                @if (a.canShareHandover) {
+                  <p-button [label]="'Handover' + (a.notes?.length ? ' (' + a.notes!.length + ')' : '')"
+                    icon="pi pi-share-alt" [text]="true" size="small" (onClick)="openHandover(a)" />
+                }
                 @if (a.canEdit) {
                   <p-button icon="pi pi-pencil" [text]="true" (onClick)="edit(a)" />
                   <p-button icon="pi pi-trash" severity="danger" [text]="true" (onClick)="confirmWithdraw(a)" />
@@ -98,6 +107,17 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; }
         </ng-template>
       </p-dialog>
 
+      <p-dialog [(visible)]="handoverVisible" [modal]="true" [style]="{ width: '34rem' }" header="Relief handover instructions">
+        @if (handoverTarget) {
+          <p class="hint">Shared with whoever covers your lessons on {{ handoverTarget.startDate }} – {{ handoverTarget.endDate }}.</p>
+          <app-handover-notes [absenceId]="handoverTarget.id!" [notes]="handoverTarget.notes ?? []"
+            [canAdd]="!!handoverTarget.canShareHandover" [mineOnly]="true" (notesChange)="onNotesChange(handoverTarget, $event)" />
+        }
+        <ng-template pTemplate="footer">
+          <p-button label="Close" severity="secondary" [text]="true" (onClick)="handoverVisible.set(false)" />
+        </ng-template>
+      </p-dialog>
+
       <p-confirmDialog />
     </div>
   `,
@@ -105,10 +125,12 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; }
     .page { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
     .toolbar { display: flex; justify-content: space-between; align-items: center; }
     label { display: block; font-size: .8rem; opacity: .8; margin: .5rem 0 .25rem; }
+    .actions { display: flex; gap: .1rem; flex-wrap: wrap; }
     .center { display: flex; justify-content: center; padding: 3rem; }
     .form { display: flex; flex-direction: column; }
     .form .row { display: flex; gap: 1rem; }
     .form .row > div { flex: 1; }
+    .hint { font-size: .85rem; opacity: .7; margin-top: 0; }
   `],
 })
 export class MyLeave {
@@ -126,6 +148,9 @@ export class MyLeave {
   protected readonly dialogVisible = signal(false);
   protected editing: AbsenceInfo = {};
 
+  protected readonly handoverVisible = signal(false);
+  protected handoverTarget: AbsenceInfo | null = null;
+
   constructor() {
     this.page.set('My Leave');
     this.load();
@@ -140,6 +165,13 @@ export class MyLeave {
 
   add(): void { this.editing = {}; this.dialogVisible.set(true); }
   edit(a: AbsenceInfo): void { this.editing = { ...a }; this.dialogVisible.set(true); }
+
+  openHandover(a: AbsenceInfo): void { this.handoverTarget = a; this.handoverVisible.set(true); }
+
+  onNotesChange(a: AbsenceInfo, notes: HandoverNoteInfo[]): void {
+    a.notes = notes;
+    this.absences.update((list) => list.map((x) => (x.id === a.id ? { ...x, notes } : x)));
+  }
 
   submit(): void {
     if (!this.editing.startDate || !this.editing.endDate) {

@@ -164,6 +164,14 @@
 					<hasPermission name="SolutionChanges"/>
 				</condition>
 			</item>
+			<item name="Change Requests" page="changeRequests" type="gwt">
+				<condition>
+					<or>
+						<hasPermission name="AssignmentChangeRequests"/>
+						<hasPermission name="AssignmentChangeApprove"/>
+					</or>
+				</condition>
+			</item>
 			<item name="History" page="assignmentHistory" type="gwt">
 				<condition>
 					<hasPermission name="AssignmentHistory"/>
@@ -455,6 +463,14 @@
 					<hasPermission name="ExaminationAssignmentChanges"/>
 				</condition>
 			</item>
+			<item name="Change Requests" page="changeRequests" type="gwt">
+				<condition>
+					<or>
+						<hasPermission name="AssignmentChangeRequests"/>
+						<hasPermission name="AssignmentChangeApprove"/>
+					</or>
+				</condition>
+			</item>
 			<item name="Conflict Statistics" page="ecbs.action">
 				<condition>
 					<hasPermission name="ExaminationConflictStatistics"/>
@@ -630,6 +646,7 @@
 				<hasPermission name="ReliefPlanning" authority="any"/>
 				<hasPermission name="StaffAbsences" authority="any"/>
 				<hasPermission name="MyLeaveRequests" authority="any"/>
+				<hasPermission name="MyReliefDuties" authority="any"/>
 			</or>
 			<not>
 				<hasRole name="Anonymous"/>
@@ -648,6 +665,11 @@
 		<item name="My Leave" page="myLeave" type="gwt">
 			<condition>
 				<hasPermission name="MyLeaveRequests"/>
+			</condition>
+		</item>
+		<item name="My Relief Duties" page="myReliefDuties" type="gwt">
+			<condition>
+				<hasPermission name="MyReliefDuties"/>
 			</condition>
 		</item>
 		<item name="Rules Configuration" page="reliefConfig" type="gwt">

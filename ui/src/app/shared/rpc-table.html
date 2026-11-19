@@ -28,7 +28,8 @@
     </ng-template>
 
     <ng-template pTemplate="body" let-row>
-      <tr>
+      <tr (click)="onRow(row)" [class.rpc-click]="clickable() && row.id != null"
+        [title]="clickable() && row.id != null ? (row.linkName || 'Open') : ''">
         @for (c of cols(); track c.index) {
           <td
             [style.text-align]="c.align"

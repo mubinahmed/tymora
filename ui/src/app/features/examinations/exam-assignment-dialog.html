@@ -1,0 +1,307 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [maximizable]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(1180px, 96vw)' }"
+  [contentStyle]="{ 'max-height': '78vh' }"
+  styleClass="asg-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="asg-title">
+      <i class="pi pi-calendar-clock"></i>
+      <div>
+        <div class="asg-title-main">{{ data()?.examName || 'Examination' }}</div>
+        @if (data(); as d) {
+          <div class="asg-title-sub">
+            {{ d.examType }} · {{ d.nrStudents }} students · {{ d.length }} min · {{ d.seatingType }} seating
+            · up to {{ d.maxRooms }} room{{ d.maxRooms === 1 ? '' : 's' }}
+          </div>
+        }
+      </div>
+      @if (data(); as d) {
+        @if (d.current) {
+          <p-tag value="Assigned" severity="success" [rounded]="true" />
+        } @else {
+          <p-tag value="Not assigned" severity="danger" [rounded]="true" />
+        }
+      }
+    </div>
+  </ng-template>
+
+  @if (loading()) {
+    <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+  } @else if (error()) {
+    <p-message severity="error" [text]="error()!" />
+  } @else if (data(); as d) {
+    <div class="asg-mode">
+      <i class="pi pi-info-circle"></i>
+      @if (d.solverMode) {
+        An examination solver is loaded: changes go to its in-memory solution. Save or commit the solution on the solver page.
+      } @else {
+        No examination solver is loaded for this type: a confirmed change is saved to the database straight away and
+        recorded in the change log. Suggestions need a loaded examination solver.
+      }
+    </div>
+
+    @if (d.pendingRequests?.length) {
+      <p-message severity="warn" styleClass="asg-msg">
+        <span>
+          @for (r of d.pendingRequests!; track r.id) {
+            <div><b>Change request pending approval</b> from {{ r.requestedName }} ({{ r.requestedTs | date: 'd MMM, HH:mm' }}): {{ r.reason }}</div>
+          }
+          <a class="link" routerLink="/change-requests" (click)="close()">Open Change Requests</a>
+        </span>
+      </p-message>
+    }
+
+    <!-- 1. current placement + clashes -->
+    <section class="asg-section">
+      <h3><span class="num">1</span> Current placement</h3>
+      @if (d.current; as c) {
+        <div class="asg-grid">
+          <div><div class="dt">Period</div><div class="dd" [style.color]="prefColor(c.periodPref)">{{ c.period }}</div></div>
+          <div><div class="dt">Room</div><div class="dd">{{ c.rooms || '—' }} @if (c.roomCapacity) { <span class="muted">({{ c.roomCapacity }} seats)</span> }</div></div>
+        </div>
+        @if (c.conflicts?.length) {
+          <div class="asg-conflicts">
+            @for (x of c.conflicts!; track $index) {
+              <div class="conf">
+                <i class="pi" [class.pi-users]="!x.instructor" [class.pi-user]="x.instructor"></i>
+                <b>{{ conflictLabel(x) }}</b>
+                @if (x.type !== 'Distribution') { ({{ x.count }} {{ x.instructor ? 'instructor' : 'student' }}{{ x.count === 1 ? '' : 's' }}) }
+                with {{ x.other }}
+                @if (x.otherTime) { <span class="muted">· {{ x.otherTime }}</span> }
+                @if (x.preference) { <span class="flag" [style.color]="prefColor(x.preference)">{{ prefName(x.preference) }}</span> }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="asg-ok"><i class="pi pi-check-circle"></i> No clashes in the current placement.</div>
+        }
+      } @else {
+        <div class="asg-ok"><i class="pi pi-info-circle"></i> This examination has no period yet.</div>
+      }
+    </section>
+
+    <!-- 2. periods -->
+    <section class="asg-section">
+      <h3><span class="num">2</span> Choose a period <span class="h-note">clash counts if the exam moved there{{ d.current ? ', change versus now in brackets' : '' }}</span></h3>
+      <p-table [value]="periods()" styleClass="p-datatable-sm asg-click" [rowHover]="true" [scrollable]="true" scrollHeight="18rem">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Period</th>
+            <th class="r" pTooltip="Students with another exam at the same time">Direct</th>
+            <th class="r" pTooltip="Students with more than two exams that day">&gt;2 a day</th>
+            <th class="r" pTooltip="Students with an exam in the adjacent period">Back-to-back</th>
+            <th class="r" pTooltip="Instructor direct / >2 a day / back-to-back">Instructor</th>
+            <th>Distribution</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-p>
+          <tr (click)="selectPeriod(p)" [class.sel-row]="p.selected">
+            <td [pTooltip]="periodTooltip(p)">
+              <span [style.color]="prefColor(p.pref)">{{ p.name }}</span>
+              @if (p.initial) { <span class="badge">current</span> }
+            </td>
+            <td class="r" [class]="deltaClass(p.direct, baseline()?.direct)">{{ withDelta(p.direct, baseline()?.direct) }}</td>
+            <td class="r" [class]="deltaClass(p.moreThanTwoADay, baseline()?.moreThanTwoADay)">{{ withDelta(p.moreThanTwoADay, baseline()?.moreThanTwoADay) }}</td>
+            <td class="r" [class]="deltaClass(p.backToBack, baseline()?.backToBack)">{{ withDelta(p.backToBack, baseline()?.backToBack) }}</td>
+            <td class="r">{{ (p.instructorDirect || p.instructorMoreThanTwoADay || p.instructorBackToBack) ? p.instructorDirect + ' / ' + p.instructorMoreThanTwoADay + ' / ' + p.instructorBackToBack : '' }}</td>
+            <td class="wrap">{{ p.distributionConflicts?.join(', ') }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="6">No period is available for this examination.</td></tr>
+        </ng-template>
+      </p-table>
+      @if (d.current) {
+        <div class="asg-legend">
+          <a class="link" (click)="unassignPeriod()">Remove the period (unassign this examination)</a> ·
+          Colours show period preferences; green counts improve on the current placement, red ones are worse.
+        </div>
+      }
+    </section>
+
+    <!-- 3. rooms -->
+    @if (d.maxRooms) {
+      <section class="asg-section">
+        <h3><span class="num">3</span> Choose room(s)
+          <span class="h-note">
+            @if (selectedPeriod(); as sp) { free in {{ sp.name }} · } pick rooms seating {{ d.nrStudents }} students
+            ({{ pickCapacity() }} selected)
+          </span>
+        </h3>
+        <div class="asg-options">
+          <label>Min size <p-inputNumber [(ngModel)]="minRoomSize" [min]="0" inputStyleClass="w-num" /></label>
+          <label>Max size <p-inputNumber [(ngModel)]="maxRoomSize" [min]="0" inputStyleClass="w-num" /></label>
+          <label>Name <input pInputText [(ngModel)]="roomFilter" placeholder="e.g. EDUC*" style="width:9rem" (keydown.enter)="applyRoomFilter()" /></label>
+          <label>Order <p-select [options]="roomOrders" [(ngModel)]="roomOrder" optionLabel="label" optionValue="value" (onChange)="applyRoomFilter()" /></label>
+          <label class="chk"><p-checkbox [(ngModel)]="allowRoomConflict" [binary]="true" /> Include rooms in use</label>
+          <span class="spacer"></span>
+          <p-button label="Apply" icon="pi pi-filter" size="small" severity="secondary" (onClick)="applyRoomFilter()" />
+        </div>
+        @if (rooms(); as list) {
+          <div class="asg-list rooms">
+            @for (r of list; track r.roomId) {
+              <button type="button" class="asg-item" [class.sel]="isRoomPicked(r)" (click)="toggleRoom(r)"
+                [pTooltip]="prefName(r.pref) + (r.hard ? '' : ' · room checks ignored (can be shared)')" tooltipPosition="left">
+                <span [style.color]="prefColor(r.pref)" [style.font-style]="r.hard ? null : 'italic'">{{ r.name }}</span>
+                @if (r.initial) { <span class="badge">current</span> }
+                <span class="num">{{ r.capacity }}</span>
+              </button>
+            } @empty {
+              <div class="empty-state">
+                No free room matches the filter in this period.
+                @if (!allowRoomConflict) { Tick <b>Include rooms in use</b> and Apply to see rooms taken by other exams (picking one bumps that exam). }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">Pick a period first to see the rooms free in it.</div>
+        }
+      </section>
+    }
+
+    <!-- 4. impact -->
+    <section class="asg-section">
+      <h3><span class="num">{{ d.maxRooms ? 4 : 3 }}</span> Impact of the change <span class="h-note">shown before anything is saved</span></h3>
+      @if (d.change; as ch) {
+        <p-table [value]="ch.lines ?? []" styleClass="p-datatable-sm asg-click" [rowHover]="true">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Examination</th><th>Period</th><th>Room</th>
+              <th class="r">Direct</th><th class="r">&gt;2 a day</th><th class="r">Back-to-back</th><th style="width:3rem"></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-l>
+            <tr (click)="selectExam(l.examId)" [class.sel-row]="l.selected" [pTooltip]="l.selected ? '' : 'Open this examination in the dialog'">
+              <td>{{ l.exam }}</td>
+              @if (l.unassigned) {
+                <td class="worse">{{ l.fromPeriod || 'not assigned' }} <i class="pi pi-arrow-right arrow"></i> <b>not assigned</b></td>
+                <td class="worse">{{ l.fromRooms || '—' }} <i class="pi pi-arrow-right arrow"></i> <b>—</b></td>
+              } @else {
+                <td>{{ l.fromPeriod || 'not assigned' }} <i class="pi pi-arrow-right arrow"></i> <b>{{ l.toPeriod }}</b></td>
+                <td>
+                  {{ l.fromRooms || '—' }} <i class="pi pi-arrow-right arrow"></i>
+                  @if (l.roomsMissing) { <b class="worse">select rooms</b> } @else { <b>{{ l.toRooms || '—' }}</b> }
+                </td>
+              }
+              <td class="r" [class]="deltaClassBA(l.direct, l.directBefore)">{{ beforeAfter(l.direct, l.directBefore) }}</td>
+              <td class="r" [class]="deltaClassBA(l.moreThanTwoADay, l.moreThanTwoADayBefore)">{{ beforeAfter(l.moreThanTwoADay, l.moreThanTwoADayBefore) }}</td>
+              <td class="r" [class]="deltaClassBA(l.backToBack, l.backToBackBefore)">{{ beforeAfter(l.backToBack, l.backToBackBefore) }}</td>
+              <td>
+                @if (!l.unassigned || l.selected) {
+                  <p-button icon="pi pi-times" size="small" [text]="true" severity="secondary" pTooltip="Drop from the change"
+                    (onClick)="removeFromChange(l.examId, $event)" />
+                }
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+        @if (bumped().length) {
+          <p-message severity="warn" styleClass="asg-msg">
+            <span>{{ bumped().length }} other examination(s) would lose their period or room. Click one to place it elsewhere as part of the same change.</span>
+          </p-message>
+        }
+        @if (d.selected?.conflicts?.length) {
+          <div class="asg-subhead">Clashes of {{ d.examName }} in the new placement</div>
+          <div class="asg-conflicts">
+            @for (x of d.selected!.conflicts!; track $index) {
+              <div class="conf">
+                <i class="pi" [class.pi-users]="!x.instructor" [class.pi-user]="x.instructor"></i>
+                <b>{{ conflictLabel(x) }}</b>
+                @if (x.type !== 'Distribution') { ({{ x.count }}) }
+                with {{ x.other }} @if (x.otherTime) { <span class="muted">· {{ x.otherTime }}</span> }
+              </div>
+            }
+          </div>
+        }
+      } @else {
+        <div class="empty-state">Pick a period{{ d.maxRooms ? ' and rooms' : '' }} above, or choose a suggestion below.</div>
+      }
+    </section>
+
+    <!-- 5. suggestions -->
+    <section class="asg-section">
+      <h3><span class="num">{{ d.maxRooms ? 5 : 4 }}</span> Suggestions <span class="h-note">alternative periods and rooms computed by the solver</span></h3>
+      @if (d.canComputeSuggestions) {
+        <div class="asg-options">
+          <label>Depth <p-inputNumber [(ngModel)]="depth" [min]="1" [max]="10" inputStyleClass="w-num" /></label>
+          <label>Time limit (s) <p-inputNumber [(ngModel)]="timeoutSec" [min]="1" [max]="60" inputStyleClass="w-num" /></label>
+          <span class="spacer"></span>
+          <p-button label="Compute suggestions" icon="pi pi-search" size="small" [loading]="computing()" (onClick)="computeSuggestions()" />
+        </div>
+        @if (d.suggestions; as list) {
+          @if (list.length) {
+            <p-table [value]="list" styleClass="p-datatable-sm asg-click" [rowHover]="true">
+              <ng-template pTemplate="header">
+                <tr><th style="width:6rem">Value</th><th>Changes</th><th style="width:7rem">Unassigned</th><th style="width:6rem"></th></tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-s let-i="rowIndex">
+                <tr (click)="pickSuggestion(i)">
+                  <td [class]="(s.value ?? 0) < 0 ? 'better' : (s.value ?? 0) > 0 ? 'worse' : ''">{{ (s.value ?? 0) | number: '1.0-0' }}</td>
+                  <td class="wrap">{{ changeSummary(s) }}</td>
+                  <td>{{ s.nrUnassigned || 0 }}</td>
+                  <td><p-button label="Preview" size="small" [text]="true" (onClick)="pickSuggestion(i); $event.stopPropagation()" /></td>
+                </tr>
+              </ng-template>
+            </p-table>
+          }
+          <div class="asg-legend">
+            {{ d.suggestionsMessage }}
+            @if (d.suggestionsTimeout || !list.length) { · <a class="link" (click)="computeSuggestions(true)">Search deeper</a> }
+          </div>
+        }
+      } @else {
+        <div class="empty-state">Load an examination solver for the {{ d.examType }} type on the solver page to get suggestions.</div>
+      }
+    </section>
+  }
+
+  <ng-template pTemplate="footer">
+    @if (confirming() && data(); as d) {
+      <div class="asg-confirm-panel">
+        <div class="asg-confirm-head">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>
+            {{ d.solverMode ? 'Change the in-memory exam solution' : 'Save this change to the database' }}:
+            {{ d.change?.nrAssigned || 0 }} exam(s) placed{{ d.change?.nrUnassigned ? ', ' + d.change!.nrUnassigned + ' unassigned' : '' }}.
+          </span>
+        </div>
+        <label class="asg-reason">
+          <span>Reason for the change <span class="req">*</span></span>
+          <textarea pTextarea [(ngModel)]="reason" rows="2" maxlength="2000" [autoResize]="true"
+            placeholder="e.g. Clash with a department event; examiner unavailable on Monday"></textarea>
+        </label>
+        @if (d.needsApproval) {
+          <div class="asg-approval-note">
+            <i class="pi pi-lock"></i>
+            This change needs approval. It is sent to an approver and is <b>not applied</b> until they approve it.
+          </div>
+        } @else {
+          <div class="asg-approval-note muted">
+            <i class="pi pi-check-circle"></i> You can apply this change directly; it is recorded with your reason as self-approved.
+          </div>
+        }
+        <div class="asg-footer">
+          <span class="muted">The reason, your name and the time are recorded with the change.</span>
+          <span class="spacer"></span>
+          <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="confirming.set(false)" />
+          <p-button [label]="d.needsApproval ? 'Submit for approval' : 'Confirm assignment'" [icon]="d.needsApproval ? 'pi pi-send' : 'pi pi-check'"
+            [loading]="busy()" [disabled]="!reasonValid()" (onClick)="assign()" />
+        </div>
+      </div>
+    } @else {
+      <div class="asg-footer">
+        @if (busy() && !loading()) { <p-progressSpinner strokeWidth="5" [style]="{ width: '1.4rem', height: '1.4rem' }" /> }
+        <span class="spacer"></span>
+        @if (hasChange()) {
+          <p-button label="Discard change" severity="secondary" [text]="true" (onClick)="clearChange()" />
+        }
+        <p-button label="Close" severity="secondary" [outlined]="true" (onClick)="close()" />
+        <p-button label="Assign…" icon="pi pi-check" [disabled]="!data()?.canAssign || busy()" (onClick)="confirming.set(true)" />
+      </div>
+    }
+  </ng-template>
+</p-dialog>

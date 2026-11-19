@@ -16,11 +16,14 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 import { RpcService } from '../../core/rpc.service';
+import { HandoverNotes, HandoverNoteInfo } from './handover-notes';
 
 /**
  * Relief Planning "Staff Absences" (admin). Lists every staff absence over a date
- * range and lets an administrator record, edit, approve/reject or remove them.
- * Approved absences feed the relief-generation engine.
+ * range and lets an administrator record, edit, approve/reject or remove them, and
+ * review (or add on a teacher's behalf) the relief handover shared for whoever
+ * covers the affected lessons (ITQ 6.6). Approved absences feed the
+ * relief-generation engine.
  */
 type Operation = 'LOAD' | 'SAVE' | 'DELETE' | 'APPROVE' | 'REJECT';
 
@@ -36,6 +39,8 @@ interface AbsenceInfo {
   status?: number;
   statusLabel?: string;
   canEdit?: boolean;
+  canShareHandover?: boolean;
+  notes?: HandoverNoteInfo[];
 }
 interface Option { id: string; label: string; }
 interface StaffAbsenceRequest { operation: Operation; from?: string; to?: string; mineOnly?: boolean; id?: number; absence?: AbsenceInfo; }
@@ -45,7 +50,7 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; s
   selector: 'app-staff-absences',
   imports: [
     FormsModule, TableModule, ButtonModule, SelectModule, DatePickerModule, InputTextModule,
-    TextareaModule, TooltipModule, DialogModule, TagModule, MessageModule, ProgressSpinnerModule, ConfirmDialogModule,
+    TextareaModule, TooltipModule, DialogModule, TagModule, MessageModule, ProgressSpinnerModule, ConfirmDialogModule, HandoverNotes,
   ],
   providers: [ConfirmationService],
   template: `
@@ -66,7 +71,7 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; s
       } @else {
         <p-table [value]="absences()" styleClass="p-datatable-sm p-datatable-gridlines" [rowHover]="true">
           <ng-template pTemplate="header">
-            <tr><th>Staff</th><th>Reason</th><th>From</th><th>To</th><th>Note</th><th>Status</th><th style="width: 14rem;"></th></tr>
+            <tr><th>Staff</th><th>Reason</th><th>From</th><th>To</th><th>Note</th><th>Status</th><th style="width: 18rem;"></th></tr>
           </ng-template>
           <ng-template pTemplate="body" let-a>
             <tr>
@@ -77,6 +82,10 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; s
               <td>{{ a.note }}</td>
               <td><p-tag [value]="a.statusLabel" [severity]="statusSeverity(a.status)" /></td>
               <td class="actions">
+                @if (a.canShareHandover) {
+                  <p-button [label]="'Handover' + (a.notes?.length ? ' (' + a.notes!.length + ')' : '')"
+                    icon="pi pi-share-alt" [text]="true" size="small" (onClick)="openHandover(a)" />
+                }
                 @if (a.status === 0 && canManage()) {
                   <p-button icon="pi pi-check" severity="success" [text]="true" pTooltip="Approve" (onClick)="setStatus('APPROVE', a)" />
                   <p-button icon="pi pi-times" severity="danger" [text]="true" pTooltip="Reject" (onClick)="setStatus('REJECT', a)" />
@@ -114,6 +123,17 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; s
         </ng-template>
       </p-dialog>
 
+      <p-dialog [(visible)]="handoverVisible" [modal]="true" [style]="{ width: '34rem' }" header="Relief handover instructions">
+        @if (handoverTarget) {
+          <p class="hint">Shared for whoever covers {{ handoverTarget.name }}'s lessons on {{ handoverTarget.startDate }} – {{ handoverTarget.endDate }}.</p>
+          <app-handover-notes [absenceId]="handoverTarget.id!" [notes]="handoverTarget.notes ?? []"
+            [canAdd]="!!handoverTarget.canShareHandover" [mineOnly]="false" (notesChange)="onNotesChange(handoverTarget, $event)" />
+        }
+        <ng-template pTemplate="footer">
+          <p-button label="Close" severity="secondary" [text]="true" (onClick)="handoverVisible.set(false)" />
+        </ng-template>
+      </p-dialog>
+
       <p-confirmDialog />
     </div>
   `,
@@ -122,11 +142,12 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; s
     .toolbar { display: flex; justify-content: space-between; align-items: end; gap: 1rem; flex-wrap: wrap; }
     .toolbar .left { display: flex; align-items: end; gap: .75rem; }
     label { display: block; font-size: .8rem; opacity: .8; margin: .5rem 0 .25rem; }
-    .actions { display: flex; gap: .1rem; }
+    .actions { display: flex; gap: .1rem; flex-wrap: wrap; }
     .center { display: flex; justify-content: center; padding: 3rem; }
     .form { display: flex; flex-direction: column; }
     .form .row { display: flex; gap: 1rem; }
     .form .row > div { flex: 1; }
+    .hint { font-size: .85rem; opacity: .7; margin-top: 0; }
   `],
 })
 export class StaffAbsences {
@@ -149,6 +170,9 @@ export class StaffAbsences {
   protected readonly dialogVisible = signal(false);
   protected editing: AbsenceInfo = {};
 
+  protected readonly handoverVisible = signal(false);
+  protected handoverTarget: AbsenceInfo | null = null;
+
   constructor() {
     this.page.set('Staff Absences');
     this.load();
@@ -164,6 +188,13 @@ export class StaffAbsences {
 
   add(): void { this.editing = { status: 1 }; this.dialogVisible.set(true); }
   edit(a: AbsenceInfo): void { this.editing = { ...a }; this.dialogVisible.set(true); }
+
+  openHandover(a: AbsenceInfo): void { this.handoverTarget = a; this.handoverVisible.set(true); }
+
+  onNotesChange(a: AbsenceInfo, notes: HandoverNoteInfo[]): void {
+    a.notes = notes;
+    this.absences.update((list) => list.map((x) => (x.id === a.id ? { ...x, notes } : x)));
+  }
 
   submit(): void {
     if (!this.editing.uid && !this.mineOnly) {
