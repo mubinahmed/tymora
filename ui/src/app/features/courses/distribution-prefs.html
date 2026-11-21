@@ -29,6 +29,12 @@
           [value]="filter()"
           (input)="filter.set($any($event.target).value)"
         />
+        <p-button label="Edit / Delete" icon="pi pi-pencil" severity="secondary" [text]="true"
+          routerLink="/distribution-prefs-edit" />
+        @if (d.canAdd) {
+          <p-button label="Add Distribution Preference" icon="pi pi-plus"
+            routerLink="/distribution-prefs-edit" [queryParams]="{ add: 1 }" />
+        }
       </div>
     </ng-template>
 

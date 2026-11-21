@@ -4,12 +4,33 @@
   <p-message severity="error" [text]="error()!" />
   <div class="mt"><p-button label="Back" icon="pi pi-arrow-left" (onClick)="back()" /></div>
 } @else {
-  <p-card [header]="'Course Offering · ' + courseLabel()">
+  <p-card [header]="createMode() ? 'Add Course Offering' : 'Course Offering · ' + courseLabel()">
     <form [formGroup]="form" class="building-form" (ngSubmit)="save()">
+      @if (formError()) {
+        <p-message severity="error" [text]="formError()!" />
+      }
       <div class="field-row">
         <div class="field">
-          <label>Subject Area</label>
-          <input pInputText [value]="subjectArea()" disabled />
+          @if (createMode()) {
+            <label for="co-subject">Subject Area *</label>
+            <p-select
+              inputId="co-subject"
+              formControlName="subjectAreaId"
+              [options]="props()?.subjectAreas ?? []"
+              optionValue="id"
+              optionLabel="abbv"
+              placeholder="Select subject area"
+              [filter]="true"
+              filterBy="abbv,label"
+              appendTo="body"
+            >
+              <ng-template let-sa pTemplate="selectedItem">{{ sa.abbv }} — {{ sa.label }}</ng-template>
+              <ng-template let-sa pTemplate="item">{{ sa.abbv }} — {{ sa.label }}</ng-template>
+            </p-select>
+          } @else {
+            <label>Subject Area</label>
+            <input pInputText [value]="subjectArea()" disabled />
+          }
         </div>
         <div class="field">
           <label for="co-nbr">Course Number *</label>
@@ -17,11 +38,14 @@
           @if (form.controls.courseNbr.invalid && form.controls.courseNbr.touched) {
             <p-message severity="error" text="Course number is required" />
           }
+          @if (createMode() && props()?.courseNbrInfo) {
+            <small>{{ props()?.courseNbrInfo }}</small>
+          }
         </div>
       </div>
 
       <div class="field">
-        <label for="co-title">Title</label>
+        <label for="co-title">Title{{ createMode() ? ' *' : '' }}</label>
         <input pInputText id="co-title" formControlName="title" autocomplete="off" />
       </div>
 
@@ -52,10 +76,12 @@
             appendTo="body"
           />
         </div>
-        <div class="field">
-          <label for="co-exp">Expected Students</label>
-          <p-inputNumber inputId="co-exp" formControlName="nbrExpectedStudents" [useGrouping]="false" [min]="0" />
-        </div>
+        @if (!createMode()) {
+          <div class="field">
+            <label for="co-exp">Expected Students</label>
+            <p-inputNumber inputId="co-exp" formControlName="nbrExpectedStudents" [useGrouping]="false" [min]="0" />
+          </div>
+        }
       </div>
 
       <div class="field-check">
@@ -73,18 +99,20 @@
         <textarea pTextarea id="co-notes" formControlName="notes" rows="3"></textarea>
       </div>
 
-      <div class="field">
-        <label>Credit</label>
-        <input pInputText [value]="creditText() || '(none)'" disabled />
-        <small>Credit configuration, cross-listing, and coordinators are edited on the legacy screen.</small>
-      </div>
+      @if (!createMode()) {
+        <div class="field">
+          <label>Credit</label>
+          <input pInputText [value]="creditText() || '(none)'" disabled />
+          <small>Credit configuration, cross-listing, and coordinators are edited on the legacy screen.</small>
+        </div>
+      }
     </form>
 
     <ng-template pTemplate="footer">
       <div class="tbl-caption">
         <p-button label="Back" severity="secondary" [text]="true" icon="pi pi-arrow-left" (onClick)="back()" [disabled]="saving()" />
         <span class="spacer"></span>
-        <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+        <p-button [label]="createMode() ? 'Create Course' : 'Save'" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
       </div>
     </ng-template>
   </p-card>

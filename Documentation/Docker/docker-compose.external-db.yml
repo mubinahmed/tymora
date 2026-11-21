@@ -1,0 +1,24 @@
+# Use an external MySQL database instead of the unitime-db container.
+#
+#   cp external-db.env.example external-db.env      # then set DB_URL, DB_USER, DB_PASSWORD (or DB_PASSWORD_FILE)
+#   docker compose --env-file external-db.env -f docker-compose.yml -f docker-compose.external-db.yml up -d
+#
+# The database must exist and hold a Tymora / UniTime schema (see the README: "External MySQL database").
+# Tymora upgrades the schema to the current version on its first start.
+
+services:
+    unitime-db:
+        # Left out of the run: only started with --profile docker-db, which this setup does not use.
+        profiles: ["docker-db"]
+
+    unitime-web:
+        environment:
+            DB_URL: ${DB_URL:?set DB_URL, e.g. jdbc:mysql://db.example.org:3306/timetable?useSSL=true}
+            DB_USER: ${DB_USER:?set DB_USER}
+            # No demo default here: give DB_PASSWORD, or DB_PASSWORD_FILE pointing to a file mounted into the container.
+            DB_PASSWORD: ${DB_PASSWORD:-}
+            DB_PASSWORD_FILE: ${DB_PASSWORD_FILE:-}
+            DB_WAIT_SECONDS: ${DB_WAIT_SECONDS:-120}
+        # A MySQL server on the Docker host itself is reachable as host.docker.internal (also on Linux).
+        extra_hosts:
+            - "host.docker.internal:host-gateway"

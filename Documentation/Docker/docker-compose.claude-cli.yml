@@ -1,0 +1,46 @@
+# AI assistant through the Claude Code CLI (personal / local use only).
+#
+# Opt-in override for docker-compose.yml. The CLI is installed in the web image at build time; only a login token
+# is mounted from the host, read-only. Every assistant question in this deployment uses the Claude account of that
+# token, so use this for a personal / local setup; for a shared server use an Anthropic API key instead
+# (ANTHROPIC_API_KEY, or tmtbl.assistant.api.keyFile).
+#
+# Once, on the host (needs a Claude subscription; opens a browser to sign in, prints a long-lived token):
+#   claude setup-token
+#   (save the printed token in a file, e.g. ~/.config/tymora/claude-token, and chmod 600 it)
+#
+# Then:
+#   export CLAUDE_TOKEN_FILE=~/.config/tymora/claude-token
+#   docker compose -f docker-compose.yml -f docker-compose.claude-cli.yml up -d --build
+#
+# Check (no model call; the token is in Tomcat's environment only, so a plain `docker exec ... claude` shows loggedIn: false):
+#   docker exec unitime-web sh -c 'CLAUDE_CODE_OAUTH_TOKEN="$(tr -d "[:space:]" < /run/secrets/claude-code-token)" claude auth status'
+
+services:
+    unitime-web:
+        build:
+            args:
+                INSTALL_CLAUDE_CLI: "true"
+                # A version, or "stable" / "latest"; rebuild with --build after changing it.
+                CLAUDE_CLI_VERSION: ${CLAUDE_CLI_VERSION:-2.1.329}
+        environment:
+            # Selects the claude-cli backend (CATALINA_OPTS, so the base settings stay as they are).
+            # The system property wins over the Application Configuration page setting.
+            CATALINA_OPTS: -Dtmtbl.assistant.backend=claude-cli
+            # The entrypoint exports the token in this file as CLAUDE_CODE_OAUTH_TOKEN for the CLI.
+            CLAUDE_CODE_OAUTH_TOKEN_FILE: /run/secrets/claude-code-token
+        volumes:
+            # Only the token file, read-only. create_host_path: false makes Docker refuse to start when the file does
+            # not exist, instead of silently creating an empty directory at that path (which then fails in the
+            # entrypoint with "tr: read error: Is a directory").
+            - type: bind
+              source: "${CLAUDE_TOKEN_FILE:?set CLAUDE_TOKEN_FILE to a file holding the token from claude setup-token}"
+              target: /run/secrets/claude-code-token
+              read_only: true
+              bind:
+                  create_host_path: false
+            # Alternative (Linux / WSL login files only; not macOS, where the login is in the Keychain): mount just the
+            # CLI's credentials file instead of a token, and remove CLAUDE_CODE_OAUTH_TOKEN_FILE above. It must stay
+            # writable, because the CLI refreshes the login in it, and host and container then share one rotating
+            # login, so a refresh on one side can sign the other out. The setup-token file avoids both.
+            # - "${HOME}/.claude/.credentials.json:/root/.claude/.credentials.json"

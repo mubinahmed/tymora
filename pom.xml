@@ -339,6 +339,23 @@
 			<artifactId>jackson-core</artifactId>
 			<version>${jackson.version}</version>
 		</dependency>
+		<!-- Jackson aligned on one version: the Anthropic SDK needs 2.19; cas-client-core brought databind 2.13 -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+		<!-- AI assistant (server side only): Anthropic Java SDK -->
+		<dependency>
+			<groupId>com.anthropic</groupId>
+			<artifactId>anthropic-java</artifactId>
+			<version>${anthropic.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>jstl</groupId>
 			<artifactId>jstl</artifactId>
@@ -533,8 +550,8 @@
 					<execution>
 						<configuration>
 							<module>org.unitime.timetable.gwt.UniTime</module>
-							<extraJvmArgs>-Xmx1g</extraJvmArgs>
-							<localWorkers>8</localWorkers>
+							<extraJvmArgs>${gwt.jvmArgs}</extraJvmArgs>
+							<localWorkers>${gwt.localWorkers}</localWorkers>
 							<webappDirectory>${project.build.directory}/gwt</webappDirectory>
 						</configuration>
 						<goals>
@@ -554,6 +571,27 @@
 						<version>${gwt.version}</version>
 					</dependency>
 				</dependencies>
+			</plugin>
+			<!-- The WAR adds target/gwt (the GWT compile output, see gwt.compiler.skip); the folder must exist even when
+			     the GWT compile is skipped and no prebuilt output is present. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>gwt-output-folder</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<mkdir dir="${project.build.directory}/gwt"/>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -599,6 +637,14 @@
 		<struts2.version>6.7.4</struts2.version>
 		<protobuf.version>4.31.1</protobuf.version>
 		<gwt.version>2.12.2</gwt.version>
+		<!-- The GWT compile (the legacy UI's browser JavaScript, target/gwt) is opt-in: the Angular UI does not use it
+		     (it calls the Java command classes through /api/rpc). Build with -Dgwt.compiler.skip=false to include the legacy
+		     UI pages that still need it (e.g. Data Exchange, Roll Forward Session). -->
+		<gwt.compiler.skip>true</gwt.compiler.skip>
+		<!-- GWT compile resources: parallel worker JVMs (each with gwt.jvmArgs) and their heap. Defaults sized for a
+		     developer machine (8 GB); raise on a build server, e.g. -Dgwt.localWorkers=8. -->
+		<gwt.localWorkers>2</gwt.localWorkers>
+		<gwt.jvmArgs>-Xmx2g</gwt.jvmArgs>
 		<spring.version>5.3.39</spring.version>
 		<spring-security.version>5.8.16</spring-security.version>
 		<spring-integration.version>5.5.20</spring-integration.version>
@@ -622,7 +668,8 @@
 		<biweekly.version>0.6.8</biweekly.version>
 		<poi.version>5.4.0</poi.version>
 		<dom4j.version>2.1.4</dom4j.version>
-		<jackson.version>2.18.2</jackson.version>
+		<jackson.version>2.19.4</jackson.version>
+		<anthropic.version>3.3.0</anthropic.version>
 		<text.version>1.13.0</text.version>
 		<lang3.version>3.17.0</lang3.version>
 		<asm.version>9.7.1</asm.version>
@@ -632,17 +679,21 @@
 	</properties>
 
 	<repositories>
+		<!-- cpsolver ${cpsolver.version} is not on any public repository (it came from the Sonatype OSS snapshot
+		     repository, which is gone). This repository inside the project holds it: the jar committed in WebContent/WEB-INF/lib, deployed
+		     with mvn deploy:deploy-file -Durl=file://$PWD/lib/maven-repo -Dfile=WebContent/WEB-INF/lib/cpsolver-1.4-SNAPSHOT.jar
+		     -DgroupId=org.unitime -DartifactId=cpsolver -Dversion=1.4-SNAPSHOT -Dpackaging=jar (repeat when the jar changes). -->
+		<repository>
+			<id>project-lib</id>
+			<name>Libraries kept in this project (lib/maven-repo)</name>
+			<url>file://${project.basedir}/lib/maven-repo</url>
+			<releases><enabled>true</enabled></releases>
+			<snapshots><enabled>true</enabled></snapshots>
+		</repository>
 		<repository>
 			<id>maven-restlet</id>
 			<name>Public online Restlet repository</name>
 			<url>https://maven.restlet.talend.com</url>
-		</repository>
-		<repository>
-			<id>snapshot-repo</id>
-			<name>Sonatype's SNAPSHOT repository</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-			<releases><enabled>false</enabled></releases>
-			<snapshots><enabled>true</enabled></snapshots>
 		</repository>
 	</repositories>
 </project>

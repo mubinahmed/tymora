@@ -30,6 +30,8 @@ import {
   TimeInfo,
 } from '../../core/models';
 import { intPrefColor, intPrefName, prefColor } from '../../shared/preference';
+import { readableTextColor } from '../../shared/contrast';
+import { ThemeService } from '../../core/theme.service';
 import {
   KEY_CRITERIA,
   assignedSelection,
@@ -129,9 +131,11 @@ export class ClassAssignmentDialog {
 
   protected readonly timeName = timeName;
   protected readonly roomsName = roomsName;
-  protected readonly intPrefColor = intPrefColor;
+  private readonly theme = inject(ThemeService);
+  /** Preference colours as TEXT, adjusted for readable contrast on the current theme (light and dark). */
+  protected readonly intPrefColor = (pref: number | null | undefined) => readableTextColor(intPrefColor(pref), this.theme.isDark());
   protected readonly intPrefName = intPrefName;
-  protected readonly prefColor = prefColor;
+  protected readonly prefColor = (prolog: string | null | undefined) => readableTextColor(prefColor(prolog), this.theme.isDark());
 
   protected readonly className = computed(() => this.details()?.class?.name ?? 'Class');
   protected readonly nrRooms = computed(() => this.details()?.class?.nrRooms ?? 0);

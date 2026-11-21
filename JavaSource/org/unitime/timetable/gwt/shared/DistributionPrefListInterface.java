@@ -73,8 +73,12 @@ public class DistributionPrefListInterface implements IsSerializable {
 		private List<SubjectAreaInfo> iSubjectAreas = new ArrayList<SubjectAreaInfo>();
 		private List<String> iColumns = new ArrayList<String>();
 		private List<Row> iRows = new ArrayList<Row>();
+		private boolean iCanAdd = false;
 
 		public DistributionPrefListResponse() {}
+
+		public boolean isCanAdd() { return iCanAdd; }
+		public void setCanAdd(boolean canAdd) { iCanAdd = canAdd; }
 
 		public String getTitle() { return iTitle; }
 		public void setTitle(String title) { iTitle = title; }

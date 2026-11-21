@@ -1,0 +1,275 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+} @else if (info(); as d) {
+  <div class="at-page">
+    <p-tabs [value]="tab" (valueChange)="onTab($event)">
+      <p-tablist>
+        @if (canManage()) { <p-tab value="dashboard">Dashboard</p-tab> }
+        <p-tab value="take">Take attendance</p-tab>
+        <p-tab value="excuses">Medical certificates &amp; leave @if (d.pendingExcuses) { <span class="badge-n">{{ d.pendingExcuses }}</span> }</p-tab>
+        <p-tab value="followup">Follow-up @if (d.openFollowups) { <span class="badge-n">{{ d.openFollowups }}</span> }</p-tab>
+        @if (canManage()) {
+          <p-tab value="reports">Reports</p-tab>
+          <p-tab value="settings">Settings</p-tab>
+          <p-tab value="export">SIMS export</p-tab>
+          <p-tab value="history">History</p-tab>
+        }
+      </p-tablist>
+      <p-tabpanels>
+        @if (canManage()) {
+          <p-tabpanel value="dashboard">
+            @if (tab === 'dashboard') {
+              <app-attendance-dashboard [config]="d.config" [initialDate]="init()?.lastRecorded" [termStart]="init()?.termStart" [termEnd]="init()?.termEnd" (navigate)="goTo($event)" />
+            }
+          </p-tabpanel>
+        }
+        <!-- ===== take attendance ===== -->
+        <p-tabpanel value="take">
+          @if (!current()) {
+            <div class="at-bar">
+              <p-button icon="pi pi-chevron-left" [text]="true" (onClick)="shiftDay(-1)" pTooltip="Previous day" />
+              <label><span>Date</span><input pInputText type="date" [(ngModel)]="date" (change)="loadSessions()" /></label>
+              <p-button icon="pi pi-chevron-right" [text]="true" (onClick)="shiftDay(1)" pTooltip="Next day" />
+              @if (canManage()) {
+                <p-selectButton [options]="[{ label: 'My classes', value: 'MINE' }, { label: 'All classes', value: 'ALL' }]" [(ngModel)]="scope" optionLabel="label" optionValue="value" [allowEmpty]="false" (onChange)="loadSessions()" />
+              }
+              <span class="spacer"></span>
+              <span class="muted">Term {{ init()?.termStart }} – {{ init()?.termEnd }}</span>
+            </div>
+            <p-table [value]="sessions()" styleClass="p-datatable-sm p-datatable-striped" [rowHover]="true">
+              <ng-template pTemplate="header"><tr><th>Time</th><th>Class</th><th>Room</th><th>Lecturer</th><th class="r">Enrolled</th><th>Attendance</th><th>Status</th></tr></ng-template>
+              <ng-template pTemplate="body" let-s>
+                <tr class="clickable" (click)="open(s)">
+                  <td>{{ s.time }}</td>
+                  <td><b>{{ s.className }}</b> @if (s.relief) { <p-tag value="relief cover" severity="warn" /> }</td>
+                  <td>{{ s.room }}</td><td>{{ s.takerName && s.relief ? s.takerName : s.instructors }}</td><td class="r">{{ s.enrolled }}</td>
+                  <td>@if (s.status !== 'NOT_TAKEN') { <span class="cnt p">{{ s.present }}</span> <span class="cnt l">{{ s.late }}</span> <span class="cnt a">{{ s.absent }}</span> <span class="cnt e">{{ s.excused }}</span> }</td>
+                  <td>
+                    <p-tag [value]="s.status === 'FINALISED' ? 'Finalised' : s.status === 'OPEN' ? 'In progress' : 'Not taken'" [severity]="s.status === 'FINALISED' ? 'success' : s.status === 'OPEN' ? 'info' : 'secondary'" />
+                    @if (s.checkinOpen) { <p-tag value="check-in open" severity="warn" /> }
+                  </td>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="emptymessage"><tr><td colspan="7">No class meetings{{ scope === 'MINE' ? ' of yours' : '' }} on this day.</td></tr></ng-template>
+            </p-table>
+          } @else {
+            @if (current(); as s) {
+              <div class="at-roll-head">
+                <p-button icon="pi pi-arrow-left" label="Sessions" [text]="true" (onClick)="back()" />
+                <div>
+                  <div class="title">{{ s.className }} <span class="muted">· {{ s.course }} · {{ s.itype }}</span></div>
+                  <div class="muted">{{ s.date }} {{ s.time }} · {{ s.room }} · {{ s.instructors }} @if (s.relief) { · <b>{{ s.takerName }}</b> }</div>
+                </div>
+                <span class="spacer"></span>
+                <p-tag [value]="s.status === 'FINALISED' ? 'Finalised' : s.status === 'OPEN' ? 'In progress' : 'Not taken'" [severity]="s.status === 'FINALISED' ? 'success' : s.status === 'OPEN' ? 'info' : 'secondary'" />
+              </div>
+              <div class="at-bar">
+                <span class="cnt p">Present {{ counts().PRESENT }}</span><span class="cnt l">Late {{ counts().LATE }}</span>
+                <span class="cnt a">Absent {{ counts().ABSENT }}</span><span class="cnt e">Excused {{ counts().EXCUSED }}</span>
+                <span class="muted">Not marked {{ counts().unmarked }}</span>
+                <span class="spacer"></span>
+                @if (s.status !== 'FINALISED') {
+                  @if (d.config?.qrEnabled) {
+                    @if (s.checkinOpen) { <p-button label="Close check-in" icon="pi pi-stop-circle" severity="secondary" (onClick)="closeCheckin()" /> }
+                    @else { <p-button label="Open QR check-in" icon="pi pi-qrcode" severity="secondary" (onClick)="openCheckin()" /> }
+                  }
+                  @if (d.config?.rollcallEnabled) {
+                    <p-button label="Mark unmarked present" icon="pi pi-check-square" severity="secondary" [text]="true" (onClick)="allPresent()" />
+                    <p-button label="Save" icon="pi pi-save" (onClick)="save()" [disabled]="!dirty" [loading]="busy()" />
+                  }
+                  <p-button label="Finalise" icon="pi pi-lock" severity="success" (onClick)="finalise()" pTooltip="Unmarked students are recorded absent (or excused when an approved certificate covers the date)" />
+                } @else if (canManage()) {
+                  <input pInputText [(ngModel)]="reason" placeholder="Reason for amending" style="width: 16rem" />
+                  <p-button label="Save amendment" icon="pi pi-save" (onClick)="save()" [disabled]="!dirty" />
+                  <p-button label="Reopen" icon="pi pi-undo" severity="secondary" [text]="true" (onClick)="reopen()" />
+                }
+              </div>
+              <div class="at-roll" [class.with-qr]="qrOpen()">
+                <p-table [value]="roster()" styleClass="p-datatable-sm p-datatable-striped">
+                  <ng-template pTemplate="header"><tr><th>Student</th><th>Id</th><th class="r" pTooltip="Attendance in this class so far (finalised sessions)">So far</th><th>Status</th><th>How</th><th>Note</th></tr></ng-template>
+                  <ng-template pTemplate="body" let-r>
+                    <tr>
+                      <td>{{ r.name }} @if (r.excused) { <p-tag value="certificate" severity="info" pTooltip="An approved medical certificate or leave covers this date" /> }</td>
+                      <td>{{ r.externalId }}</td>
+                      <td class="r"><span [class]="'rate ' + rateClass(r.ratePct)">{{ r.ratePct != null ? r.ratePct + '%' : '' }}</span></td>
+                      <td>
+                        <div class="st">
+                          @for (o of statusOptions; track o.value) {
+                            <button type="button" [class]="'stb ' + o.value.toLowerCase()" [class.on]="statusOf(r) === o.value" [title]="o.title"
+                              [disabled]="s.status === 'FINALISED' && !canManage()" (click)="setStatus(r, $any(o.value))">{{ o.label }}</button>
+                          }
+                        </div>
+                      </td>
+                      <td class="muted">{{ marks[r.studentId] ? 'unsaved' : r.source ? (r.source === 'QR' ? 'QR ' + (r.markedTs | date: 'HH:mm:ss') : r.source.toLowerCase()) : '' }}</td>
+                      <td><input pInputText class="note" [ngModel]="notes[r.studentId] ?? r.note" (ngModelChange)="notes[r.studentId] = $event; dirty = true" [disabled]="s.status === 'FINALISED' && !canManage()" /></td>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="emptymessage"><tr><td colspan="6">No students are enrolled.</td></tr></ng-template>
+                </p-table>
+                @if (qrOpen()) {
+                  <aside class="at-qr">
+                    <div class="dt">Scan to check in</div>
+                    @if (qrImage()) { <img [src]="qrImage()" alt="QR check-in code" /> }
+                    <div class="qr-meta">Code changes in <b>{{ qrSeconds() }}</b> s · open until {{ s.checkinUntil | date: 'HH:mm' }}</div>
+                    <div class="qr-meta">{{ counts().PRESENT + counts().LATE }} of {{ roster().length }} checked in</div>
+                    <div class="muted small">Students scan with their phone while logged in. Each code is valid for one rotation (plus a short grace period); check-ins after {{ d.config?.lateMinutes }} minutes count as late.</div>
+                    <a class="muted small link" [href]="qrUrl" target="_blank" rel="noopener">Check-in link</a>
+                  </aside>
+                }
+              </div>
+            }
+          }
+        </p-tabpanel>
+
+        <!-- ===== excuses ===== -->
+        <p-tabpanel value="excuses">
+          <div class="muted at-hint">Submitted by students under My Attendance. Approval: {{ d.config?.excuseApprover === 'LECTURER' ? 'any lecturer of the student' : 'the school office (attendance managers)' }} (Settings). Approving changes absences in the period to excused.</div>
+          <p-table [value]="excuses()" styleClass="p-datatable-sm p-datatable-striped" [paginator]="excuses().length > 25" [rows]="25">
+            <ng-template pTemplate="header"><tr><th>Submitted</th><th>Student</th><th>Type</th><th>Period</th><th>Note</th><th>Document</th><th>Status</th><th></th></tr></ng-template>
+            <ng-template pTemplate="body" let-e>
+              <tr>
+                <td>{{ e.submittedTs | date: 'd MMM, HH:mm' }}</td><td>{{ e.studentName }} <span class="muted">{{ e.studentExternalId }}</span></td>
+                <td>{{ excuseLabel(e.type) }}</td><td>{{ e.fromDate | date: 'd MMM' }} – {{ e.toDate | date: 'd MMM y' }}</td><td class="wrap">{{ e.note }}</td>
+                <td>@if (e.hasFile) { <a class="link" (click)="viewFile(e)"><i class="pi pi-paperclip"></i> {{ e.fileName }}</a> }</td>
+                <td><p-tag [value]="e.status" [severity]="e.status === 'APPROVED' ? 'success' : e.status === 'REJECTED' ? 'danger' : 'warn'" />
+                  @if (e.decidedBy) { <div class="muted small">{{ e.decidedBy }}{{ e.decisionNote ? ': ' + e.decisionNote : '' }}</div> }</td>
+                <td class="act">@if (e.canDecide) {
+                  <p-button label="Approve" size="small" (onClick)="decideFor.set({ e: e, approve: true })" />
+                  <p-button label="Reject" size="small" severity="danger" [outlined]="true" (onClick)="decideFor.set({ e: e, approve: false })" /> }</td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage"><tr><td colspan="8">No medical certificates or leave submitted.</td></tr></ng-template>
+          </p-table>
+        </p-tabpanel>
+
+        <!-- ===== follow-up ===== -->
+        <p-tabpanel value="followup">
+          <div class="at-bar">
+            <p-selectButton [options]="[{ label: 'Open', value: 'OPEN' }, { label: 'In progress', value: 'IN_PROGRESS' }, { label: 'Closed', value: 'CLOSED' }, { label: 'All', value: 'ALL' }]" [ngModel]="caseFilter()" (ngModelChange)="caseFilter.set($event)" optionLabel="label" optionValue="value" [allowEmpty]="false" />
+            <span class="spacer"></span>
+            <span class="muted">Raised automatically when a session is finalised; staff review each case and decide the action.</span>
+            @if (canManage()) { <p-button label="Run rules now" icon="pi pi-bolt" size="small" severity="secondary" (onClick)="evaluate()" /> }
+          </div>
+          <p-table [value]="visibleCases()" styleClass="p-datatable-sm p-datatable-striped" [paginator]="visibleCases().length > 25" [rows]="25">
+            <ng-template pTemplate="header"><tr><th>Raised</th><th>Student</th><th>Class</th><th>Reason</th><th class="r">Now</th><th>Alerted</th><th>Status</th><th></th></tr></ng-template>
+            <ng-template pTemplate="body" let-f>
+              <tr>
+                <td>{{ f.createdTs | date: 'd MMM, HH:mm' }}</td><td>{{ f.studentName }} <span class="muted">{{ f.studentExternalId }}</span></td><td>{{ f.className }}</td>
+                <td class="wrap"><p-tag [value]="ruleLabel(f.rule)" [severity]="f.rule === 'ELIGIBILITY_RISK' ? 'danger' : 'warn'" /> <div class="small">{{ f.detail }}</div></td>
+                <td class="r"><span [class]="'rate ' + rateClass(f.ratePct)">{{ f.ratePct != null ? f.ratePct + '%' : '' }}</span></td>
+                <td class="wrap small muted">{{ f.recipients }}</td>
+                <td><p-tag [value]="f.status === 'IN_PROGRESS' ? 'In progress' : f.status === 'CLOSED' ? 'Closed' : 'Open'" [severity]="f.status === 'CLOSED' ? 'success' : f.status === 'IN_PROGRESS' ? 'info' : 'warn'" />
+                  @if (f.outcome) { <div class="small">{{ f.outcome }}</div> }</td>
+                <td class="act"><p-button label="Update" size="small" [text]="true" (onClick)="editCase(f)" /></td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage"><tr><td colspan="8">No cases.</td></tr></ng-template>
+          </p-table>
+        </p-tabpanel>
+
+        @if (canManage()) {
+          <!-- ===== reports ===== -->
+          <p-tabpanel value="reports">
+            @if (tab === 'reports') {
+              <app-attendance-reports [reports]="init()?.reports ?? []" [config]="d.config" [termStart]="init()?.termStart" [termEnd]="init()?.termEnd" [lastRecorded]="init()?.lastRecorded" [initialReport]="reportToOpen" />
+            }
+          </p-tabpanel>
+
+          <!-- ===== settings ===== -->
+          <p-tabpanel value="settings">
+            @if (config; as c) {
+              <div class="at-settings">
+                <section>
+                  <h4>Policy</h4>
+                  <label><span>Minimum attendance %</span><p-inputNumber [(ngModel)]="c.minPct" [min]="0" [max]="100" /></label>
+                  <label><span>Examination eligibility % (empty = not used)</span><p-inputNumber [(ngModel)]="c.eligibilityPct" [min]="0" [max]="100" /></label>
+                  <label class="chk"><p-checkbox [(ngModel)]="c.lateCountsPresent" [binary]="true" /> Late counts as attended</label>
+                  <label class="chk"><p-checkbox [(ngModel)]="c.excusedCountsPresent" [binary]="true" /> Excused counts as attended</label>
+                </section>
+                <section>
+                  <h4>Capture</h4>
+                  <label class="chk"><p-checkbox [(ngModel)]="c.rollcallEnabled" [binary]="true" /> Lecturer roll call</label>
+                  <label class="chk"><p-checkbox [(ngModel)]="c.qrEnabled" [binary]="true" /> QR self check-in</label>
+                  <label><span>QR code changes every (seconds)</span><p-inputNumber [(ngModel)]="c.qrRotationSec" [min]="5" /></label>
+                  <label><span>Check-in stays open (minutes)</span><p-inputNumber [(ngModel)]="c.checkinMinutes" [min]="1" /></label>
+                  <label><span>Late after (minutes from opening)</span><p-inputNumber [(ngModel)]="c.lateMinutes" [min]="0" /></label>
+                  <label class="chk"><p-checkbox [(ngModel)]="c.oneDevice" [binary]="true" /> One device per student per session</label>
+                </section>
+                <section>
+                  <h4>Follow-up</h4>
+                  <label><span>Consecutive unexcused absences</span><p-inputNumber [(ngModel)]="c.consecutiveAbsences" [min]="0" /></label>
+                  <label><span>Rules apply after this many sessions</span><p-inputNumber [(ngModel)]="c.minSessions" [min]="1" /></label>
+                  <label><span>Alert</span><p-multiSelect [options]="recipientOptions" [(ngModel)]="recipientSel" optionLabel="label" optionValue="value" display="chip" /></label>
+                  <label class="chk"><p-checkbox [(ngModel)]="c.notifyStudent" [binary]="true" /> Also notify the student</label>
+                  <label><span>Medical certificates and leave approved by</span><p-select [options]="approverOptions" [(ngModel)]="c.excuseApprover" optionLabel="label" optionValue="value" /></label>
+                </section>
+                <section>
+                  <h4>SIMS export</h4>
+                  <label><span>Columns (in this order)</span><p-multiSelect [options]="exportOptions" [(ngModel)]="exportSel" optionLabel="label" optionValue="value" display="chip" /></label>
+                </section>
+                <div><p-button label="Save settings" icon="pi pi-check" (onClick)="saveConfig()" [loading]="busy()" /></div>
+              </div>
+            }
+          </p-tabpanel>
+
+          <!-- ===== export ===== -->
+          <p-tabpanel value="export">
+            <div class="at-bar">
+              <label><span>From</span><input pInputText type="date" [(ngModel)]="fromDate" /></label>
+              <label><span>To</span><input pInputText type="date" [(ngModel)]="toDate" /></label>
+              <p-button label="Export for SIMS (CSV)" icon="pi pi-upload" (onClick)="exportSims()" [loading]="busy()" />
+            </div>
+            <div class="muted at-hint">Finalised attendance records, one line per student and session, with the columns chosen in Settings: {{ d.config?.exportColumns }}. Each export is recorded in the history.</div>
+          </p-tabpanel>
+
+          <!-- ===== history ===== -->
+          <p-tabpanel value="history">
+            <p-table [value]="log()" styleClass="p-datatable-sm" [paginator]="log().length > 25" [rows]="25">
+              <ng-template pTemplate="header"><tr><th style="width:10rem">When</th><th style="width:10rem">Who</th><th style="width:9rem">Action</th><th>Detail</th></tr></ng-template>
+              <ng-template pTemplate="body" let-l><tr><td>{{ l.timeStamp | date: 'd MMM, HH:mm:ss' }}</td><td>{{ l.userName }}</td><td>{{ l.action }}</td><td class="wrap">{{ l.detail }}</td></tr></ng-template>
+            </p-table>
+          </p-tabpanel>
+        }
+      </p-tabpanels>
+    </p-tabs>
+  </div>
+
+  <p-dialog [visible]="!!decideFor()" (visibleChange)="!$event && decideFor.set(null)" [header]="decideFor()?.approve ? 'Approve' : 'Reject'" [modal]="true" [style]="{ width: 'min(520px, 94vw)' }">
+    @if (decideFor(); as x) {
+      <div class="at-dialog">
+        <div><b>{{ x.e.studentName }}</b> · {{ excuseLabel(x.e.type) }} · {{ x.e.fromDate | date: 'd MMM' }} – {{ x.e.toDate | date: 'd MMM y' }}</div>
+        <label><span>{{ x.approve ? 'Note (optional)' : 'Why is it rejected?' }}</span><textarea pTextarea [(ngModel)]="decisionNote" rows="3"></textarea></label>
+      </div>
+    }
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="decideFor.set(null)" />
+      <p-button [label]="decideFor()?.approve ? 'Approve' : 'Reject'" [severity]="decideFor()?.approve ? 'primary' : 'danger'" (onClick)="decide()" [loading]="busy()" />
+    </ng-template>
+  </p-dialog>
+
+  <p-dialog [visible]="!!caseEdit()" (visibleChange)="!$event && caseEdit.set(null)" header="Follow-up case" [modal]="true" [style]="{ width: 'min(600px, 94vw)' }">
+    @if (caseEdit(); as f) {
+      <div class="at-dialog">
+        <div><b>{{ f.studentName }}</b> · {{ f.className }} · {{ ruleLabel(f.rule) }}</div>
+        <div class="muted">{{ f.detail }}</div>
+        <label><span>Status</span><p-select [options]="[{ label: 'Open', value: 'OPEN' }, { label: 'In progress', value: 'IN_PROGRESS' }, { label: 'Closed', value: 'CLOSED' }]" [(ngModel)]="f.status" optionLabel="label" optionValue="value" /></label>
+        <label><span>Notes (contact made, discussion)</span><textarea pTextarea [(ngModel)]="f.notes" rows="3"></textarea></label>
+        <label><span>Outcome / action decided</span><input pInputText [(ngModel)]="f.outcome" /></label>
+        <label><span>Next review</span><input pInputText type="date" [(ngModel)]="f.nextReview" /></label>
+      </div>
+    }
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="caseEdit.set(null)" />
+      <p-button label="Save" icon="pi pi-check" (onClick)="saveCase()" [loading]="busy()" />
+    </ng-template>
+  </p-dialog>
+
+  <p-dialog [visible]="!!fileView()" (visibleChange)="!$event && fileView.set(null)" [header]="fileView()?.name ?? ''" [modal]="true" [style]="{ width: 'min(900px, 96vw)' }">
+    @if (fileView(); as f) {
+      @if (f.type.startsWith('image/')) { <img [src]="f.url" style="max-width: 100%" alt="document" /> }
+      @else { <a [href]="f.url" [attr.download]="f.name"><i class="pi pi-download"></i> Download {{ f.name }}</a> }
+    }
+  </p-dialog>
+}

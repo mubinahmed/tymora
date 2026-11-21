@@ -60,6 +60,17 @@
   }
   .help:hover { color: #fff; }
 
+  .ai-btn {
+    all: unset;
+    cursor: pointer;
+    color: var(--ut-blue-soft);
+    display: inline-flex;
+    font-size: 1.1rem;
+    padding: 0.2rem;
+    border-radius: 6px;
+    &:hover, &.on { color: #fff; }
+    &:focus-visible { outline: 2px solid var(--ut-blue-soft); }
+  }
   .cr-bell {
     position: relative;
     color: var(--ut-blue-soft);

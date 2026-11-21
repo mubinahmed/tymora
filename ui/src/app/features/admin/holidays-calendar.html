@@ -30,7 +30,7 @@
                 class="hol-day"
                 [class.hol-editable]="!disabled()"
                 [style.background]="colorFor(cell.value)"
-                [style.color]="cell.value === 0 ? 'var(--ut-text)' : '#fff'"
+                [style.color]="textColorFor(cell.value)"
                 [style.border]="cell.boundary ? '2px solid ' + boundaryColorFor(cell.boundary) : null"
                 [attr.title]="cellTitle(cell)"
                 [disabled]="disabled()"

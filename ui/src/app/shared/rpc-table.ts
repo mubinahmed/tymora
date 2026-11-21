@@ -1,7 +1,9 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { TableModule } from 'primeng/table';
 import { MessageModule } from 'primeng/message';
 import { TableInterface, TableRowInterface } from '../core/models';
+import { ThemeService } from '../core/theme.service';
+import { readableTextColor } from './contrast';
 
 interface Col {
   index: number;
@@ -22,6 +24,12 @@ interface Col {
   templateUrl: './rpc-table.html',
 })
 export class RpcTable {
+  private readonly theme = inject(ThemeService);
+  /** Server-sent cell text colour, adjusted for readable contrast on the current theme. */
+  protected cellColor(color: string | null | undefined): string {
+    return readableTextColor(color, this.theme.isDark());
+  }
+
   readonly table = input.required<TableInterface | null>();
   /** when set, rows with an id are clickable and emit rowClick (e.g. open a dialog) */
   readonly clickable = input(false);

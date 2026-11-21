@@ -6,13 +6,15 @@ import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { AuthService } from './core/auth.service';
 import { ChangeRequestsService } from './core/change-requests.service';
+import { AssistantService } from './core/assistant.service';
+import { AssistantPanel } from './features/assistant/assistant-panel';
 import { PageService } from './core/page.service';
 import { ThemeService } from './core/theme.service';
 import { MenuService } from './layout/menu.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, PanelMenuModule, ButtonModule, ToastModule],
+  imports: [RouterOutlet, RouterLink, PanelMenuModule, ButtonModule, ToastModule, AssistantPanel],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -24,6 +26,8 @@ export class App implements OnInit {
   protected page = inject(PageService);
   /** change-request badge (pending decisions for approvers, decided requests for requesters) */
   protected changes = inject(ChangeRequestsService);
+  /** AI assistant (header button + drawer) */
+  protected assistant = inject(AssistantService);
 
   protected readonly isDark = this.theme.isDark;
 
@@ -40,7 +44,11 @@ export class App implements OnInit {
    * menu must not be available until a session is selected. (Login is already
    * full-page because it renders while unauthenticated.)
    */
-  private readonly onPicker = computed(() => this.url().split('?')[0].startsWith('/select-role'));
+  private readonly onPicker = computed(() => {
+    const path = this.url().split('?')[0];
+    // /attend: the QR check-in page students open on a phone, shown full-page without the menu
+    return path.startsWith('/select-role') || path === '/attend';
+  });
 
   /** Show the app chrome only once signed in AND not on the session picker. */
   protected readonly authenticated = computed(() => !!this.user()?.name && !this.onPicker());
@@ -81,7 +89,7 @@ export class App implements OnInit {
 
     // Change-request badge: refresh on sign-in / role switch, on every navigation and every minute.
     effect(() => {
-      if (this.auth.user()?.name) this.changes.refresh();
+      if (this.auth.user()?.name) { this.changes.refresh(); this.assistant.refresh(); }
     });
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))

@@ -1,0 +1,237 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+} @else if (data(); as d) {
+  <div class="xs-page">
+    <div class="xs-head">
+      <label><span>Examination type</span>
+        <p-select [options]="typeOptions()" [(ngModel)]="examTypeId" (onChange)="onTypeChange()" [style]="{ minWidth: '9rem' }" /></label>
+      <div class="xs-kpi"><b>{{ d.nrSeated }}</b> / {{ d.nrStudents }} seated</div>
+      <div class="xs-kpi" [class.bad]="d.nrErrors"><b>{{ d.nrErrors }}</b> error(s)</div>
+      <div class="xs-kpi" [class.warn]="d.nrWarnings"><b>{{ d.nrWarnings }}</b> warning(s)</div>
+      <span class="spacer"></span>
+      @if (d.status; as st) {
+        <p-tag [value]="st.status === 'PUBLISHED' ? 'Published' : st.status === 'APPROVED' ? 'Approved' : (st.publishedTs ? 'Draft (changed after publication)' : 'Draft')"
+          [severity]="st.status === 'PUBLISHED' ? 'success' : st.status === 'APPROVED' ? 'info' : st.publishedTs ? 'warn' : 'secondary'" />
+      }
+    </div>
+    @if (d.message && !d.periods?.length) { <div class="empty-state">{{ d.message }}</div> }
+    @if (!d.periods?.length) { <div class="empty-state">No examination of this type has a period yet. Seats are allocated after the examination timetable is made.</div> }
+
+    <p-tabs [value]="tab" (valueChange)="onTab($event)">
+      <p-tablist>
+        <p-tab value="plan">Seating plan</p-tab>
+        <p-tab value="layouts">Venue layouts</p-tab>
+        <p-tab value="arrangements">Special arrangements</p-tab>
+        <p-tab value="problems">Problems @if (d.nrErrors) { <span class="badge-n">{{ d.nrErrors }}</span> }</p-tab>
+        <p-tab value="lists">Seat lists &amp; export</p-tab>
+        <p-tab value="publication">Approval &amp; publication</p-tab>
+      </p-tablist>
+      <p-tabpanels>
+        <!-- ===== seating plan ===== -->
+        <p-tabpanel value="plan">
+          <div class="xs-bar">
+            <label><span>Period</span><p-select [options]="periodOptions()" [(ngModel)]="periodId" (onChange)="onPeriodChange()" [style]="{ minWidth: '22rem' }" /></label>
+            <label><span>Venue</span><p-select [options]="roomOptions()" [(ngModel)]="roomId" (onChange)="onRoomChange()" [style]="{ minWidth: '12rem' }" /></label>
+            @if (canEdit()) {
+              <span class="spacer"></span>
+              <label><span>Sort students by</span>
+                <p-multiSelect [options]="sortOptions" [(ngModel)]="sort" optionLabel="label" optionValue="value" display="chip" [style]="{ minWidth: '16rem' }" /></label>
+              <label><span>Pattern</span><p-select [options]="patternOptions" [(ngModel)]="pattern" optionLabel="label" optionValue="value" /></label>
+              <label class="chk"><p-checkbox [(ngModel)]="keepLocked" [binary]="true" /> Keep locked seats</label>
+              <label class="chk"><p-checkbox [(ngModel)]="allPeriods" [binary]="true" /> All periods</label>
+              <p-button label="Allocate seats" icon="pi pi-th-large" (onClick)="allocate()" [loading]="busy()" />
+            }
+          </div>
+          @if (plan(); as p) {
+            <div class="xs-layout">
+              <div class="xs-gridwrap">
+                <div class="xs-gridhead">
+                  <b>{{ p.room }}</b> · {{ p.nrSeated }} of {{ p.usableSeats }} usable seats used
+                  <span class="spacer"></span>
+                  <p-button label="Print plan &amp; attendance list" icon="pi pi-print" size="small" [text]="true" (onClick)="printRoom()" />
+                </div>
+                <div class="xs-front">FRONT</div>
+                <div class="xs-grid" [style.grid-template-columns]="'repeat(' + p.columns + ', minmax(4.6rem, 1fr))'">
+                  @for (row of gridRows(); track $index) {
+                    @for (s of row; track s.label) {
+                      <button type="button" class="xs-seat" (click)="clickSeat(s)"
+                        [class.blocked]="s.blocked" [class.unused]="!s.usable && !s.blocked" [class.taken]="s.studentId != null" [class.picked]="isPicked(s)"
+                        [class.front]="s.front" [style.border-color]="seatColor(s)" [style.background]="s.studentId != null ? seatColor(s) + '1f' : null"
+                        [pTooltip]="s.studentId != null ? (s.studentName + ' (' + s.studentExternalId + ') · ' + s.exam + (s.locked ? ' · locked' : '')) : (s.blocked ? 'blocked' : s.usable ? 'free' : 'not used (spacing / capacity)')"
+                        [showDelay]="300">
+                        <span class="lbl">{{ s.label }}@if (s.accessible) { <i class="pi pi-user" title="accessible"></i> }@if (s.locked) { <i class="pi pi-lock"></i> }</span>
+                        @if (s.studentId != null) { <span class="who">{{ s.studentExternalId || s.studentName }}</span> }
+                        @if (s.special) { <span class="sp" title="special arrangement">★</span> }
+                      </button>
+                    }
+                  }
+                </div>
+                <div class="xs-legend">
+                  @for (e of p.exams ?? []; track e.id) { <span class="lg"><i [style.background]="examColors().get(e.id!)"></i>{{ e.name }} ({{ e.detail }})</span> }
+                  <span class="lg"><i class="lg-blocked"></i>blocked</span><span class="lg"><i class="lg-unused"></i>not used</span>
+                  <span class="lg"><i class="pi pi-user"></i> accessible</span><span class="lg">★ special arrangement</span>
+                </div>
+              </div>
+              <aside class="xs-side">
+                @if (pick(); as k) {
+                  <div class="xs-card">
+                    <div class="dt">Selected</div>
+                    <div><b>{{ k.studentName }}</b></div>
+                    <div class="muted">{{ k.exam }} · {{ k.seat ? 'seat ' + k.seat : 'not seated' }}</div>
+                    <div class="muted hint">Click an empty seat to move the student there, or an occupied seat to swap. You can switch venue first.</div>
+                    @if (k.seat) {
+                      <div class="xs-acts">
+                        @if (pickedSeat()?.locked) { <p-button label="Unlock" icon="pi pi-lock-open" size="small" severity="secondary" (onClick)="seatAction('UNLOCK')" /> }
+                        @else { <p-button label="Lock" icon="pi pi-lock" size="small" severity="secondary" (onClick)="seatAction('LOCK')" /> }
+                        <p-button label="Remove seat" icon="pi pi-times" size="small" severity="danger" [text]="true" (onClick)="seatAction('UNSEAT')" />
+                      </div>
+                    }
+                    <p-button label="Cancel" size="small" [text]="true" (onClick)="pick.set(null)" />
+                  </div>
+                } @else if (canEdit()) {
+                  <div class="muted hint">Click a seated student to move, swap, lock or remove their seat. Manual changes are locked so re-running the allocation keeps them.</div>
+                }
+                <div class="xs-card">
+                  <div class="dt">Without a seat in this period ({{ unseated().length }})</div>
+                  @for (u of unseated(); track u.studentId + '-' + u.examId) {
+                    <button type="button" class="xs-unseated" (click)="pickUnseated(u)" [disabled]="!canEdit()">
+                      {{ u.studentName }} <span class="muted">{{ u.exam }}</span> @if (u.special) { <span class="sp">★</span> }
+                    </button>
+                  } @empty { <div class="muted">Everyone has a seat.</div> }
+                </div>
+              </aside>
+            </div>
+          } @else if (d.periods?.length) {
+            <div class="empty-state">No venue in this period.</div>
+          }
+        </p-tabpanel>
+
+        <!-- ===== layouts ===== -->
+        <p-tabpanel value="layouts">
+          <div class="xs-bar"><span class="muted">Seat grids of the examination venues. Without a saved layout, a grid of 10 seats per row is generated from the venue capacity, with the last-row aisle seat accessible. Alternate (exam) seating uses every other seat.</span>
+            <span class="spacer"></span>@if (canEdit()) { <p-button label="Add layout" icon="pi pi-plus" size="small" (onClick)="editLayout()" /> }</div>
+          <p-table [value]="layouts()" styleClass="p-datatable-sm p-datatable-striped">
+            <ng-template pTemplate="header"><tr><th>Venue</th><th class="r">Capacity</th><th class="r">Exam capacity</th><th>Grid</th><th class="r">Front rows</th><th>Blocked</th><th>Accessible</th><th class="r">Usable</th><th></th></tr></ng-template>
+            <ng-template pTemplate="body" let-l>
+              <tr>
+                <td>{{ l.room }} @if (l.generated) { <p-tag value="generated" severity="secondary" /> }</td>
+                <td class="r">{{ l.capacity }}</td><td class="r">{{ l.examCapacity }}</td>
+                <td>{{ l.rows }} × {{ l.columns }}</td><td class="r">{{ l.frontRows }}</td>
+                <td class="wrap">{{ l.blocked }}</td><td class="wrap">{{ l.accessible }}</td><td class="r">{{ l.usableSeats }}</td>
+                <td class="act">@if (canEdit()) {
+                  <p-button icon="pi pi-pencil" size="small" [text]="true" (onClick)="editLayout(l)" />
+                  @if (!l.generated) { <p-button icon="pi pi-undo" size="small" [text]="true" severity="secondary" pTooltip="Back to the generated grid" (onClick)="resetLayout(l)" /> }
+                }</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-tabpanel>
+
+        <!-- ===== special arrangements ===== -->
+        <p-tabpanel value="arrangements">
+          <div class="xs-bar"><span class="muted">Approved special arrangements: a separate venue, an accessible or front seat, extra time. The allocation places these students first.</span>
+            <span class="spacer"></span>@if (canEdit()) { <p-button label="Add arrangement" icon="pi pi-plus" size="small" (onClick)="editArrangement()" /> }</div>
+          <p-table [value]="arrangements()" styleClass="p-datatable-sm p-datatable-striped">
+            <ng-template pTemplate="header"><tr><th>Student</th><th>Id</th><th>Arrangement</th><th>Note</th><th>Approved by</th><th></th></tr></ng-template>
+            <ng-template pTemplate="body" let-a>
+              <tr><td>{{ a.studentName }}</td><td>{{ a.studentExternalId }}</td><td>{{ arrangementText(a) }}</td><td class="wrap">{{ a.note }}</td><td>{{ a.approvedBy }}</td>
+                <td class="act">@if (canEdit()) { <p-button icon="pi pi-pencil" size="small" [text]="true" (onClick)="editArrangement(a)" /><p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" (onClick)="deleteArrangement(a)" /> }</td></tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage"><tr><td colspan="6">No special arrangements.</td></tr></ng-template>
+          </p-table>
+        </p-tabpanel>
+
+        <!-- ===== problems ===== -->
+        <p-tabpanel value="problems">
+          <p-table [value]="issues()" styleClass="p-datatable-sm" [paginator]="issues().length > 50" [rows]="50" [rowHover]="true">
+            <ng-template pTemplate="header"><tr><th style="width:6rem"></th><th>Period</th><th>Venue</th><th>Problem</th><th>What to do</th></tr></ng-template>
+            <ng-template pTemplate="body" let-i>
+              <tr class="clickable" (click)="goTo(i)">
+                <td><p-tag [value]="i.severity === 'ERROR' ? 'Error' : 'Warning'" [severity]="i.severity === 'ERROR' ? 'danger' : 'warn'" /></td>
+                <td>{{ i.period }}</td><td>{{ i.room }}{{ i.seat ? ' ' + i.seat : '' }}</td><td class="wrap">{{ i.message }}</td><td class="wrap muted">{{ i.action }}</td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage"><tr><td colspan="5">No problems: every student has a valid seat.</td></tr></ng-template>
+          </p-table>
+        </p-tabpanel>
+
+        <!-- ===== lists ===== -->
+        <p-tabpanel value="lists">
+          <div class="xs-bar">
+            <label><span>Period</span><p-select [options]="periodOptions()" [(ngModel)]="listPeriod" [showClear]="true" placeholder="All periods" [style]="{ minWidth: '18rem' }" /></label>
+            <label><span>Venue</span><p-select [options]="listRoomOptions()" [(ngModel)]="listRoom" [showClear]="true" placeholder="All venues" /></label>
+            <label><span>Search</span><input pInputText [(ngModel)]="listSearch" placeholder="Student, id, exam, seat" /></label>
+            <span class="spacer"></span>
+            <span class="muted">{{ listRows().length }} seat(s)</span>
+            <p-button label="CSV" icon="pi pi-download" size="small" severity="secondary" [text]="true" (onClick)="exportList()" />
+            <p-button label="Export for SIMS" icon="pi pi-upload" size="small" severity="secondary" [text]="true" pTooltip="Seat allocation file for the student information system" (onClick)="exportSims()" />
+          </div>
+          <p-table [value]="listRows()" styleClass="p-datatable-sm p-datatable-striped" [paginator]="listRows().length > 50" [rows]="50">
+            <ng-template pTemplate="header"><tr><th>Date</th><th>Time</th><th>Venue</th><th>Seat</th><th>Student id</th><th>Student</th><th>Examination</th><th></th></tr></ng-template>
+            <ng-template pTemplate="body" let-r>
+              <tr><td>{{ r.date }}</td><td>{{ r.time }}</td><td>{{ r.room }}</td><td><b>{{ r.seat }}</b></td><td>{{ r.studentExternalId }}</td><td>{{ r.studentName }}</td><td>{{ r.exam }}</td>
+                <td>@if (r.locked) { <i class="pi pi-lock" title="locked"></i> } @if (r.special) { <span class="sp" title="special arrangement">★</span> }</td></tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage"><tr><td colspan="8">No seats allocated yet.</td></tr></ng-template>
+          </p-table>
+        </p-tabpanel>
+
+        <!-- ===== publication ===== -->
+        <p-tabpanel value="publication">
+          <app-publication-panel [status]="d.status" [nrErrors]="d.nrErrors ?? 0" [log]="log()" [busy]="busy()" (action)="decide($event)" (loadLog)="loadLog()" />
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+  </div>
+
+  <!-- layout dialog -->
+  <p-dialog [visible]="!!layoutEdit()" (visibleChange)="!$event && layoutEdit.set(null)" header="Venue seat layout" [modal]="true" [style]="{ width: 'min(900px, 96vw)' }">
+    @if (layoutEdit(); as l) {
+      <div class="xs-form">
+        <label><span>Venue</span><p-select [options]="allRooms()" [(ngModel)]="l.roomId" optionLabel="name" optionValue="id" [filter]="true" filterBy="name" placeholder="Pick a venue" [disabled]="!!l.room" /></label>
+        <label><span>Rows</span><p-inputNumber [(ngModel)]="l.rows" [min]="1" [max]="200" (onInput)="layoutEdit.set({ ...l })" /></label>
+        <label><span>Seats per row</span><p-inputNumber [(ngModel)]="l.columns" [min]="1" [max]="100" (onInput)="layoutEdit.set({ ...l })" /></label>
+        <label><span>Front rows</span><p-inputNumber [(ngModel)]="l.frontRows" [min]="0" [max]="20" (onInput)="layoutEdit.set({ ...l })" /></label>
+      </div>
+      <div class="xs-bar">
+        <span class="muted">Click seats to mark them</span>
+        <p-select [options]="[{ label: 'blocked (no seat)', value: 'blocked' }, { label: 'accessible', value: 'accessible' }]" [(ngModel)]="layoutClickMode" optionLabel="label" optionValue="value" />
+      </div>
+      <div class="xs-mini">
+        @for (row of layoutPreview(l); track $index) {
+          <div class="xs-mini-row">
+            @for (c of row; track c.label) {
+              <button type="button" class="xs-mini-seat" [class.blocked]="c.blocked" [class.acc]="c.accessible" [class.front]="c.front" (click)="toggleLayoutSeat(l, c.label, layoutClickMode)">{{ c.label }}</button>
+            }
+          </div>
+        }
+      </div>
+    }
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="layoutEdit.set(null)" />
+      <p-button label="Save layout" icon="pi pi-check" (onClick)="saveLayout()" [disabled]="!layoutEdit()?.roomId" [loading]="busy()" />
+    </ng-template>
+  </p-dialog>
+
+  <!-- arrangement dialog -->
+  <p-dialog [visible]="!!arrangementEdit()" (visibleChange)="!$event && arrangementEdit.set(null)" header="Special arrangement" [modal]="true" [style]="{ width: 'min(560px, 96vw)' }">
+    @if (arrangementEdit(); as a) {
+      <div class="xs-form col">
+        @if (a.id) { <div><b>{{ a.studentName }}</b> <span class="muted">({{ a.studentExternalId }})</span></div> }
+        @else { <label><span>Student id</span><input pInputText [(ngModel)]="a.studentExternalId" placeholder="External student id" /></label> }
+        <label class="chk"><p-checkbox [(ngModel)]="a.separateRoom" [binary]="true" /> Separate venue</label>
+        @if (a.separateRoom) { <label><span>Venue</span><p-select [options]="allRooms()" [(ngModel)]="a.roomId" optionLabel="name" optionValue="id" [filter]="true" filterBy="name" placeholder="Pick the separate venue" /></label> }
+        <label class="chk"><p-checkbox [(ngModel)]="a.accessibleSeat" [binary]="true" /> Accessible seat</label>
+        <label class="chk"><p-checkbox [(ngModel)]="a.frontSeat" [binary]="true" /> Front seat</label>
+        <label><span>Extra time (%)</span><p-inputNumber [(ngModel)]="a.extraTimePct" [min]="0" [max]="200" /></label>
+        <label><span>Note</span><textarea pTextarea [(ngModel)]="a.note" rows="2"></textarea></label>
+      </div>
+    }
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="arrangementEdit.set(null)" />
+      <p-button label="Save" icon="pi pi-check" (onClick)="saveArrangement()" [loading]="busy()" />
+    </ng-template>
+  </p-dialog>
+}

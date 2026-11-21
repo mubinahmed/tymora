@@ -44,12 +44,16 @@
       </div>
     </fieldset>
 
+    @if (d.preferences) {
+      <app-course-prefs-editor [data]="d.preferences" />
+    }
+
     <fieldset class="section">
       <div class="section-head">
         <span class="section-icon"><i class="pi pi-info-circle"></i></span>
         <div>
           <h2>Read-only</h2>
-          <p>Credit and preferences are managed on their own screens.</p>
+          <p>Credit and distribution preferences are managed on their own screens.</p>
         </div>
       </div>
       <div class="detail-grid">

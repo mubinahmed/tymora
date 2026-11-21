@@ -1,0 +1,85 @@
+<div class="form-page" style="max-width: 62rem;">
+  <fieldset class="section">
+    <div class="section-head">
+      <span class="section-icon"><i class="pi pi-users"></i></span>
+      <div>
+        <h2>Student Import</h2>
+        <p>
+          Create or update students (and their class enrollments) in the current academic session from a Data Exchange XML file.
+          The root element must be <code>&lt;studentEnrollments&gt;</code> or <code>&lt;students&gt;</code>, with <code>campus</code>,
+          <code>year</code> and <code>term</code> matching the current session. Classes are matched by name, e.g. "IT 1001 Lec 1".
+        </p>
+      </div>
+    </div>
+
+    <div class="si-file">
+      <input #fileInput type="file" accept=".xml,text/xml,application/xml" (change)="pick($event)" />
+      <p-button label="Choose File" icon="pi pi-folder-open" severity="secondary" (onClick)="fileInput.click()" [disabled]="importing()" />
+      @if (fileName()) {
+        <span class="si-file-name">{{ fileName() }}</span>
+        <span class="si-muted">({{ sizeLabel() }})</span>
+      } @else {
+        <span class="si-muted">No file chosen (.xml, up to 10 MB)</span>
+      }
+    </div>
+
+    <div class="si-option">
+      <p-checkbox inputId="si-incr" [binary]="true" [(ngModel)]="incremental" [disabled]="importing()" />
+      <label for="si-incr">Incremental import (keep students and enrollments that are not in the file)</label>
+    </div>
+    @if (!incremental) {
+      <p-message
+        severity="warn"
+        styleClass="mb"
+        text="Full import: for a students file, students of this session that are not in the file are deleted; for a studentEnrollments file, their class enrollments are removed."
+      />
+    }
+
+    <p-button label="Import" icon="pi pi-upload" (onClick)="doImport()" [loading]="importing()" [disabled]="!fileName()" />
+
+    <details class="si-example">
+      <summary>Example</summary>
+      <pre class="si-pre">{{ example }}</pre>
+    </details>
+  </fieldset>
+
+  @if (result(); as r) {
+    <fieldset class="section">
+      <div class="section-head">
+        <span class="section-icon"><i class="pi" [class.pi-check-circle]="r.success" [class.pi-times-circle]="!r.success"></i></span>
+        <div>
+          <h2>Result</h2>
+          <p>{{ r.sessionLabel }} &middot; &lt;{{ r.rootElement }}&gt; &middot; {{ r.incremental ? 'incremental' : 'full' }} import</p>
+        </div>
+      </div>
+
+      <p-message [severity]="r.success ? (r.warnings ? 'warn' : 'success') : 'error'" [text]="r.message ?? ''" />
+
+      <table class="si-counts">
+        <thead>
+          <tr><th></th><th>Before</th><th>After</th><th>Change</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Students</td><td>{{ r.studentsBefore ?? 0 }}</td><td>{{ r.studentsAfter ?? 0 }}</td>
+            <td>{{ delta(r.studentsAfter, r.studentsBefore) }}</td>
+          </tr>
+          <tr>
+            <td>Class enrollments</td><td>{{ r.enrollmentsBefore ?? 0 }}</td><td>{{ r.enrollmentsAfter ?? 0 }}</td>
+            <td>{{ delta(r.enrollmentsAfter, r.enrollmentsBefore) }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Log <span class="si-muted">({{ r.warnings ?? 0 }} warning(s), {{ r.errors ?? 0 }} error(s))</span></h3>
+      <div class="si-pre si-log">
+        @for (line of r.log ?? []; track $index) {
+          <div [class]="lineClass(line)">{{ line }}</div>
+        }
+        @if (r.logTruncated) {
+          <div class="si-muted">... log truncated</div>
+        }
+      </div>
+    </fieldset>
+  }
+</div>

@@ -38,7 +38,8 @@ import org.unitime.timetable.security.rights.Right;
 
 /**
  * Read backend for the migrated Class Edit page (legacy classEdit.action). Loads
- * the editable class-data fields plus the applicable date-pattern options. See
+ * the editable class-data fields plus the applicable date-pattern options and the
+ * time / room preference state ({@link CoursePreferencesHelper}). See
  * {@link org.unitime.timetable.gwt.shared.ClassEditInterface}; gated by
  * {@link Right#ClassEdit}. The companion {@code ClassEditUpdateBackend} saves.
  *
@@ -104,6 +105,15 @@ public class ClassEditBackend implements GwtRpcImplementation<ClassEditRequest, 
 			for (DatePattern dp : DatePattern.findAll(context.getUser(), c.getManagingDept(), c.effectiveDatePattern()))
 				r.addDatePatternOption(new IdName(dp.getUniqueId(), dp.getName()));
 		} catch (Exception e) {}
+
+		// Time pattern / time preference / room preference state (legacy PreferencesAction2);
+		// effective preferences, so the ones inherited from the subpart are included (flagged)
+		r.setPreferences(CoursePreferencesHelper.load(c, context,
+				ss.getMinutesPerWk() == null ? 0 : ss.getMinutesPerWk().intValue(),
+				c.effectiveDatePattern(),
+				ioc.getDurationModel(),
+				c.getManagingDept(),
+				c.getNbrRooms() == null ? 1 : c.getNbrRooms().intValue()));
 	}
 
 	private static boolean datePatternEditable(Class_ c) {

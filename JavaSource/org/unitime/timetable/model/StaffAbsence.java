@@ -23,6 +23,7 @@ import java.util.Date;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -61,6 +62,7 @@ public class StaffAbsence extends BaseStaffAbsence {
 	}
 
 	public Status status() { return Status.fromValue(getStatus()); }
+	@Transient
 	public boolean isApproved() { return status() == Status.APPROVED; }
 
 	/** True when this absence covers the given calendar date (inclusive of both ends). */

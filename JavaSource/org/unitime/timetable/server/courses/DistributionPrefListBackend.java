@@ -71,6 +71,7 @@ public class DistributionPrefListBackend implements GwtRpcImplementation<Distrib
 
 		DistributionPrefListResponse response = new DistributionPrefListResponse();
 		response.setTitle("Distribution Preferences");
+		response.setCanAdd(context.hasPermission(Right.DistributionPreferenceAdd));
 
 		// Subject areas visible to the current user (drive the filter selector).
 		TreeSet<SubjectArea> userSubjectAreas = SubjectArea.getUserSubjectAreas(context.getUser());

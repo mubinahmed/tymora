@@ -17,31 +17,53 @@
 
 services:
 
+    # MySQL in a container, loaded with the demo data (Documentation/Database/MySQL/woebegon-data.sql) on first start.
+    # To use an external MySQL database instead, add docker-compose.external-db.yml (see the README).
     unitime-db:
         container_name: unitime-db
         command: --default-authentication-plugin=mysql_native_password
-        environment: 
-            - MYSQL_RANDOM_ROOT_PASSWORD=yes
-            - MYSQL_USER=timetable
-            - MYSQL_PASSWORD=unitime
-            - MYSQL_DATABASE=timetable
+        environment:
+            # Created on the first start of an empty volume; the same values are given to unitime-web.
+            MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+            MYSQL_USER: ${DB_USER:-timetable}
+            MYSQL_PASSWORD: ${DB_PASSWORD:-unitime}
+            MYSQL_DATABASE: timetable
         build:
             context: ..
-            dockerfile: docker/mysql.Dockerfile
+            dockerfile: Docker/mysql.Dockerfile
         expose:
             - 3306
+        # Healthy once the real server accepts TCP logins (not during the first-start seed load, which uses a socket only).
+        healthcheck:
+            test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]
+            interval: 5s
+            timeout: 5s
+            start_period: 30s
+            retries: 60
         volumes:
             - "unitime-db:/var/lib/mysql"
 
     unitime-web:
         container_name: unitime-web
+        # Tymora initialises once at startup: wait until the database (and its seed) is ready. Not required, so the
+        # web service also runs when unitime-db is left out (external database).
         depends_on:
-            - unitime-db
+            unitime-db:
+                condition: service_healthy
+                required: false
         environment:
-            - JAVA_OPTS=-Dconnection.url=jdbc:mysql://unitime-db:3306/timetable
+            # Database connection (overrides hibernate.cfg.xml, whose defaults are for a developer machine). The image's
+            # entrypoint writes these into a properties file, so the password may contain any characters; DB_PASSWORD_FILE
+            # (a mounted secret) may be used instead of DB_PASSWORD. Defaults: the unitime-db container above.
+            DB_URL: ${DB_URL:-jdbc:mysql://unitime-db:3306/timetable?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf-8}
+            DB_USER: ${DB_USER:-timetable}
+            DB_PASSWORD: ${DB_PASSWORD:-unitime}
+            DB_PASSWORD_FILE: ${DB_PASSWORD_FILE:-}
+        # Built from the repository root so the image takes the Maven build output target/UniTime.war
+        # (build the WAR first); tomcat.Dockerfile.dockerignore sends only what the image needs.
         build:
-            context: ..
-            dockerfile: docker/tomcat.Dockerfile
+            context: ../..
+            dockerfile: Documentation/Docker/tomcat.Dockerfile
         ports:
             - 8888:8080
         volumes:

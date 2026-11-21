@@ -30,14 +30,22 @@ public class SearchOfferingsBackend implements GwtRpcImplementation<SearchOfferi
 		response.setCanAdd(context.hasPermission(Right.AddCourseOffering));
 
 		// Subject areas the current user may see (same source as the legacy screen).
-		for (SubjectArea sa : SubjectArea.getUserSubjectAreas(context.getUser()))
+		java.util.Set<Long> allowed = new java.util.HashSet<Long>();
+		for (SubjectArea sa : SubjectArea.getUserSubjectAreas(context.getUser())) {
 			response.addSubjectArea(new SubjectAreaItem(sa.getUniqueId(), sa.getSubjectAreaAbbreviation(), sa.getTitle()));
+			allowed.add(sa.getUniqueId());
+		}
 
 		if (request.getSubjectAreaId() == null) return response; // just the picker
 
 		SubjectArea sa = SubjectAreaDAO.getInstance().get(request.getSubjectAreaId());
 		if (sa == null) throw new GwtRpcException("Subject area not found.");
-		context.checkPermission(sa.getSession(), "Session", Right.InstructionalOfferings);
+		// The search is limited to the subject areas of the picker, as on the legacy screen. (This used to call
+		// checkPermission(sa.getSession(), "Session", Right.InstructionalOfferings), which bound to the
+		// (Serializable targetId, String targetType, Right) overload: the Session entity was taken as an id of type
+		// "Session" for a Department-level right, so every search failed with HTTP 500.)
+		if (!allowed.contains(sa.getUniqueId()) || !sa.getSession().getUniqueId().equals(context.getUser().getCurrentAcademicSessionId()))
+			throw new GwtRpcException("You are not allowed to see the courses of " + sa.getSubjectAreaAbbreviation() + ".");
 
 		String q = request.getCourseNumber() == null ? null : request.getCourseNumber().trim().toLowerCase();
 		for (CourseOffering co : sa.getCourseOfferings()) {

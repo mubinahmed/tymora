@@ -40,6 +40,7 @@ import org.unitime.timetable.gwt.shared.PatternEditInterface.PatternEditRequest;
 import org.unitime.timetable.gwt.shared.PatternEditInterface.PatternEditResponse;
 import org.unitime.timetable.gwt.shared.PatternEditInterface.PatternRecord;
 import org.unitime.timetable.gwt.shared.PatternEditInterface.PatternTypeOption;
+import org.unitime.timetable.form.TimePatternEditForm;
 import org.unitime.timetable.model.ChangeLog;
 import org.unitime.timetable.model.DatePattern;
 import org.unitime.timetable.model.DatePattern.DatePatternType;
@@ -83,9 +84,14 @@ import org.unitime.timetable.util.DateUtils;
  * {@code TimePatternEditForm.update}, gated on {@code TimePattern.isEditable()})
  * when {@code record.dayCodes}/{@code startSlots} are supplied.
  *
+ * SAVE with no record id CREATES a new pattern (port of DatePatternEditForm.create /
+ * TimePatternEditForm.create, ChangeLog CREATE). Time patterns may be created from
+ * the legacy text entry (record.dayCodesText / startTimesText, parsed by
+ * TimePatternEditForm.str2dayCodes / str2startSlots). record.default=true on a
+ * date pattern performs the legacy "Make Default".
+ *
  * STILL DEFERRED (managed only on the legacy JSP page): DatePattern
- * numberOfWeeks, the department / parent / child (pattern-set) associations, and
- * creating a brand-new pattern (addable=false).
+ * numberOfWeeks and the department / parent / child (pattern-set) associations.
  *
  * @author Angular migration
  */
@@ -127,7 +133,7 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 		response.setKind(Kind.DATE);
 		boolean canEdit = context.hasPermission(sessionId, "Session", Right.DatePatterns);
 		response.setEditable(canEdit);
-		response.setAddable(false); // creation requires the deferred day-bitmap editor
+		response.setAddable(canEdit);
 		response.setDeletable(canEdit);
 
 		for (DatePatternType t : DatePatternType.values())
@@ -208,72 +214,88 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 	protected void saveDate(PatternRecord record, Long sessionId, SessionContext context) {
 		if (record == null)
 			throw new GwtRpcException("No date pattern provided.");
-		if (record.getId() == null || record.getId() < 0)
-			throw new GwtRpcException("Creating a new date pattern is not supported here; it requires the day-pattern editor on the legacy page.");
+		boolean create = (record.getId() == null || record.getId() < 0);
 		if (record.getName() == null || record.getName().trim().isEmpty())
 			throw new GwtRpcException("Name is required.");
 		if (record.getType() != null && (record.getType() < 0 || record.getType() >= DatePatternType.values().length))
 			throw new GwtRpcException("Invalid date pattern type.");
+		if (create && record.getType() == null)
+			throw new GwtRpcException("Type is required.");
+		String name = record.getName().trim();
 
 		Transaction tx = null;
 		org.hibernate.Session hibSession = DatePatternDAO.getInstance().getSession();
 		try {
 			tx = hibSession.beginTransaction();
 
-			DatePattern dp = DatePatternDAO.getInstance().get(record.getId(), hibSession);
-			if (dp == null)
-				throw new GwtRpcException("The date pattern no longer exists.");
-			if (dp.getSession() == null || !sessionId.equals(dp.getSession().getUniqueId()))
-				throw new GwtRpcException("The date pattern does not belong to the current academic session.");
+			// Legacy DatePatternEditForm.validate: the name must be unique within the session.
+			DatePattern sameName = DatePattern.findByName(sessionId, name);
+
+			DatePattern dp;
+			if (create) {
+				if (sameName != null)
+					throw new GwtRpcException("A date pattern named " + name + " already exists.");
+				// Mirrors DatePatternEditForm.create (no departments / parents / children).
+				dp = new DatePattern();
+				dp.setSession(SessionDAO.getInstance().get(sessionId, hibSession));
+				dp.setParents(new HashSet<DatePattern>());
+				dp.setChildren(new HashSet<DatePattern>());
+				dp.setDepartments(new HashSet<Department>());
+				dp.setNumberOfWeeks(null);
+			} else {
+				dp = DatePatternDAO.getInstance().get(record.getId(), hibSession);
+				if (dp == null)
+					throw new GwtRpcException("The date pattern no longer exists.");
+				if (dp.getSession() == null || !sessionId.equals(dp.getSession().getUniqueId()))
+					throw new GwtRpcException("The date pattern does not belong to the current academic session.");
+				if (sameName != null && !sameName.getUniqueId().equals(dp.getUniqueId()))
+					throw new GwtRpcException("A date pattern named " + name + " already exists.");
+			}
+			if (dp.getSession() == null)
+				throw new GwtRpcException("The date pattern has no academic session.");
 
 			// Merge-on-update: descriptive fields plus (optionally) the day bitmap.
 			// numberOfWeeks and the department / parent / child collections are
 			// intentionally left untouched (deferred).
-			dp.setName(record.getName().trim());
+			dp.setName(name);
 			if (record.getType() != null)
 				dp.setType(record.getType());
 			dp.setVisible(record.isVisible());
 
-			// Day-bitmap: only rewritten when the client supplies the edited grid.
-			// This is a faithful re-implementation of DatePattern.setPatternAndOffset
-			// (the exact bit indexing the legacy datePatternEdit page stores).
+			// Day-bitmap: only rewritten when the client supplies the edited grid
+			// (always required on create).
 			if (record.getOfferedDays() != null) {
-				Session dpSession = dp.getSession();
-				if (dpSession == null)
-					throw new GwtRpcException("The date pattern has no academic session.");
-				int startMonth = dpSession.getPatternStartMonth();
-				int endMonth = dpSession.getPatternEndMonth();
-				int year = dpSession.getSessionStartYear();
-				Set<Integer> offered = new HashSet<Integer>(record.getOfferedDays());
-				StringBuffer sb = null;
-				int firstOne = 0, lastOne = 0;
-				int idx = dpSession.getDayOfYear(1, startMonth);
-				for (int m = startMonth; m <= endMonth; m++) {
-					int daysOfMonth = DateUtils.getNrDaysOfMonth(m, year);
-					for (int d = 1; d <= daysOfMonth; d++) {
-						String off = offered.contains(idx) ? "1" : "0";
-						if (sb != null || !off.equals("0")) {
-							if (sb == null) { firstOne = idx; sb = new StringBuffer(); }
-							sb.append(off);
-						}
-						if (!off.equals("0")) lastOne = idx;
-						idx++;
-					}
-				}
-				Calendar cal = Calendar.getInstance(Locale.US);
-				cal.setTime(dpSession.getSessionBeginDateTime());
-				if (sb != null) {
-					dp.setPattern(sb.substring(0, lastOne - firstOne + 1));
-					dp.setOffset(cal.get(Calendar.DAY_OF_YEAR) - firstOne - 1);
-				} else {
-					dp.setPattern("0"); dp.setOffset(0);
-				}
+				applyOfferedDays(dp, dp.getSession(), new HashSet<Integer>(record.getOfferedDays()));
+			} else if (create) {
+				dp.setPattern("0"); dp.setOffset(0);
 			}
 
-			hibSession.merge(dp);
+			// Legacy validation of the day bitmap.
+			boolean patternSet = (dp.getType() != null && dp.getType() == DatePatternType.PatternSet.ordinal());
+			int nrDays = 0;
+			if (dp.getPattern() != null)
+				for (int i = 0; i < dp.getPattern().length(); i++)
+					if (dp.getPattern().charAt(i) == '1') nrDays++;
+			if (patternSet && nrDays > 0)
+				throw new GwtRpcException("An alternative pattern set cannot have any dates selected.");
+			if (!patternSet && nrDays == 0)
+				throw new GwtRpcException("Please select at least one date.");
+			if (dp.getPattern() != null && dp.getPattern().length() > 366)
+				throw new GwtRpcException("The date pattern is too long (more than 366 days between the first and the last selected date).");
+
+			if (create)
+				hibSession.persist(dp);
+			else
+				hibSession.merge(dp);
+
+			// Legacy "Make Default".
+			if (record.isDefault() && !dp.equals(dp.getSession().getDefaultDatePattern())) {
+				dp.getSession().setDefaultDatePattern(dp);
+				hibSession.merge(dp.getSession());
+			}
 
 			ChangeLog.addChange(hibSession, context, dp, ChangeLog.Source.DATE_PATTERN_EDIT,
-					ChangeLog.Operation.UPDATE, null, null);
+					(create ? ChangeLog.Operation.CREATE : ChangeLog.Operation.UPDATE), null, null);
 
 			tx.commit(); tx = null;
 		} catch (GwtRpcException e) {
@@ -282,6 +304,40 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 		} catch (Throwable t) {
 			if (tx != null && tx.isActive()) tx.rollback();
 			throw new GwtRpcException(t.getMessage(), t);
+		}
+	}
+
+	/**
+	 * Faithful re-implementation of {@code DatePattern.setPatternAndOffset(HttpServletRequest)}
+	 * with the offered dates given as the running day index used by {@link CalendarDate#getKey()}
+	 * instead of {@code cal_val_*} request parameters.
+	 */
+	protected static void applyOfferedDays(DatePattern dp, Session dpSession, Set<Integer> offered) {
+		int startMonth = dpSession.getPatternStartMonth();
+		int endMonth = dpSession.getPatternEndMonth();
+		int year = dpSession.getSessionStartYear();
+		StringBuffer sb = null;
+		int firstOne = 0, lastOne = 0;
+		int idx = dpSession.getDayOfYear(1, startMonth);
+		for (int m = startMonth; m <= endMonth; m++) {
+			int daysOfMonth = DateUtils.getNrDaysOfMonth(m, year);
+			for (int d = 1; d <= daysOfMonth; d++) {
+				String off = offered.contains(idx) ? "1" : "0";
+				if (sb != null || !off.equals("0")) {
+					if (sb == null) { firstOne = idx; sb = new StringBuffer(); }
+					sb.append(off);
+				}
+				if (!off.equals("0")) lastOne = idx;
+				idx++;
+			}
+		}
+		Calendar cal = Calendar.getInstance(Locale.US);
+		cal.setTime(dpSession.getSessionBeginDateTime());
+		if (sb != null) {
+			dp.setPattern(sb.substring(0, lastOne - firstOne + 1));
+			dp.setOffset(cal.get(Calendar.DAY_OF_YEAR) - firstOne - 1);
+		} else {
+			dp.setPattern("0"); dp.setOffset(0);
 		}
 	}
 
@@ -337,7 +393,7 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 		response.setKind(Kind.TIME);
 		boolean canEdit = context.hasPermission(sessionId, "Session", Right.TimePatterns);
 		response.setEditable(canEdit);
-		response.setAddable(false); // creation requires the deferred day/time-grid editor
+		response.setAddable(canEdit);
 		response.setDeletable(canEdit);
 
 		for (TimePatternType t : TimePatternType.values())
@@ -392,27 +448,43 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 	protected void saveTime(PatternRecord record, Long sessionId, SessionContext context) {
 		if (record == null)
 			throw new GwtRpcException("No time pattern provided.");
-		if (record.getId() == null || record.getId() < 0)
-			throw new GwtRpcException("Creating a new time pattern is not supported here; it requires the day/time-grid editor on the legacy page.");
+		boolean create = (record.getId() == null || record.getId() < 0);
 		if (record.getName() == null || record.getName().trim().isEmpty())
 			throw new GwtRpcException("Name is required.");
 		if (record.getType() != null && (record.getType() < 0 || record.getType() >= TimePatternType.values().length))
 			throw new GwtRpcException("Invalid time pattern type.");
+		if (create && record.getType() == null)
+			throw new GwtRpcException("Type is required.");
+		String name = record.getName().trim();
 
 		Transaction tx = null;
 		org.hibernate.Session hibSession = TimePatternDAO.getInstance().getSession();
 		try {
 			tx = hibSession.beginTransaction();
 
-			TimePattern tp = TimePatternDAO.getInstance().get(record.getId(), hibSession);
-			if (tp == null)
-				throw new GwtRpcException("The time pattern no longer exists.");
-			if (tp.getSession() == null || !sessionId.equals(tp.getSession().getUniqueId()))
-				throw new GwtRpcException("The time pattern does not belong to the current academic session.");
+			// Legacy TimePatternEditForm.validate: the name must be unique within the session.
+			TimePattern sameName = TimePattern.findByName(sessionId, name);
+
+			TimePattern tp;
+			if (create) {
+				if (sameName != null)
+					throw new GwtRpcException("A time pattern named " + name + " already exists.");
+				tp = new TimePattern();
+				tp.setSession(SessionDAO.getInstance().get(sessionId, hibSession));
+				tp.setDepartments(new HashSet<Department>());
+			} else {
+				tp = TimePatternDAO.getInstance().get(record.getId(), hibSession);
+				if (tp == null)
+					throw new GwtRpcException("The time pattern no longer exists.");
+				if (tp.getSession() == null || !sessionId.equals(tp.getSession().getUniqueId()))
+					throw new GwtRpcException("The time pattern does not belong to the current academic session.");
+				if (sameName != null && !sameName.getUniqueId().equals(tp.getUniqueId()))
+					throw new GwtRpcException("A time pattern named " + name + " already exists.");
+			}
 
 			// Merge-on-update: descriptive fields plus (optionally) the day/time grid.
 			// The department associations are intentionally left untouched (deferred).
-			tp.setName(record.getName().trim());
+			tp.setName(name);
 			if (record.getType() != null)
 				tp.setType(record.getType());
 			if (record.getNrMeetings() != null)
@@ -421,83 +493,91 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 				tp.setMinPerMtg(record.getMinPerMtg());
 			if (record.getSlotsPerMtg() != null)
 				tp.setSlotsPerMtg(record.getSlotsPerMtg());
-			tp.setBreakTime(record.getBreakTime());
+			tp.setBreakTime(record.getBreakTime() == null ? Integer.valueOf(0) : record.getBreakTime());
 			tp.setVisible(record.isVisible());
 
-			// Day / start-time grid: only rewritten when the client supplies it AND
-			// the pattern is editable (mirrors TimePatternEditForm.update, which
-			// gates the grid on TimePattern.isEditable()). Faithful re-implementation
-			// of that method's remove-old / persist-new / clear-affected-prefs flow.
-			boolean gridProvided = record.getDayCodes() != null && record.getStartSlots() != null;
-			if (gridProvided && tp.isEditable()) {
-				int effType = (record.getType() != null ? record.getType()
-						: (tp.getType() == null ? -1 : tp.getType()));
-				boolean exact = effType == TimePatternType.ExactTime.ordinal();
-				int nrMtg = (record.getNrMeetings() != null ? record.getNrMeetings()
-						: (tp.getNrMeetings() == null ? 0 : tp.getNrMeetings()));
-				int slotsPerMtg = (record.getSlotsPerMtg() != null ? record.getSlotsPerMtg()
-						: (tp.getSlotsPerMtg() == null ? 0 : tp.getSlotsPerMtg()));
+			int effType = (tp.getType() == null ? -1 : tp.getType());
+			boolean exact = effType == TimePatternType.ExactTime.ordinal();
+			int nrMtg = (tp.getNrMeetings() == null ? 0 : tp.getNrMeetings());
+			int minPerMtg = (tp.getMinPerMtg() == null ? 0 : tp.getMinPerMtg());
+			int slotsPerMtg = (tp.getSlotsPerMtg() == null ? 0 : tp.getSlotsPerMtg());
 
-				int dayMask = 0;
-				for (int i = 0; i < Constants.NR_DAYS; i++) dayMask |= Constants.DAY_CODES[i];
+			// Legacy TimePatternEditForm.validate numeric checks.
+			if (!exact) {
+				if (nrMtg <= 0) throw new GwtRpcException("Number of meetings per week is required.");
+				if (minPerMtg <= 0) throw new GwtRpcException("Minutes per meeting is required.");
+				if (slotsPerMtg <= 0) throw new GwtRpcException("Number of slots per meeting is required.");
+			}
+			if (create) {
+				if (tp.getNrMeetings() == null) tp.setNrMeetings(0);
+				if (tp.getMinPerMtg() == null) tp.setMinPerMtg(0);
+				if (tp.getSlotsPerMtg() == null) tp.setSlotsPerMtg(0);
+			}
 
-				TreeSet<TimePatternDays> newDays = new TreeSet<TimePatternDays>();
-				for (Integer dc : record.getDayCodes()) {
-					if (dc == null) continue;
-					if (dc <= 0 || (dc & ~dayMask) != 0)
-						throw new GwtRpcException("Invalid day combination.");
-					int nrDays = 0;
-					for (int i = 0; i < Constants.NR_DAYS; i++)
-						if ((dc & Constants.DAY_CODES[i]) != 0) nrDays++;
-					if (!exact && nrMtg > 0 && nrDays != nrMtg)
-						throw new GwtRpcException("Each day combination must select exactly " + nrMtg + " day(s).");
-					TimePatternDays d = new TimePatternDays();
-					d.setDayCode(dc);
-					if (!newDays.add(d))
-						throw new GwtRpcException("Duplicate day combination.");
+			// Day / start-time grid, either as legacy text (create form) or as raw
+			// day-codes / start-slots (edit grid).
+			Set<TimePatternDays> newDays = null;
+			Set<TimePatternTime> newTimes = null;
+			if (record.getDayCodesText() != null || record.getStartTimesText() != null) {
+				TimePatternEditForm form = new TimePatternEditForm();
+				form.setNrMtgs(String.valueOf(nrMtg));
+				form.setSlotsPerMtg(String.valueOf(slotsPerMtg));
+				try {
+					newDays = toDays(form.str2dayCodes(record.getDayCodesText() == null ? "" : record.getDayCodesText(), "\n, "));
+				} catch (Exception e) {
+					throw new GwtRpcException("Days: " + e.getMessage());
 				}
-
-				TreeSet<TimePatternTime> newTimes = new TreeSet<TimePatternTime>();
-				for (Integer ss : record.getStartSlots()) {
-					if (ss == null) continue;
-					if (ss < 0 || ss >= Constants.SLOTS_PER_DAY)
-						throw new GwtRpcException("Invalid start time.");
-					if (slotsPerMtg > 0 && ss + slotsPerMtg > Constants.SLOTS_PER_DAY)
-						throw new GwtRpcException("A start time would run past midnight.");
-					TimePatternTime t = new TimePatternTime();
-					t.setStartSlot(ss);
-					if (!newTimes.add(t))
-						throw new GwtRpcException("Duplicate start time.");
+				try {
+					newTimes = toTimes(form.str2startSlots(record.getStartTimesText() == null ? "" : record.getStartTimesText(), "\n, "));
+				} catch (Exception e) {
+					throw new GwtRpcException("Start times: " + e.getMessage());
 				}
+			} else if (record.getDayCodes() != null && record.getStartSlots() != null) {
+				newDays = buildDays(record.getDayCodes(), exact, nrMtg);
+				newTimes = buildTimes(record.getStartSlots(), slotsPerMtg);
+			}
 
-				int oldDays = tp.getDays().size();
-				int oldTimes = tp.getTimes().size();
-				for (TimePatternTime t : new ArrayList<TimePatternTime>(tp.getTimes()))
-					hibSession.remove(t);
-				for (TimePatternDays d : new ArrayList<TimePatternDays>(tp.getDays()))
-					hibSession.remove(d);
-				tp.setTimes(new HashSet<TimePatternTime>(newTimes));
-				tp.setDays(new HashSet<TimePatternDays>(newDays));
+			if (create) {
+				// Mirrors TimePatternEditForm.create: persist days / times, then the pattern.
+				tp.setDays(newDays == null ? new HashSet<TimePatternDays>() : new HashSet<TimePatternDays>(newDays));
+				tp.setTimes(newTimes == null ? new HashSet<TimePatternTime>() : new HashSet<TimePatternTime>(newTimes));
 				for (TimePatternTime t : tp.getTimes())
 					hibSession.persist(t);
 				for (TimePatternDays d : tp.getDays())
 					hibSession.persist(d);
-				if (tp.getSession() != null && tp.getSession().getStatusType().isAllowRollForward()) {
-					if (oldDays != tp.getDays().size() || oldTimes != tp.getTimes().size()) {
-						for (TimePref tpref : hibSession.createQuery(
-								"from TimePref tp where tp.timePattern.uniqueId = :tpid", TimePref.class)
-								.setParameter("tpid", tp.getUniqueId()).list()) {
-							tpref.setPreference(null);
-							hibSession.merge(tpref);
+				hibSession.persist(tp);
+			} else {
+				// Only rewritten when supplied AND the pattern is editable (mirrors
+				// TimePatternEditForm.update, gated on TimePattern.isEditable()).
+				if (newDays != null && newTimes != null && tp.isEditable()) {
+					int oldDays = tp.getDays().size();
+					int oldTimes = tp.getTimes().size();
+					for (TimePatternTime t : new ArrayList<TimePatternTime>(tp.getTimes()))
+						hibSession.remove(t);
+					for (TimePatternDays d : new ArrayList<TimePatternDays>(tp.getDays()))
+						hibSession.remove(d);
+					tp.setTimes(new HashSet<TimePatternTime>(newTimes));
+					tp.setDays(new HashSet<TimePatternDays>(newDays));
+					for (TimePatternTime t : tp.getTimes())
+						hibSession.persist(t);
+					for (TimePatternDays d : tp.getDays())
+						hibSession.persist(d);
+					if (tp.getSession() != null && tp.getSession().getStatusType().isAllowRollForward()) {
+						if (oldDays != tp.getDays().size() || oldTimes != tp.getTimes().size()) {
+							for (TimePref tpref : hibSession.createQuery(
+									"from TimePref tp where tp.timePattern.uniqueId = :tpid", TimePref.class)
+									.setParameter("tpid", tp.getUniqueId()).list()) {
+								tpref.setPreference(null);
+								hibSession.merge(tpref);
+							}
 						}
 					}
 				}
+				hibSession.merge(tp);
 			}
 
-			hibSession.merge(tp);
-
 			ChangeLog.addChange(hibSession, context, tp, ChangeLog.Source.TIME_PATTERN_EDIT,
-					ChangeLog.Operation.UPDATE, null, null);
+					(create ? ChangeLog.Operation.CREATE : ChangeLog.Operation.UPDATE), null, null);
 
 			tx.commit(); tx = null;
 		} catch (GwtRpcException e) {
@@ -507,6 +587,57 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 			if (tx != null && tx.isActive()) tx.rollback();
 			throw new GwtRpcException(t.getMessage(), t);
 		}
+	}
+
+	@SuppressWarnings("rawtypes")
+	private static Set<TimePatternDays> toDays(Set raw) {
+		TreeSet<TimePatternDays> ret = new TreeSet<TimePatternDays>();
+		for (Object o : raw) ret.add((TimePatternDays) o);
+		return ret;
+	}
+
+	@SuppressWarnings("rawtypes")
+	private static Set<TimePatternTime> toTimes(Set raw) {
+		TreeSet<TimePatternTime> ret = new TreeSet<TimePatternTime>();
+		for (Object o : raw) ret.add((TimePatternTime) o);
+		return ret;
+	}
+
+	private static Set<TimePatternDays> buildDays(List<Integer> dayCodes, boolean exact, int nrMtg) {
+		int dayMask = 0;
+		for (int i = 0; i < Constants.NR_DAYS; i++) dayMask |= Constants.DAY_CODES[i];
+		TreeSet<TimePatternDays> newDays = new TreeSet<TimePatternDays>();
+		for (Integer dc : dayCodes) {
+			if (dc == null) continue;
+			if (dc <= 0 || (dc & ~dayMask) != 0)
+				throw new GwtRpcException("Invalid day combination.");
+			int nrDays = 0;
+			for (int i = 0; i < Constants.NR_DAYS; i++)
+				if ((dc & Constants.DAY_CODES[i]) != 0) nrDays++;
+			if (!exact && nrMtg > 0 && nrDays != nrMtg)
+				throw new GwtRpcException("Each day combination must select exactly " + nrMtg + " day(s).");
+			TimePatternDays d = new TimePatternDays();
+			d.setDayCode(dc);
+			if (!newDays.add(d))
+				throw new GwtRpcException("Duplicate day combination.");
+		}
+		return newDays;
+	}
+
+	private static Set<TimePatternTime> buildTimes(List<Integer> startSlots, int slotsPerMtg) {
+		TreeSet<TimePatternTime> newTimes = new TreeSet<TimePatternTime>();
+		for (Integer ss : startSlots) {
+			if (ss == null) continue;
+			if (ss < 0 || ss >= Constants.SLOTS_PER_DAY)
+				throw new GwtRpcException("Invalid start time.");
+			if (slotsPerMtg > 0 && ss + slotsPerMtg > Constants.SLOTS_PER_DAY)
+				throw new GwtRpcException("A start time would run past midnight.");
+			TimePatternTime t = new TimePatternTime();
+			t.setStartSlot(ss);
+			if (!newTimes.add(t))
+				throw new GwtRpcException("Duplicate start time.");
+		}
+		return newTimes;
 	}
 
 	protected void deleteTime(PatternRecord record, Long sessionId, SessionContext context) {

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -10,14 +10,16 @@ import { MessageService } from 'primeng/api';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
+import { CoursePrefsEditor } from '../../shared/course-prefs-editor';
 import { IdName, SubpartEditRequest, SubpartEditResponse, SubpartEditUpdateRequest } from './subpart-edit.models';
 
 /**
  * Scheduling Subpart Edit (legacy schedulingSubpartEdit.action) — read + save of
- * the subpart-row fields, backed by SubpartEditRequest (load) and
- * SubpartEditUpdateRequest (save). Credit configuration and time/room preferences
- * keep their own handling and are read-only here. Reached by subpart id from
- * Scheduling Subpart Detail.
+ * the subpart-row fields plus time pattern / time preferences and room / building /
+ * room group / room feature preferences (shared CoursePrefsEditor), backed by
+ * SubpartEditRequest (load) and SubpartEditUpdateRequest (save). Credit
+ * configuration is read-only here. Reached by subpart id from Scheduling Subpart
+ * Detail.
  */
 @Component({
   selector: 'app-subpart-edit',
@@ -29,6 +31,7 @@ import { IdName, SubpartEditRequest, SubpartEditResponse, SubpartEditUpdateReque
     CheckboxModule,
     MessageModule,
     ProgressSpinnerModule,
+    CoursePrefsEditor,
   ],
   templateUrl: './subpart-edit.html',
 })
@@ -40,6 +43,7 @@ export class SchedulingSubpartEdit implements OnInit {
   private messages = inject(MessageService);
 
   readonly id = input<string>();
+  private readonly prefsEditor = viewChild(CoursePrefsEditor);
 
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -94,6 +98,12 @@ export class SchedulingSubpartEdit implements OnInit {
   save(): void {
     const sid = this.data()?.subpartId;
     if (sid == null) return;
+    const editor = this.prefsEditor();
+    const invalid = editor?.validate();
+    if (invalid) {
+      this.messages.add({ severity: 'error', summary: 'Invalid preferences', detail: invalid });
+      return;
+    }
     this.saving.set(true);
     const v = this.form.getRawValue();
     const request: SubpartEditUpdateRequest = {
@@ -102,6 +112,7 @@ export class SchedulingSubpartEdit implements OnInit {
       datePatternId: v.datePatternId,
       autoSpreadInTime: !!v.autoSpreadInTime,
       studentAllowOverlap: !!v.studentAllowOverlap,
+      preferences: editor && this.data()?.preferences ? editor.toUpdate() : undefined,
     };
     this.rpc.execute<SubpartEditResponse>('SubpartEditUpdateRequest', request).subscribe({
       next: (d) => {

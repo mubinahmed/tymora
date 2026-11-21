@@ -24,6 +24,8 @@ import java.util.List;
 
 import org.unitime.timetable.gwt.command.client.GwtRpcRequest;
 import org.unitime.timetable.gwt.command.client.GwtRpcResponse;
+import org.unitime.timetable.gwt.shared.CoursePreferencesInterface.PreferencesData;
+import org.unitime.timetable.gwt.shared.CoursePreferencesInterface.PreferencesUpdate;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
@@ -36,8 +38,9 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  *   <li>{@code ClassEditUpdateRequest} — persist those fields (the subset that
  *       {@code ClassEditAction.doUpdate()} saves for the class row itself).</li>
  * </ul>
- * Instructor assignment and time/room/distribution preferences keep their own
- * dedicated screens and are intentionally out of scope here. Additive.
+ * Instructor assignment and distribution preferences keep their own dedicated
+ * screens; time and room preferences travel in the optional {@code preferences}
+ * field (see {@link CoursePreferencesInterface}). Additive.
  *
  * @author Angular migration
  */
@@ -103,6 +106,11 @@ public class ClassEditInterface implements IsSerializable {
 
 		public boolean isDisplayInstructor() { return iDisplayInstructor; }
 		public void setDisplayInstructor(boolean displayInstructor) { iDisplayInstructor = displayInstructor; }
+
+		/** Time / room preferences to save; null = leave preferences untouched. */
+		private PreferencesUpdate iPreferences;
+		public PreferencesUpdate getPreferences() { return iPreferences; }
+		public void setPreferences(PreferencesUpdate preferences) { iPreferences = preferences; }
 
 		@Override
 		public String toString() { return "ClassEditUpdate[" + iClassId + "]"; }
@@ -204,6 +212,10 @@ public class ClassEditInterface implements IsSerializable {
 
 		public boolean isDisplayInstructor() { return iDisplayInstructor; }
 		public void setDisplayInstructor(boolean displayInstructor) { iDisplayInstructor = displayInstructor; }
+
+		private PreferencesData iPreferences;
+		public PreferencesData getPreferences() { return iPreferences; }
+		public void setPreferences(PreferencesData preferences) { iPreferences = preferences; }
 
 		public List<IdName> getDatePatternOptions() { return iDatePatternOptions; }
 		public void addDatePatternOption(IdName option) { iDatePatternOptions.add(option); }

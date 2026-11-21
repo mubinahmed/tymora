@@ -4,6 +4,7 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { TextareaModule } from 'primeng/textarea';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
@@ -35,8 +36,14 @@ import { RpcService } from '../../core/rpc.service';
  *    TimePatternDays/TimePatternTime sets (mirrors TimePatternEditForm.update,
  *    gated on TimePattern.isEditable()).
  *
+ * CREATE ("Add Date Pattern" / "Add Time Pattern"): SAVE with no id. Date
+ * patterns are built on the session calendar (click days, or "Select weekdays in
+ * range"); `default: true` performs the legacy "Make Default". Time patterns are
+ * created from the legacy text fields (days / start times one per line), parsed
+ * on the server by TimePatternEditForm.
+ *
  * STILL DEFERRED (legacy JSP page only): the department / parent / child
- * (pattern-set) associations, number-of-weeks and creating a brand-new pattern.
+ * (pattern-set) associations and number-of-weeks.
  */
 
 type Operation = 'LOAD' | 'SAVE' | 'DELETE';
@@ -79,6 +86,9 @@ interface PatternRecord {
   dayCodes?: number[] | null;
   startSlots?: number[] | null;
   gridEditable?: boolean;
+  // time create (legacy text entry)
+  dayCodesText?: string | null;
+  startTimesText?: string | null;
 }
 
 interface PatternEditRequest {
@@ -120,6 +130,13 @@ interface Editing {
   breakTime: number | null;
   patternEditable: boolean;
   gridEditable: boolean;
+  isNew: boolean;
+  /** date only: pattern is (or should become) the session default */
+  isDefault: boolean;
+  wasDefault: boolean;
+  /** time create only: legacy text entry */
+  dayCodesText: string;
+  startTimesText: string;
 }
 
 const MONTH_NAMES = [
@@ -136,6 +153,7 @@ const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     ButtonModule,
     InputTextModule,
     InputNumberModule,
+    TextareaModule,
     CheckboxModule,
     DialogModule,
     SelectModule,
@@ -151,22 +169,24 @@ const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   styles: [
     `
       .cal-wrap { display: flex; flex-wrap: wrap; gap: 1rem; max-height: 50vh; overflow-y: auto; padding: 0.25rem; }
-      .cal-month { border: 1px solid var(--surface-border, #dee2e6); border-radius: 6px; padding: 0.5rem; }
-      .cal-month h4 { margin: 0 0 0.4rem; font-size: 0.85rem; text-align: center; }
+      /* Colours: normal days use the app theme tokens (readable in light and dark mode); the coloured states use
+         fixed pale backgrounds with an explicit dark text colour, so they never inherit the light dark-mode text. */
+      .cal-month { border: 1px solid var(--ut-border, #dee2e6); border-radius: 6px; padding: 0.5rem; background: var(--ut-surface, transparent); }
+      .cal-month h4 { margin: 0 0 0.4rem; font-size: 0.85rem; text-align: center; color: var(--ut-ink, inherit); }
       .cal-grid { display: grid; grid-template-columns: repeat(7, 1.9rem); gap: 2px; }
-      .cal-grid .dow { font-size: 0.65rem; text-align: center; color: var(--text-color-secondary, #6c757d); }
-      .cal-day { width: 1.9rem; height: 1.9rem; border: 1px solid var(--surface-border, #dee2e6); border-radius: 4px;
+      .cal-grid .dow { font-size: 0.65rem; text-align: center; color: var(--ut-muted, #6c757d); }
+      .cal-day { width: 1.9rem; height: 1.9rem; border: 1px solid var(--ut-border, #dee2e6); border-radius: 4px;
         font-size: 0.75rem; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none;
-        background: var(--surface-0, #fff); }
+        background: var(--ut-card, #fff); color: var(--ut-text, #212529); }
       .cal-day.blank { border: none; cursor: default; background: transparent; }
-      .cal-day.holiday { background: #fdecea; }
-      .cal-day.brk { background: #fff4e5; }
-      .cal-day.offered { background: #cfe8ff; border-color: #2684ff; font-weight: 600; }
+      .cal-day.holiday { background: #e2e3e5; color: #495057; }
+      .cal-day.brk { background: #fff4e5; color: #7a4b00; }
+      .cal-day.offered { background: #cfe8ff; border-color: #2684ff; color: #042c53; font-weight: 600; }
       .cal-day.ro { cursor: default; }
       .cal-legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.75rem; margin: 0.25rem 0 0.5rem; align-items: center; }
       .cal-legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 4px; vertical-align: middle; border: 1px solid rgba(0,0,0,0.15); }
       .sw.offered { background: #cfe8ff; }
-      .sw.holiday { background: #fdecea; }
+      .sw.holiday { background: #e2e3e5; }
       .sw.brk { background: #fff4e5; }
 
       .combo-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
@@ -174,7 +194,12 @@ const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       .combo-day { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; gap: 2px; }
       .grid-section { margin-top: 0.5rem; }
       .grid-section h4 { margin: 0.5rem 0 0.3rem; font-size: 0.9rem; }
-      .grid-hint { color: var(--text-color-secondary, #6c757d); font-size: 0.78rem; margin: 0 0 0.4rem; }
+      .range-box { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; border: 1px dashed var(--ut-border);
+        border-radius: 6px; padding: 0.5rem; margin: 0.25rem 0 0.5rem; font-size: 0.8rem; }
+      .range-box label { display: inline-flex; align-items: center; gap: 0.25rem; }
+      .range-box input[type='date'] { padding: 0.25rem; }
+      .legacy-text { width: 100%; font-family: monospace; }
+      .grid-hint { color: var(--ut-muted); font-size: 0.78rem; margin: 0 0 0.4rem; }
     `,
   ],
 })
@@ -198,6 +223,7 @@ export class PatternEdit {
   protected readonly types = signal<PatternTypeOption[]>([]);
   protected readonly editable = signal(false);
   protected readonly deletable = signal(false);
+  protected readonly addable = signal(false);
 
   protected readonly dialogVisible = signal(false);
   protected editing: Editing = this.blank();
@@ -214,6 +240,18 @@ export class PatternEdit {
 
   // Date-grid editing state (set of offered CalendarDate keys).
   protected readonly offered = signal<Set<number>>(new Set());
+
+  // "Select weekdays in range" helper (date patterns).
+  protected rangeFrom = '';
+  protected rangeTo = '';
+  protected rangeDays: boolean[] = [true, true, true, true, true, false, false]; // Mon..Sun
+  protected skipHolidays = true;
+  protected readonly offeredCount = computed(() => this.offered().size);
+  protected readonly sessionRange = computed(() => {
+    const d = this.sessionDates();
+    if (!d.length) return { min: '', max: '' };
+    return { min: this.isoDate(d[0]), max: this.isoDate(d[d.length - 1]) };
+  });
 
   // Time-grid editing state.
   protected readonly dayCombos = signal<boolean[][]>([]); // each length 7 (Mon..Sun)
@@ -263,7 +301,17 @@ export class PatternEdit {
       breakTime: null,
       patternEditable: false,
       gridEditable: false,
+      isNew: false,
+      isDefault: false,
+      wasDefault: false,
+      dayCodesText: '',
+      startTimesText: '',
     };
+  }
+
+  private isoDate(d: CalendarDate): string {
+    const p = (n: number) => (n < 10 ? '0' : '') + n;
+    return `${d.year}-${p(d.month + 1)}-${p(d.day)}`;
   }
 
   private slotLabel(slot: number): string {
@@ -296,6 +344,7 @@ export class PatternEdit {
         this.types.set(res.types ?? []);
         this.editable.set(!!res.editable);
         this.deletable.set(!!res.deletable);
+        this.addable.set(!!res.addable);
         this.sessionDates.set(res.sessionDates ?? []);
         this.dayNames.set(res.dayNames ?? []);
         if (res.dayCodes && res.dayCodes.length === 7) this.dayCodesConst = res.dayCodes;
@@ -326,12 +375,41 @@ export class PatternEdit {
       breakTime: r.breakTime ?? null,
       patternEditable: !!r.patternEditable,
       gridEditable: !!r.gridEditable,
+      isNew: false,
+      isDefault: !!r.default,
+      wasDefault: !!r.default,
+      dayCodesText: '',
+      startTimesText: '',
     };
     // seed date grid
     this.offered.set(new Set(r.offeredDays ?? []));
     // seed time grid
     this.dayCombos.set((r.dayCodes ?? []).map((dc) => this.dayCodeToBools(dc)));
     this.startSlots.set([...(r.startSlots ?? [])]);
+    this.dialogVisible.set(true);
+  }
+
+  /** "Add Date Pattern" / "Add Time Pattern". */
+  add(): void {
+    if (!this.addable()) return;
+    const standard = this.types().find((t) => t.label?.toLowerCase().startsWith('standard')) ?? this.types()[0];
+    this.editing = {
+      ...this.blank(),
+      type: standard ? standard.id : null,
+      visible: true,
+      isNew: true,
+      patternEditable: true,
+      gridEditable: true,
+      breakTime: this.isTime() ? 0 : null,
+    };
+    this.offered.set(new Set());
+    this.dayCombos.set([]);
+    this.startSlots.set([]);
+    const range = this.sessionRange();
+    this.rangeFrom = range.min;
+    this.rangeTo = range.max;
+    this.rangeDays = [true, true, true, true, true, false, false];
+    this.skipHolidays = true;
     this.dialogVisible.set(true);
   }
 
@@ -365,6 +443,39 @@ export class PatternEdit {
     return c;
   }
 
+  /** Select (or clear) every date in [rangeFrom, rangeTo] whose weekday is ticked. */
+  applyRange(select: boolean): void {
+    if (!this.editing.patternEditable) return;
+    const from = this.rangeFrom;
+    const to = this.rangeTo;
+    if (!from || !to || from > to) {
+      this.messages.add({ severity: 'error', summary: 'Validation', detail: 'Enter a valid From / To date range.' });
+      return;
+    }
+    let n = 0;
+    this.offered.update((set) => {
+      const next = new Set(set);
+      for (const d of this.sessionDates()) {
+        const iso = this.isoDate(d);
+        if (iso < from || iso > to) continue;
+        if (!this.rangeDays[d.dayOfWeek]) continue;
+        if (select && this.skipHolidays && d.holiday !== 0) continue;
+        if (select) next.add(d.key);
+        else next.delete(d.key);
+        n++;
+      }
+      return next;
+    });
+    if (n === 0) {
+      this.messages.add({ severity: 'warn', summary: 'No dates', detail: 'No session dates matched the range.' });
+    }
+  }
+
+  clearAllDates(): void {
+    if (!this.editing.patternEditable) return;
+    this.offered.set(new Set());
+  }
+
   // ----- time grid helpers -----
 
   private dayCodeToBools(dc: number): boolean[] {
@@ -392,13 +503,25 @@ export class PatternEdit {
       return;
     }
 
+    if (this.editing.isNew && this.editing.type == null) {
+      this.messages.add({ severity: 'error', summary: 'Validation', detail: 'Type is required.' });
+      return;
+    }
+
     const record: PatternRecord = {
       id: this.editing.id,
       name,
       type: this.editing.type,
       visible: this.editing.visible,
     };
-    if (this.isTime()) {
+    if (this.isTime() && this.editing.isNew) {
+      record.nrMeetings = this.editing.nrMeetings;
+      record.minPerMtg = this.editing.minPerMtg;
+      record.slotsPerMtg = this.editing.slotsPerMtg;
+      record.breakTime = this.editing.breakTime ?? 0;
+      record.dayCodesText = this.editing.dayCodesText;
+      record.startTimesText = this.editing.startTimesText;
+    } else if (this.isTime()) {
       record.nrMeetings = this.editing.nrMeetings;
       record.minPerMtg = this.editing.minPerMtg;
       record.slotsPerMtg = this.editing.slotsPerMtg;
@@ -420,8 +543,9 @@ export class PatternEdit {
         record.dayCodes = dayCodes;
         record.startSlots = [...this.startSlots()].sort((a, b) => a - b);
       }
-    } else if (this.editing.patternEditable) {
-      record.offeredDays = Array.from(this.offered());
+    } else {
+      if (this.editing.patternEditable) record.offeredDays = Array.from(this.offered());
+      if (this.editing.isDefault && !this.editing.wasDefault) record.default = true;
     }
 
     this.saving.set(true);
@@ -430,7 +554,7 @@ export class PatternEdit {
       () => {
         this.saving.set(false);
         this.dialogVisible.set(false);
-        this.messages.add({ severity: 'success', summary: 'Saved', detail: name });
+        this.messages.add({ severity: 'success', summary: record.id == null ? 'Created' : 'Saved', detail: name });
       },
       (e) => {
         this.saving.set(false);

@@ -1,4 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
+import { contrastText } from '../../shared/contrast';
 
 /** One day of the holidays calendar (mirrors SessionEditInterface.HolidayDay). */
 export interface HolidayDay {
@@ -108,9 +109,21 @@ export class HolidaysCalendar {
     return out;
   });
 
+  /**
+   * Background of a day. A normal day ("No Holiday") uses the theme's card colour rather than the backend's fixed
+   * light grey, so the day number (theme text colour) stays readable in both light and dark mode. Holidays and
+   * breaks keep the backend's colours.
+   */
   colorFor(value: number): string {
+    if (value === 0) return 'var(--ut-card)';
     const c = this.colors();
     return c[value] ?? c[0] ?? 'transparent';
+  }
+
+  /** Text colour of a day: the theme text colour on normal days, black or white by contrast on coloured days. */
+  textColorFor(value: number): string {
+    if (value === 0) return 'var(--ut-text)';
+    return contrastText(this.colorFor(value), '#fff');
   }
 
   overlayColorFor(overlay: number): string | null {

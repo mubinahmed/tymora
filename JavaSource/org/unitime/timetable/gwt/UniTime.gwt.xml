@@ -34,6 +34,11 @@
 	<extend-property name="locale" values="pl"/>
 	<extend-property name="locale" values="ar"/>
 	<set-property-fallback name="locale" value="en"/>
+
+	<!-- Compile one permutation instead of one per browser engine and locale (12): all locales and browsers still
+	     work, from a single larger script. The legacy UI is an opt-in fallback now (see gwt.compiler.skip in pom.xml),
+	     so a much lighter compile matters more than download size. -->
+	<collapse-all-properties />
 	
 	<!-- Logging -->
 	<inherits name="com.google.gwt.logging.Logging" />

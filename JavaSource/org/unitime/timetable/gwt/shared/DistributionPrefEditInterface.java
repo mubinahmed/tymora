@@ -52,7 +52,69 @@ public class DistributionPrefEditInterface implements IsSerializable {
 	public static enum Operation implements IsSerializable {
 		LOAD,
 		SAVE,
-		DELETE
+		DELETE,
+		/** Lookup: controlling courses of the subject area in lookupId. */
+		COURSES,
+		/** Lookup: scheduling subparts of the course offering in lookupId. */
+		SUBPARTS,
+		/** Lookup: classes of the scheduling subpart in lookupId. */
+		CLASSES
+	}
+
+	/** A generic id / label pair (lookup options). */
+	public static class IdLabel implements IsSerializable {
+		private Long iId;
+		private String iLabel;
+
+		public IdLabel() {}
+		public IdLabel(Long id, String label) { iId = id; iLabel = label; }
+
+		public Long getId() { return iId; }
+		public void setId(Long id) { iId = id; }
+		public String getLabel() { return iLabel; }
+		public void setLabel(String label) { iLabel = label; }
+	}
+
+	/** A distribution structure (DistributionPref.Structure); id is the enum name. */
+	public static class StructureInfo implements IsSerializable {
+		private String iId;
+		private String iLabel;
+		private String iDescription;
+
+		public StructureInfo() {}
+		public StructureInfo(String id, String label, String description) { iId = id; iLabel = label; iDescription = description; }
+
+		public String getId() { return iId; }
+		public void setId(String id) { iId = id; }
+		public String getLabel() { return iLabel; }
+		public void setLabel(String label) { iLabel = label; }
+		public String getDescription() { return iDescription; }
+		public void setDescription(String description) { iDescription = description; }
+	}
+
+	/**
+	 * One ordered row of a distribution preference: subject / course / subpart / class.
+	 * classId = -1 (or null) means all classes of the subpart (the subpart is the prefGroup).
+	 */
+	public static class ClassLine implements IsSerializable {
+		private Long iSubjectAreaId;
+		private Long iCourseId;
+		private Long iSubpartId;
+		private Long iClassId;
+
+		public ClassLine() {}
+		public ClassLine(Long subjectAreaId, Long courseId, Long subpartId, Long classId) {
+			iSubjectAreaId = subjectAreaId; iCourseId = courseId; iSubpartId = subpartId; iClassId = classId;
+		}
+
+		public Long getSubjectAreaId() { return iSubjectAreaId; }
+		public void setSubjectAreaId(Long subjectAreaId) { iSubjectAreaId = subjectAreaId; }
+		public Long getCourseId() { return iCourseId; }
+		public void setCourseId(Long courseId) { iCourseId = courseId; }
+		public Long getSubpartId() { return iSubpartId; }
+		public void setSubpartId(Long subpartId) { iSubpartId = subpartId; }
+		public Long getClassId() { return iClassId; }
+		public void setClassId(Long classId) { iClassId = classId; }
 	}
 
 	/** One selectable subject area (drives the list filter). */
@@ -116,8 +178,22 @@ public class DistributionPrefEditInterface implements IsSerializable {
 		private String iTypeLabel;
 		private String iOwnerLabel;
 		private String iAppliesTo;
+		private String iStructure;
+		private List<ClassLine> iLines;
 
 		public DistributionPrefRecord() {}
+
+		/** DistributionPref.Structure enum name (null = AllClasses). */
+		public String getStructure() { return iStructure; }
+		public void setStructure(String structure) { iStructure = structure; }
+
+		/** Ordered rows; when null on SAVE of an existing preference only type and level are updated. */
+		public List<ClassLine> getLines() { return iLines; }
+		public void setLines(List<ClassLine> lines) { iLines = lines; }
+		public void addLine(ClassLine line) {
+			if (iLines == null) iLines = new ArrayList<ClassLine>();
+			iLines.add(line);
+		}
 
 		public Long getId() { return iId; }
 		public void setId(Long id) { iId = id; }
@@ -143,8 +219,13 @@ public class DistributionPrefEditInterface implements IsSerializable {
 		private Long iSubjectAreaId;
 		private Long iId;
 		private DistributionPrefRecord iRecord;
+		private Long iLookupId;
 
 		public DistributionPrefEditRequest() {}
+
+		/** Parent id for the COURSES / SUBPARTS / CLASSES lookups. */
+		public Long getLookupId() { return iLookupId; }
+		public void setLookupId(Long lookupId) { iLookupId = lookupId; }
 
 		public Operation getOperation() { return iOperation; }
 		public void setOperation(Operation operation) { iOperation = operation; }
@@ -175,8 +256,26 @@ public class DistributionPrefEditInterface implements IsSerializable {
 		private DistributionPrefRecord iRecord;
 		private List<DistributionTypeInfo> iDistributionTypes = new ArrayList<DistributionTypeInfo>();
 		private List<PrefLevelInfo> iPrefLevels = new ArrayList<PrefLevelInfo>();
+		private boolean iCanAdd = false;
+		private List<StructureInfo> iStructures = new ArrayList<StructureInfo>();
+		private List<IdLabel> iOptions = new ArrayList<IdLabel>();
+		private Long iSavedId;
 
 		public DistributionPrefEditResponse() {}
+
+		public boolean isCanAdd() { return iCanAdd; }
+		public void setCanAdd(boolean canAdd) { iCanAdd = canAdd; }
+
+		public List<StructureInfo> getStructures() { return iStructures; }
+		public void addStructure(StructureInfo structure) { iStructures.add(structure); }
+
+		/** Lookup result of COURSES / SUBPARTS / CLASSES. */
+		public List<IdLabel> getOptions() { return iOptions; }
+		public void addOption(IdLabel option) { iOptions.add(option); }
+
+		/** Id of the preference created / updated by SAVE. */
+		public Long getSavedId() { return iSavedId; }
+		public void setSavedId(Long savedId) { iSavedId = savedId; }
 
 		public String getTitle() { return iTitle; }
 		public void setTitle(String title) { iTitle = title; }

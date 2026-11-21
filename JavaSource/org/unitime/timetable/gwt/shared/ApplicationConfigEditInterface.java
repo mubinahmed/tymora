@@ -28,25 +28,31 @@ import org.unitime.timetable.gwt.command.client.GwtRpcResponse;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
- * Edit the value / description of existing global {@link ApplicationConfig}
- * entries (Angular migration of applicationConfig.action). Conservative on
- * purpose: only the value and description of an already-existing key can be
- * changed — creating/deleting keys and the legacy per-session config overrides
- * are intentionally out of scope.
+ * Application configuration editor (Angular migration of applicationConfig.action).
+ * LOAD lists the global {@code ApplicationConfig} rows plus the {@code SessionConfig}
+ * rows of the current academic session (session rows override global ones with the
+ * same key). SAVE changes the value / description of an existing key, CREATE adds a
+ * new key (global or current-session, like the legacy "Add Setting"), DELETE removes
+ * a key (legacy "Delete").
  *
  * @author Angular migration
  */
 public class ApplicationConfigEditInterface implements IsSerializable {
 
-	public static enum Operation implements IsSerializable { LOAD, SAVE }
+	public static enum Operation implements IsSerializable { LOAD, SAVE, CREATE, DELETE }
 
 	public static class ApplicationConfigEditRequest implements GwtRpcRequest<ApplicationConfigEditResponse> {
 		private Operation iOperation;
 		private String iKey;
 		private String iValue;
 		private String iDescription;
+		private Boolean iAllSessions;
 
 		public ApplicationConfigEditRequest() {}
+
+		/** CREATE / SAVE: true (default) = global ApplicationConfig, false = SessionConfig of the current session. */
+		public Boolean getAllSessions() { return iAllSessions; }
+		public void setAllSessions(Boolean allSessions) { iAllSessions = allSessions; }
 
 		public Operation getOperation() { return iOperation; }
 		public void setOperation(Operation operation) { iOperation = operation; }
@@ -78,8 +84,13 @@ public class ApplicationConfigEditInterface implements IsSerializable {
 		private String iKey;
 		private String iValue;
 		private String iDescription;
+		private boolean iAllSessions = true;
 
 		public ApplicationConfigItem() {}
+
+		/** true = global ApplicationConfig row, false = SessionConfig of the current academic session. */
+		public boolean isAllSessions() { return iAllSessions; }
+		public void setAllSessions(boolean allSessions) { iAllSessions = allSessions; }
 
 		public String getKey() { return iKey; }
 		public void setKey(String key) { iKey = key; }

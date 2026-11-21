@@ -15723,38 +15723,59 @@
 			teacher and apply to every class that teacher owns. See TimetableDatabaseLoader
 			.createGroupConstraint for the reference->constraint dispatch.
 		-->
+		<!-- Each type is inserted only if neither its reference nor its req_id exists yet: the shipped seed databases
+		     (MySQL woebegon / blank data, PostgreSQL timetable.sql) already contain these rows, and a plain insert
+		     stopped fresh installs on the unique req_id (finding DB-3). -->
 		<plsql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_DAY(3)', 'At Most 3 Hours A Day', 0, 50, '210R', 'Classes are to be placed in a way that there is no more than three hours in any day.', 'At Most 3 Hrs', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_DAY(3)', 'At Most 3 Hours A Day', 0, 50, '210R', 'Classes are to be placed in a way that there is no more than three hours in any day.', 'At Most 3 Hrs', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_DAY(3)' or x.req_id = 50)
 		]]></plsql>
 		<plsql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_DAY(4)', 'At Most 4 Hours A Day', 0, 51, '210R', 'Classes are to be placed in a way that there is no more than four hours in any day.', 'At Most 4 Hrs', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_DAY(4)', 'At Most 4 Hours A Day', 0, 51, '210R', 'Classes are to be placed in a way that there is no more than four hours in any day.', 'At Most 4 Hrs', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_DAY(4)' or x.req_id = 51)
 		]]></plsql>
 		<plsql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%SCHEMA%.ref_table_seq.nextval, '_MaxBlock:120:20_', 'Max 2h Blocks', 0, 52, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 2 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '2h Blocks', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %SCHEMA%.ref_table_seq.nextval, '_MaxBlock:120:20_', 'Max 2h Blocks', 0, 52, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 2 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '2h Blocks', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = '_MaxBlock:120:20_' or x.req_id = 52)
 		]]></plsql>
 		<plsql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%SCHEMA%.ref_table_seq.nextval, '_MaxBlock:180:20_', 'Max 3h Blocks', 0, 53, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '3h Blocks', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %SCHEMA%.ref_table_seq.nextval, '_MaxBlock:180:20_', 'Max 3h Blocks', 0, 53, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '3h Blocks', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = '_MaxBlock:180:20_' or x.req_id = 53)
 		]]></plsql>
 		<mysql into="ID">select 32767 * next_hi from %SCHEMA%.hibernate_unique_key</mysql>
 		<mysql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%ID% + 0, 'MAX_HRS_DAY(3)', 'At Most 3 Hours A Day', 0, 50, '210R', 'Classes are to be placed in a way that there is no more than three hours in any day.', 'At Most 3 Hrs', 1, 0),
-			(%ID% + 1, 'MAX_HRS_DAY(4)', 'At Most 4 Hours A Day', 0, 51, '210R', 'Classes are to be placed in a way that there is no more than four hours in any day.', 'At Most 4 Hrs', 1, 0),
-			(%ID% + 2, '_MaxBlock:120:20_', 'Max 2h Blocks', 0, 52, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 2 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '2h Blocks', 1, 0),
-			(%ID% + 3, '_MaxBlock:180:20_', 'Max 3h Blocks', 0, 53, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '3h Blocks', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 0, 'MAX_HRS_DAY(3)', 'At Most 3 Hours A Day', 0, 50, '210R', 'Classes are to be placed in a way that there is no more than three hours in any day.', 'At Most 3 Hrs', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_DAY(3)' or x.req_id = 50)
+		]]></mysql>
+		<mysql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 1, 'MAX_HRS_DAY(4)', 'At Most 4 Hours A Day', 0, 51, '210R', 'Classes are to be placed in a way that there is no more than four hours in any day.', 'At Most 4 Hrs', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_DAY(4)' or x.req_id = 51)
+		]]></mysql>
+		<mysql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 2, '_MaxBlock:120:20_', 'Max 2h Blocks', 0, 52, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 2 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '2h Blocks', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = '_MaxBlock:120:20_' or x.req_id = 52)
+		]]></mysql>
+		<mysql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 3, '_MaxBlock:180:20_', 'Max 3h Blocks', 0, 53, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '3h Blocks', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = '_MaxBlock:180:20_' or x.req_id = 53)
 		]]></mysql>
 		<mysql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</mysql>
 		<pgsql into="ID">select 32767 * next_hi from %SCHEMA%.hibernate_unique_key</pgsql>
 		<pgsql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%ID% + 0, 'MAX_HRS_DAY(3)', 'At Most 3 Hours A Day', 0, 50, '210R', 'Classes are to be placed in a way that there is no more than three hours in any day.', 'At Most 3 Hrs', 1, 0),
-			(%ID% + 1, 'MAX_HRS_DAY(4)', 'At Most 4 Hours A Day', 0, 51, '210R', 'Classes are to be placed in a way that there is no more than four hours in any day.', 'At Most 4 Hrs', 1, 0),
-			(%ID% + 2, '_MaxBlock:120:20_', 'Max 2h Blocks', 0, 52, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 2 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '2h Blocks', 1, 0),
-			(%ID% + 3, '_MaxBlock:180:20_', 'Max 3h Blocks', 0, 53, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '3h Blocks', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 0, 'MAX_HRS_DAY(3)', 'At Most 3 Hours A Day', 0, 50, '210R', 'Classes are to be placed in a way that there is no more than three hours in any day.', 'At Most 3 Hrs', 1, 0 where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_DAY(3)' or x.req_id = 50)
+		]]></pgsql>
+		<pgsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 1, 'MAX_HRS_DAY(4)', 'At Most 4 Hours A Day', 0, 51, '210R', 'Classes are to be placed in a way that there is no more than four hours in any day.', 'At Most 4 Hrs', 1, 0 where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_DAY(4)' or x.req_id = 51)
+		]]></pgsql>
+		<pgsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 2, '_MaxBlock:120:20_', 'Max 2h Blocks', 0, 52, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 2 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '2h Blocks', 1, 0 where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = '_MaxBlock:120:20_' or x.req_id = 52)
+		]]></pgsql>
+		<pgsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 3, '_MaxBlock:180:20_', 'Max 3h Blocks', 0, 53, '210R', 'There needs to be a break of more than 20 minutes after each block of at most 3 hours. Two consecutive classes are considered in the same block if the time between them is not more than 20 minutes.', '3h Blocks', 1, 0 where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = '_MaxBlock:180:20_' or x.req_id = 53)
 		]]></pgsql>
 		<pgsql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</pgsql>
 	</update>
@@ -16031,44 +16052,71 @@
 			All are instructor preferences (instructor_pref=1) so they can be
 			attached to a teacher and apply to every class that teacher owns.
 		-->
+		<!-- Each type is inserted only if neither its reference nor its req_id exists yet: the shipped seed databases
+		     (MySQL woebegon / blank data, PostgreSQL timetable.sql) already contain these rows, and a plain insert
+		     stopped fresh installs on the unique req_id (finding DB-3). -->
 		<plsql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(20)', 'At Most 20 Hours A Week', 0, 54, '210R', 'Classes are to be placed in a way that there is no more than twenty hours in any week, in total, for the instructor.', 'At Most 20 Hrs/Wk', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(20)', 'At Most 20 Hours A Week', 0, 54, '210R', 'Classes are to be placed in a way that there is no more than twenty hours in any week, in total, for the instructor.', 'At Most 20 Hrs/Wk', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(20)' or x.req_id = 54)
 		]]></plsql>
 		<plsql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(25)', 'At Most 25 Hours A Week', 0, 55, '210R', 'Classes are to be placed in a way that there is no more than twenty-five hours in any week, in total, for the instructor.', 'At Most 25 Hrs/Wk', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(25)', 'At Most 25 Hours A Week', 0, 55, '210R', 'Classes are to be placed in a way that there is no more than twenty-five hours in any week, in total, for the instructor.', 'At Most 25 Hrs/Wk', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(25)' or x.req_id = 55)
 		]]></plsql>
 		<plsql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(30)', 'At Most 30 Hours A Week', 0, 56, '210R', 'Classes are to be placed in a way that there is no more than thirty hours in any week, in total, for the instructor.', 'At Most 30 Hrs/Wk', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(30)', 'At Most 30 Hours A Week', 0, 56, '210R', 'Classes are to be placed in a way that there is no more than thirty hours in any week, in total, for the instructor.', 'At Most 30 Hrs/Wk', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(30)' or x.req_id = 56)
 		]]></plsql>
 		<plsql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(35)', 'At Most 35 Hours A Week', 0, 57, '210R', 'Classes are to be placed in a way that there is no more than thirty-five hours in any week, in total, for the instructor.', 'At Most 35 Hrs/Wk', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(35)', 'At Most 35 Hours A Week', 0, 57, '210R', 'Classes are to be placed in a way that there is no more than thirty-five hours in any week, in total, for the instructor.', 'At Most 35 Hrs/Wk', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(35)' or x.req_id = 57)
 		]]></plsql>
 		<plsql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(40)', 'At Most 40 Hours A Week', 0, 58, '210R', 'Classes are to be placed in a way that there is no more than forty hours in any week, in total, for the instructor.', 'At Most 40 Hrs/Wk', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %SCHEMA%.ref_table_seq.nextval, 'MAX_HRS_WEEK(40)', 'At Most 40 Hours A Week', 0, 58, '210R', 'Classes are to be placed in a way that there is no more than forty hours in any week, in total, for the instructor.', 'At Most 40 Hrs/Wk', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(40)' or x.req_id = 58)
 		]]></plsql>
 		<mysql into="ID">select 32767 * next_hi from %SCHEMA%.hibernate_unique_key</mysql>
 		<mysql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%ID% + 0, 'MAX_HRS_WEEK(20)', 'At Most 20 Hours A Week', 0, 54, '210R', 'Classes are to be placed in a way that there is no more than twenty hours in any week, in total, for the instructor.', 'At Most 20 Hrs/Wk', 1, 0),
-			(%ID% + 1, 'MAX_HRS_WEEK(25)', 'At Most 25 Hours A Week', 0, 55, '210R', 'Classes are to be placed in a way that there is no more than twenty-five hours in any week, in total, for the instructor.', 'At Most 25 Hrs/Wk', 1, 0),
-			(%ID% + 2, 'MAX_HRS_WEEK(30)', 'At Most 30 Hours A Week', 0, 56, '210R', 'Classes are to be placed in a way that there is no more than thirty hours in any week, in total, for the instructor.', 'At Most 30 Hrs/Wk', 1, 0),
-			(%ID% + 3, 'MAX_HRS_WEEK(35)', 'At Most 35 Hours A Week', 0, 57, '210R', 'Classes are to be placed in a way that there is no more than thirty-five hours in any week, in total, for the instructor.', 'At Most 35 Hrs/Wk', 1, 0),
-			(%ID% + 4, 'MAX_HRS_WEEK(40)', 'At Most 40 Hours A Week', 0, 58, '210R', 'Classes are to be placed in a way that there is no more than forty hours in any week, in total, for the instructor.', 'At Most 40 Hrs/Wk', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 0, 'MAX_HRS_WEEK(20)', 'At Most 20 Hours A Week', 0, 54, '210R', 'Classes are to be placed in a way that there is no more than twenty hours in any week, in total, for the instructor.', 'At Most 20 Hrs/Wk', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(20)' or x.req_id = 54)
+		]]></mysql>
+		<mysql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 1, 'MAX_HRS_WEEK(25)', 'At Most 25 Hours A Week', 0, 55, '210R', 'Classes are to be placed in a way that there is no more than twenty-five hours in any week, in total, for the instructor.', 'At Most 25 Hrs/Wk', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(25)' or x.req_id = 55)
+		]]></mysql>
+		<mysql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 2, 'MAX_HRS_WEEK(30)', 'At Most 30 Hours A Week', 0, 56, '210R', 'Classes are to be placed in a way that there is no more than thirty hours in any week, in total, for the instructor.', 'At Most 30 Hrs/Wk', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(30)' or x.req_id = 56)
+		]]></mysql>
+		<mysql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 3, 'MAX_HRS_WEEK(35)', 'At Most 35 Hours A Week', 0, 57, '210R', 'Classes are to be placed in a way that there is no more than thirty-five hours in any week, in total, for the instructor.', 'At Most 35 Hrs/Wk', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(35)' or x.req_id = 57)
+		]]></mysql>
+		<mysql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 4, 'MAX_HRS_WEEK(40)', 'At Most 40 Hours A Week', 0, 58, '210R', 'Classes are to be placed in a way that there is no more than forty hours in any week, in total, for the instructor.', 'At Most 40 Hrs/Wk', 1, 0 from dual where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(40)' or x.req_id = 58)
 		]]></mysql>
 		<mysql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</mysql>
 		<pgsql into="ID">select 32767 * next_hi from %SCHEMA%.hibernate_unique_key</pgsql>
 		<pgsql><![CDATA[
-			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref) values
-			(%ID% + 0, 'MAX_HRS_WEEK(20)', 'At Most 20 Hours A Week', 0, 54, '210R', 'Classes are to be placed in a way that there is no more than twenty hours in any week, in total, for the instructor.', 'At Most 20 Hrs/Wk', 1, 0),
-			(%ID% + 1, 'MAX_HRS_WEEK(25)', 'At Most 25 Hours A Week', 0, 55, '210R', 'Classes are to be placed in a way that there is no more than twenty-five hours in any week, in total, for the instructor.', 'At Most 25 Hrs/Wk', 1, 0),
-			(%ID% + 2, 'MAX_HRS_WEEK(30)', 'At Most 30 Hours A Week', 0, 56, '210R', 'Classes are to be placed in a way that there is no more than thirty hours in any week, in total, for the instructor.', 'At Most 30 Hrs/Wk', 1, 0),
-			(%ID% + 3, 'MAX_HRS_WEEK(35)', 'At Most 35 Hours A Week', 0, 57, '210R', 'Classes are to be placed in a way that there is no more than thirty-five hours in any week, in total, for the instructor.', 'At Most 35 Hrs/Wk', 1, 0),
-			(%ID% + 4, 'MAX_HRS_WEEK(40)', 'At Most 40 Hours A Week', 0, 58, '210R', 'Classes are to be placed in a way that there is no more than forty hours in any week, in total, for the instructor.', 'At Most 40 Hrs/Wk', 1, 0)
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 0, 'MAX_HRS_WEEK(20)', 'At Most 20 Hours A Week', 0, 54, '210R', 'Classes are to be placed in a way that there is no more than twenty hours in any week, in total, for the instructor.', 'At Most 20 Hrs/Wk', 1, 0 where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(20)' or x.req_id = 54)
+		]]></pgsql>
+		<pgsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 1, 'MAX_HRS_WEEK(25)', 'At Most 25 Hours A Week', 0, 55, '210R', 'Classes are to be placed in a way that there is no more than twenty-five hours in any week, in total, for the instructor.', 'At Most 25 Hrs/Wk', 1, 0 where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(25)' or x.req_id = 55)
+		]]></pgsql>
+		<pgsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 2, 'MAX_HRS_WEEK(30)', 'At Most 30 Hours A Week', 0, 56, '210R', 'Classes are to be placed in a way that there is no more than thirty hours in any week, in total, for the instructor.', 'At Most 30 Hrs/Wk', 1, 0 where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(30)' or x.req_id = 56)
+		]]></pgsql>
+		<pgsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 3, 'MAX_HRS_WEEK(35)', 'At Most 35 Hours A Week', 0, 57, '210R', 'Classes are to be placed in a way that there is no more than thirty-five hours in any week, in total, for the instructor.', 'At Most 35 Hrs/Wk', 1, 0 where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(35)' or x.req_id = 57)
+		]]></pgsql>
+		<pgsql><![CDATA[
+			insert into %SCHEMA%.distribution_type (uniqueid, reference, label, sequencing_required, req_id, allowed_pref, description, abbreviation, instructor_pref, exam_pref)
+			select %ID% + 4, 'MAX_HRS_WEEK(40)', 'At Most 40 Hours A Week', 0, 58, '210R', 'Classes are to be placed in a way that there is no more than forty hours in any week, in total, for the instructor.', 'At Most 40 Hrs/Wk', 1, 0 where not exists (select 1 from %SCHEMA%.distribution_type x where x.reference = 'MAX_HRS_WEEK(40)' or x.req_id = 58)
 		]]></pgsql>
 		<pgsql>update %SCHEMA%.hibernate_unique_key set next_hi=next_hi+1</pgsql>
 	</update>
@@ -16239,5 +16287,833 @@
 		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'AssignmentChangeRequests' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value in ('Suggestions', 'ExaminationAssignment') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AssignmentChangeRequests')</sql>
 		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'AssignmentChangeApprove' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value = 'PermissionEdit' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AssignmentChangeApprove')</sql>
 		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'AssignmentChangeApprove' from %SCHEMA%.roles r where r.reference = 'Session Admin' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AssignmentChangeApprove')</sql>
+	</update>
+	<update version="278" date="20-Nov-2026" comment="Examination seat allocation and invigilation">
+		<!--
+			Seat allocation: exam_seat_layout (venue seat grids), exam_seat (student seats), exam_special_arr
+			(special arrangements). Invigilation: invigilator, invigilator_avail, invigilation_asgn (duties),
+			invigilation_config (staffing rules). Shared: exam_alloc_status (review / approval / publication per
+			examination type) and exam_alloc_log (audit trail). See org.unitime.timetable.server.seating and
+			org.unitime.timetable.server.invigilation.
+		-->
+		<plsql>
+			create table %SCHEMA%.exam_seat_layout (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				location_id number(20,0) not null,
+				nr_rows number(10) not null,
+				nr_columns number(10) not null,
+				blocked_seats varchar2(2000 char),
+				accessible_seats varchar2(2000 char),
+				front_rows number(10)
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.exam_seat_layout add constraint pk_exam_seat_layout primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.exam_seat_layout (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				location_id decimal(20,0) not null,
+				nr_rows int not null,
+				nr_columns int not null,
+				blocked_seats varchar(2000),
+				accessible_seats varchar(2000),
+				front_rows int
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.exam_seat_layout (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				location_id bigint not null,
+				nr_rows integer not null,
+				nr_columns integer not null,
+				blocked_seats varchar(2000),
+				accessible_seats varchar(2000),
+				front_rows integer
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.exam_seat_layout add constraint pk_exam_seat_layout primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.exam_seat_layout add constraint fk_exam_seat_layout_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<plsql>
+			create table %SCHEMA%.exam_seat (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				exam_type_id number(20,0) not null,
+				exam_period_id number(20,0) not null,
+				exam_id number(20,0) not null,
+				student_id number(20,0) not null,
+				location_id number(20,0) not null,
+				seat_label varchar2(20 char),
+				source varchar2(10 char) not null,
+				locked number(1) not null,
+				last_modified timestamp not null,
+				modified_by varchar2(100 char)
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.exam_seat add constraint pk_exam_seat primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.exam_seat (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				exam_type_id decimal(20,0) not null,
+				exam_period_id decimal(20,0) not null,
+				exam_id decimal(20,0) not null,
+				student_id decimal(20,0) not null,
+				location_id decimal(20,0) not null,
+				seat_label varchar(20),
+				source varchar(10) not null,
+				locked boolean not null,
+				last_modified datetime not null,
+				modified_by varchar(100)
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.exam_seat (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				exam_type_id bigint not null,
+				exam_period_id bigint not null,
+				exam_id bigint not null,
+				student_id bigint not null,
+				location_id bigint not null,
+				seat_label varchar(20),
+				source varchar(10) not null,
+				locked boolean not null,
+				last_modified timestamp not null,
+				modified_by varchar(100)
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.exam_seat add constraint pk_exam_seat primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.exam_seat add constraint fk_exam_seat_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<plsql>
+			create table %SCHEMA%.exam_special_arr (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				student_id number(20,0) not null,
+				separate_room number(1) not null,
+				location_id number(20,0),
+				accessible_seat number(1) not null,
+				front_seat number(1) not null,
+				extra_time_pct number(10),
+				note varchar2(500 char),
+				approved_by varchar2(100 char)
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.exam_special_arr add constraint pk_exam_special_arr primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.exam_special_arr (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				student_id decimal(20,0) not null,
+				separate_room boolean not null,
+				location_id decimal(20,0),
+				accessible_seat boolean not null,
+				front_seat boolean not null,
+				extra_time_pct int,
+				note varchar(500),
+				approved_by varchar(100)
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.exam_special_arr (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				student_id bigint not null,
+				separate_room boolean not null,
+				location_id bigint,
+				accessible_seat boolean not null,
+				front_seat boolean not null,
+				extra_time_pct integer,
+				note varchar(500),
+				approved_by varchar(100)
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.exam_special_arr add constraint pk_exam_special_arr primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.exam_special_arr add constraint fk_exam_special_arr_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<plsql>
+			create table %SCHEMA%.exam_alloc_status (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				exam_type_id number(20,0) not null,
+				kind varchar2(20 char) not null,
+				status varchar2(20 char) not null,
+				approved_by varchar2(100 char),
+				approved_ts timestamp,
+				published_by varchar2(100 char),
+				published_ts timestamp,
+				note varchar2(2000 char),
+				version number(10) not null
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.exam_alloc_status add constraint pk_exam_alloc_status primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.exam_alloc_status (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				exam_type_id decimal(20,0) not null,
+				kind varchar(20) not null,
+				status varchar(20) not null,
+				approved_by varchar(100),
+				approved_ts datetime,
+				published_by varchar(100),
+				published_ts datetime,
+				note varchar(2000),
+				version int not null
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.exam_alloc_status (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				exam_type_id bigint not null,
+				kind varchar(20) not null,
+				status varchar(20) not null,
+				approved_by varchar(100),
+				approved_ts timestamp,
+				published_by varchar(100),
+				published_ts timestamp,
+				note varchar(2000),
+				version integer not null
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.exam_alloc_status add constraint pk_exam_alloc_status primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.exam_alloc_status add constraint fk_exam_alloc_status_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<plsql>
+			create table %SCHEMA%.exam_alloc_log (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				exam_type_id number(20,0),
+				kind varchar2(20 char) not null,
+				action varchar2(40 char) not null,
+				exam_period_id number(20,0),
+				detail varchar2(2000 char),
+				user_id varchar2(40 char),
+				user_name varchar2(100 char),
+				time_stamp timestamp not null
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.exam_alloc_log add constraint pk_exam_alloc_log primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.exam_alloc_log (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				exam_type_id decimal(20,0),
+				kind varchar(20) not null,
+				action varchar(40) not null,
+				exam_period_id decimal(20,0),
+				detail varchar(2000),
+				user_id varchar(40),
+				user_name varchar(100),
+				time_stamp datetime not null
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.exam_alloc_log (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				exam_type_id bigint,
+				kind varchar(20) not null,
+				action varchar(40) not null,
+				exam_period_id bigint,
+				detail varchar(2000),
+				user_id varchar(40),
+				user_name varchar(100),
+				time_stamp timestamp not null
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.exam_alloc_log add constraint pk_exam_alloc_log primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.exam_alloc_log add constraint fk_exam_alloc_log_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<plsql>
+			create table %SCHEMA%.invigilator (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				external_uid varchar2(40 char),
+				name varchar2(100 char) not null,
+				email varchar2(200 char),
+				department_id number(20,0),
+				instructor_id number(20,0),
+				duty_types varchar2(100 char) not null,
+				max_per_day number(10),
+				max_total number(10),
+				active number(1) not null,
+				note varchar2(500 char)
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.invigilator add constraint pk_invigilator primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.invigilator (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				external_uid varchar(40),
+				name varchar(100) not null,
+				email varchar(200),
+				department_id decimal(20,0),
+				instructor_id decimal(20,0),
+				duty_types varchar(100) not null,
+				max_per_day int,
+				max_total int,
+				active boolean not null,
+				note varchar(500)
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.invigilator (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				external_uid varchar(40),
+				name varchar(100) not null,
+				email varchar(200),
+				department_id bigint,
+				instructor_id bigint,
+				duty_types varchar(100) not null,
+				max_per_day integer,
+				max_total integer,
+				active boolean not null,
+				note varchar(500)
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.invigilator add constraint pk_invigilator primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.invigilator add constraint fk_invigilator_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<plsql>
+			create table %SCHEMA%.invigilator_avail (
+				uniqueid number(20,0) not null,
+				invigilator_id number(20,0) not null,
+				exam_period_id number(20,0) not null,
+				status varchar2(20 char) not null,
+				source varchar2(10 char) not null,
+				note varchar2(500 char)
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.invigilator_avail add constraint pk_invigilator_avail primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.invigilator_avail (
+				uniqueid decimal(20,0) primary key not null,
+				invigilator_id decimal(20,0) not null,
+				exam_period_id decimal(20,0) not null,
+				status varchar(20) not null,
+				source varchar(10) not null,
+				note varchar(500)
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.invigilator_avail (
+				uniqueid bigint not null,
+				invigilator_id bigint not null,
+				exam_period_id bigint not null,
+				status varchar(20) not null,
+				source varchar(10) not null,
+				note varchar(500)
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.invigilator_avail add constraint pk_invigilator_avail primary key (uniqueid)</pgsql>
+		<plsql>
+			create table %SCHEMA%.invigilation_asgn (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				exam_type_id number(20,0) not null,
+				exam_period_id number(20,0) not null,
+				location_id number(20,0),
+				invigilator_id number(20,0) not null,
+				duty_type varchar2(20 char) not null,
+				source varchar2(10 char) not null,
+				locked number(1) not null,
+				last_modified timestamp not null,
+				modified_by varchar2(100 char)
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.invigilation_asgn add constraint pk_invigilation_asgn primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.invigilation_asgn (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				exam_type_id decimal(20,0) not null,
+				exam_period_id decimal(20,0) not null,
+				location_id decimal(20,0),
+				invigilator_id decimal(20,0) not null,
+				duty_type varchar(20) not null,
+				source varchar(10) not null,
+				locked boolean not null,
+				last_modified datetime not null,
+				modified_by varchar(100)
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.invigilation_asgn (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				exam_type_id bigint not null,
+				exam_period_id bigint not null,
+				location_id bigint,
+				invigilator_id bigint not null,
+				duty_type varchar(20) not null,
+				source varchar(10) not null,
+				locked boolean not null,
+				last_modified timestamp not null,
+				modified_by varchar(100)
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.invigilation_asgn add constraint pk_invigilation_asgn primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.invigilation_asgn add constraint fk_invigilation_asgn_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<plsql>
+			create table %SCHEMA%.invigilation_config (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				students_per_invig number(10) not null,
+				min_per_room number(10) not null,
+				chief_per_room number(1) not null,
+				extra_special_room number(10) not null,
+				reserves_per_period number(10) not null,
+				default_max_per_day number(10) not null,
+				default_max_total number(10) not null,
+				avoid_own_exam number(1) not null
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.invigilation_config add constraint pk_invigilation_config primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.invigilation_config (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				students_per_invig int not null,
+				min_per_room int not null,
+				chief_per_room boolean not null,
+				extra_special_room int not null,
+				reserves_per_period int not null,
+				default_max_per_day int not null,
+				default_max_total int not null,
+				avoid_own_exam boolean not null
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.invigilation_config (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				students_per_invig integer not null,
+				min_per_room integer not null,
+				chief_per_room boolean not null,
+				extra_special_room integer not null,
+				reserves_per_period integer not null,
+				default_max_per_day integer not null,
+				default_max_total integer not null,
+				avoid_own_exam boolean not null
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.invigilation_config add constraint pk_invigilation_config primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.invigilation_config add constraint fk_invigilation_config_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<mysql>create index idx_exam_seat_period on %SCHEMA%.exam_seat(exam_period_id, location_id)</mysql>
+		<mysql>create index idx_invig_asgn_period on %SCHEMA%.invigilation_asgn(exam_period_id, location_id)</mysql>
+		<pgsql>create index idx_exam_seat_period on %SCHEMA%.exam_seat(exam_period_id, location_id)</pgsql>
+		<pgsql>create index idx_invig_asgn_period on %SCHEMA%.invigilation_asgn(exam_period_id, location_id)</pgsql>
+		<plsql>create index %SCHEMA%.idx_exam_seat_period on %SCHEMA%.exam_seat(exam_period_id, location_id)</plsql>
+		<plsql>create index %SCHEMA%.idx_invig_asgn_period on %SCHEMA%.invigilation_asgn(exam_period_id, location_id)</plsql>
+
+		<!-- ===== seed rights ===== -->
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'ExamSeating' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value in ('ExaminationAssignment') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'ExamSeating')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'ExamSeatingEdit' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value in ('ExaminationAssignment') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'ExamSeatingEdit')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'Invigilation' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value in ('ExaminationAssignment') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'Invigilation')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'InvigilationEdit' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value in ('ExaminationAssignment') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'InvigilationEdit')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'MyInvigilationDuties' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value in ('MyLeaveRequests', 'ExaminationAssignment') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyInvigilationDuties')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'MyExamSeats' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value in ('PersonalSchedule') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyExamSeats')</sql>
+	</update>
+	<update version="279" date="20-Nov-2026" comment="Attendance management">
+		<!--
+			Attendance: attendance_config (policy and capture settings), attendance_session (attendance of a
+			dated class meeting), attendance_record (student status), attendance_excuse (medical certificates,
+			leave), attendance_followup (follow-up cases). Actions are logged in exam_alloc_log (kind ATTENDANCE).
+			See org.unitime.timetable.server.attendance.
+		-->
+		<plsql>
+			create table %SCHEMA%.attendance_config (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				min_pct number(10) not null,
+				eligibility_pct number(10),
+				late_minutes number(10) not null,
+				checkin_minutes number(10) not null,
+				rollcall_enabled number(1) not null,
+				qr_enabled number(1) not null,
+				qr_rotation_sec number(10) not null,
+				one_device number(1) not null,
+				late_counts_present number(1) not null,
+				excused_counts_present number(1) not null,
+				consecutive_absences number(10) not null,
+				min_sessions number(10) not null,
+				alert_recipients varchar2(100 char) not null,
+				excuse_approver varchar2(20 char) not null,
+				notify_student number(1) not null,
+				export_columns varchar2(500 char)
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.attendance_config add constraint pk_attendance_config primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.attendance_config (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				min_pct int not null,
+				eligibility_pct int,
+				late_minutes int not null,
+				checkin_minutes int not null,
+				rollcall_enabled boolean not null,
+				qr_enabled boolean not null,
+				qr_rotation_sec int not null,
+				one_device boolean not null,
+				late_counts_present boolean not null,
+				excused_counts_present boolean not null,
+				consecutive_absences int not null,
+				min_sessions int not null,
+				alert_recipients varchar(100) not null,
+				excuse_approver varchar(20) not null,
+				notify_student boolean not null,
+				export_columns varchar(500)
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.attendance_config (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				min_pct integer not null,
+				eligibility_pct integer,
+				late_minutes integer not null,
+				checkin_minutes integer not null,
+				rollcall_enabled boolean not null,
+				qr_enabled boolean not null,
+				qr_rotation_sec integer not null,
+				one_device boolean not null,
+				late_counts_present boolean not null,
+				excused_counts_present boolean not null,
+				consecutive_absences integer not null,
+				min_sessions integer not null,
+				alert_recipients varchar(100) not null,
+				excuse_approver varchar(20) not null,
+				notify_student boolean not null,
+				export_columns varchar(500)
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.attendance_config add constraint pk_attendance_config primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.attendance_config add constraint fk_attendance_config_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<plsql>
+			create table %SCHEMA%.attendance_session (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				meeting_id number(20,0) not null,
+				class_id number(20,0) not null,
+				meeting_date timestamp not null,
+				start_period number(10) not null,
+				stop_period number(10) not null,
+				location_perm_id number(20,0),
+				taker_uid varchar2(40 char),
+				taker_name varchar2(100 char),
+				status varchar2(20 char) not null,
+				checkin_opened timestamp,
+				checkin_until timestamp,
+				qr_secret varchar2(64 char),
+				finalised_by varchar2(100 char),
+				finalised_ts timestamp
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.attendance_session add constraint pk_attendance_session primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.attendance_session (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				meeting_id decimal(20,0) not null,
+				class_id decimal(20,0) not null,
+				meeting_date datetime not null,
+				start_period int not null,
+				stop_period int not null,
+				location_perm_id decimal(20,0),
+				taker_uid varchar(40),
+				taker_name varchar(100),
+				status varchar(20) not null,
+				checkin_opened datetime,
+				checkin_until datetime,
+				qr_secret varchar(64),
+				finalised_by varchar(100),
+				finalised_ts datetime
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.attendance_session (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				meeting_id bigint not null,
+				class_id bigint not null,
+				meeting_date timestamp not null,
+				start_period integer not null,
+				stop_period integer not null,
+				location_perm_id bigint,
+				taker_uid varchar(40),
+				taker_name varchar(100),
+				status varchar(20) not null,
+				checkin_opened timestamp,
+				checkin_until timestamp,
+				qr_secret varchar(64),
+				finalised_by varchar(100),
+				finalised_ts timestamp
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.attendance_session add constraint pk_attendance_session primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.attendance_session add constraint fk_attendance_session_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<plsql>
+			create table %SCHEMA%.attendance_record (
+				uniqueid number(20,0) not null,
+				attendance_session_id number(20,0) not null,
+				student_id number(20,0) not null,
+				status varchar2(20 char) not null,
+				source varchar2(20 char) not null,
+				marked_ts timestamp not null,
+				marked_by varchar2(100 char),
+				device_id varchar2(64 char),
+				note varchar2(500 char)
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.attendance_record add constraint pk_attendance_record primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.attendance_record (
+				uniqueid decimal(20,0) primary key not null,
+				attendance_session_id decimal(20,0) not null,
+				student_id decimal(20,0) not null,
+				status varchar(20) not null,
+				source varchar(20) not null,
+				marked_ts datetime not null,
+				marked_by varchar(100),
+				device_id varchar(64),
+				note varchar(500)
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.attendance_record (
+				uniqueid bigint not null,
+				attendance_session_id bigint not null,
+				student_id bigint not null,
+				status varchar(20) not null,
+				source varchar(20) not null,
+				marked_ts timestamp not null,
+				marked_by varchar(100),
+				device_id varchar(64),
+				note varchar(500)
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.attendance_record add constraint pk_attendance_record primary key (uniqueid)</pgsql>
+		<plsql>
+			create table %SCHEMA%.attendance_excuse (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				student_id number(20,0) not null,
+				excuse_type varchar2(20 char) not null,
+				from_date timestamp not null,
+				to_date timestamp not null,
+				note varchar2(1000 char),
+				file_name varchar2(260 char),
+				file_type varchar2(100 char),
+				file_content blob,
+				status varchar2(20 char) not null,
+				submitted_ts timestamp not null,
+				decided_by varchar2(100 char),
+				decided_ts timestamp,
+				decision_note varchar2(1000 char)
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.attendance_excuse add constraint pk_attendance_excuse primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.attendance_excuse (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				student_id decimal(20,0) not null,
+				excuse_type varchar(20) not null,
+				from_date datetime not null,
+				to_date datetime not null,
+				note varchar(1000),
+				file_name varchar(260),
+				file_type varchar(100),
+				file_content mediumblob,
+				status varchar(20) not null,
+				submitted_ts datetime not null,
+				decided_by varchar(100),
+				decided_ts datetime,
+				decision_note varchar(1000)
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.attendance_excuse (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				student_id bigint not null,
+				excuse_type varchar(20) not null,
+				from_date timestamp not null,
+				to_date timestamp not null,
+				note varchar(1000),
+				file_name varchar(260),
+				file_type varchar(100),
+				file_content bytea,
+				status varchar(20) not null,
+				submitted_ts timestamp not null,
+				decided_by varchar(100),
+				decided_ts timestamp,
+				decision_note varchar(1000)
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.attendance_excuse add constraint pk_attendance_excuse primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.attendance_excuse add constraint fk_attendance_excuse_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<plsql>
+			create table %SCHEMA%.attendance_followup (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				student_id number(20,0) not null,
+				class_id number(20,0),
+				rule_type varchar2(30 char) not null,
+				detail varchar2(1000 char),
+				status varchar2(20 char) not null,
+				created_ts timestamp not null,
+				recipients varchar2(1000 char),
+				notes varchar2(2000 char),
+				outcome varchar2(1000 char),
+				next_review timestamp,
+				updated_by varchar2(100 char),
+				updated_ts timestamp
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.attendance_followup add constraint pk_attendance_followup primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.attendance_followup (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				student_id decimal(20,0) not null,
+				class_id decimal(20,0),
+				rule_type varchar(30) not null,
+				detail varchar(1000),
+				status varchar(20) not null,
+				created_ts datetime not null,
+				recipients varchar(1000),
+				notes varchar(2000),
+				outcome varchar(1000),
+				next_review datetime,
+				updated_by varchar(100),
+				updated_ts datetime
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.attendance_followup (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				student_id bigint not null,
+				class_id bigint,
+				rule_type varchar(30) not null,
+				detail varchar(1000),
+				status varchar(20) not null,
+				created_ts timestamp not null,
+				recipients varchar(1000),
+				notes varchar(2000),
+				outcome varchar(1000),
+				next_review timestamp,
+				updated_by varchar(100),
+				updated_ts timestamp
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.attendance_followup add constraint pk_attendance_followup primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.attendance_followup add constraint fk_attendance_followup_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<mysql>create index idx_att_session_meeting on %SCHEMA%.attendance_session(meeting_id)</mysql>
+		<mysql>create index idx_att_record_session on %SCHEMA%.attendance_record(attendance_session_id, student_id)</mysql>
+		<pgsql>create index idx_att_session_meeting on %SCHEMA%.attendance_session(meeting_id)</pgsql>
+		<pgsql>create index idx_att_record_session on %SCHEMA%.attendance_record(attendance_session_id, student_id)</pgsql>
+		<plsql>create index %SCHEMA%.idx_att_session_meeting on %SCHEMA%.attendance_session(meeting_id)</plsql>
+		<plsql>create index %SCHEMA%.idx_att_record_session on %SCHEMA%.attendance_record(attendance_session_id, student_id)</plsql>
+
+		<!-- ===== seed rights ===== -->
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'AttendanceManage' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value in ('PermissionEdit') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AttendanceManage')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'AttendanceTake' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value in ('PermissionEdit', 'MyLeaveRequests') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AttendanceTake')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select distinct r.role_id, 'MyAttendance' from %SCHEMA%.roles r, %SCHEMA%.rights g where g.role_id = r.role_id and g.value in ('PersonalSchedule') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyAttendance')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'AttendanceManage' from %SCHEMA%.roles r where r.reference in ('Session Admin', 'Dept Sched Mgr') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AttendanceManage')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'AttendanceTake' from %SCHEMA%.roles r where r.reference in ('Session Admin', 'Dept Sched Mgr') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AttendanceTake')</sql>
+	</update>
+	<update version="280" date="20-Nov-2026" comment="Attendance notification delivery log">
+		<!--
+			attendance_notification: one row per attendance notification and recipient with its delivery status
+			(SENT, FAILED, NO_ADDRESS, NOT_SENT), for the notification delivery report.
+		-->
+		<plsql>
+			create table %SCHEMA%.attendance_notification (
+				uniqueid number(20,0) not null,
+				session_id number(20,0) not null,
+				followup_id number(20,0),
+				student_id number(20,0),
+				class_id number(20,0),
+				recipient_type varchar2(20 char) not null,
+				recipient_name varchar2(200 char),
+				address varchar2(200 char),
+				subject varchar2(300 char),
+				status varchar2(20 char) not null,
+				error varchar2(1000 char),
+				sent_ts timestamp not null
+			)
+		</plsql>
+		<plsql>alter table %SCHEMA%.attendance_notification add constraint pk_attendance_notification primary key (uniqueid)</plsql>
+		<mysql>
+			create table %SCHEMA%.attendance_notification (
+				uniqueid decimal(20,0) primary key not null,
+				session_id decimal(20,0) not null,
+				followup_id decimal(20,0),
+				student_id decimal(20,0),
+				class_id decimal(20,0),
+				recipient_type varchar(20) not null,
+				recipient_name varchar(200),
+				address varchar(200),
+				subject varchar(300),
+				status varchar(20) not null,
+				error varchar(1000),
+				sent_ts datetime not null
+			) engine = INNODB
+		</mysql>
+		<pgsql>
+			create table %SCHEMA%.attendance_notification (
+				uniqueid bigint not null,
+				session_id bigint not null,
+				followup_id bigint,
+				student_id bigint,
+				class_id bigint,
+				recipient_type varchar(20) not null,
+				recipient_name varchar(200),
+				address varchar(200),
+				subject varchar(300),
+				status varchar(20) not null,
+				error varchar(1000),
+				sent_ts timestamp not null
+			)
+		</pgsql>
+		<pgsql>alter table %SCHEMA%.attendance_notification add constraint pk_attendance_notification primary key (uniqueid)</pgsql>
+		<sql>alter table %SCHEMA%.attendance_notification add constraint fk_attendance_notification_sess foreign key (session_id) references %SCHEMA%.sessions (uniqueid) on delete cascade</sql>
+		<mysql>create index idx_att_notif_session on %SCHEMA%.attendance_notification(session_id, sent_ts)</mysql>
+		<pgsql>create index idx_att_notif_session on %SCHEMA%.attendance_notification(session_id, sent_ts)</pgsql>
+		<plsql>create index %SCHEMA%.idx_att_notif_session on %SCHEMA%.attendance_notification(session_id, sent_ts)</plsql>
+	</update>
+	<update version="281" date="20-Nov-2026" comment="AI assistant">
+		<!-- AI assistant (Claude): the AssistantUse right for every role of signed-in users (not Anonymous / No Role) and editable settings. See org.unitime.timetable.server.assistant. -->
+		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'AssistantUse' from %SCHEMA%.roles r where r.reference not in ('Anonymous', 'No Role') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AssistantUse')</sql>
+		<sql>insert into %SCHEMA%.application_config (name, value, description) select 'tmtbl.assistant.backend', 'auto', 'AI assistant: auto (Anthropic API when ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN is set on the server, otherwise off), api, claude-cli (the Claude Code CLI login of the server account - personal or local use only), or off' from %SCHEMA%.sessions where not exists (select 1 from %SCHEMA%.application_config where name = 'tmtbl.assistant.backend') and uniqueid = (select min(uniqueid) from %SCHEMA%.sessions)</sql>
+		<sql>insert into %SCHEMA%.application_config (name, value, description) select 'tmtbl.assistant.model', 'claude-opus-5-5', 'AI assistant: Claude model' from %SCHEMA%.sessions where not exists (select 1 from %SCHEMA%.application_config where name = 'tmtbl.assistant.model') and uniqueid = (select min(uniqueid) from %SCHEMA%.sessions)</sql>
+		<sql>insert into %SCHEMA%.application_config (name, value, description) select 'tmtbl.assistant.effort', 'medium', 'AI assistant: effort (low, medium, high, xhigh, max)' from %SCHEMA%.sessions where not exists (select 1 from %SCHEMA%.application_config where name = 'tmtbl.assistant.effort') and uniqueid = (select min(uniqueid) from %SCHEMA%.sessions)</sql>
+		<sql>insert into %SCHEMA%.application_config (name, value, description) select 'tmtbl.assistant.cli.command', 'claude', 'AI assistant: Claude Code CLI command for the claude-cli backend (may include arguments)' from %SCHEMA%.sessions where not exists (select 1 from %SCHEMA%.application_config where name = 'tmtbl.assistant.cli.command') and uniqueid = (select min(uniqueid) from %SCHEMA%.sessions)</sql>
+		<sql>insert into %SCHEMA%.application_config (name, value, description) select 'tmtbl.assistant.api.baseUrl', '', 'AI assistant: Anthropic API base URL (empty = default; for a proxy or a test server)' from %SCHEMA%.sessions where not exists (select 1 from %SCHEMA%.application_config where name = 'tmtbl.assistant.api.baseUrl') and uniqueid = (select min(uniqueid) from %SCHEMA%.sessions)</sql>
+		<sql>insert into %SCHEMA%.application_config (name, value, description) select 'tmtbl.assistant.api.keyFile', '', 'AI assistant: file holding the Anthropic API key, e.g. a mounted secret (empty = use ANTHROPIC_API_KEY from the environment)' from %SCHEMA%.sessions where not exists (select 1 from %SCHEMA%.application_config where name = 'tmtbl.assistant.api.keyFile') and uniqueid = (select min(uniqueid) from %SCHEMA%.sessions)</sql>
+		<sql>insert into %SCHEMA%.application_config (name, value, description) select 'tmtbl.assistant.maxSteps', '8', 'AI assistant: maximum model calls (tool rounds) per user message' from %SCHEMA%.sessions where not exists (select 1 from %SCHEMA%.application_config where name = 'tmtbl.assistant.maxSteps') and uniqueid = (select min(uniqueid) from %SCHEMA%.sessions)</sql>
+		<sql>insert into %SCHEMA%.application_config (name, value, description) select 'tmtbl.assistant.rateLimit', '20', 'AI assistant: maximum messages and confirmations per user and minute' from %SCHEMA%.sessions where not exists (select 1 from %SCHEMA%.application_config where name = 'tmtbl.assistant.rateLimit') and uniqueid = (select min(uniqueid) from %SCHEMA%.sessions)</sql>
+	</update>
+	<update version="282" date="21-Nov-2026" comment="Teacher and session administrator rights on fresh installs">
+		<!--
+			Versions 276-279 derived the teacher rights (MyLeaveRequests, MyReliefDuties, MyInvigilationDuties,
+			AttendanceTake) from manager rights the Instructor role does not hold, and granted the session
+			administrator rights by the reference 'Session Admin'. On a database created from blank-data.sql the
+			Instructor role therefore got none of them, and the Session Administrator role (reference 'Administrator'
+			there, while 'Administrator' is the System Administrator in the woebegon data) got no approval or
+			attendance management. Grant them by role identity: the Instructor reference, and the Session
+			Administrator label. Idempotent; rights already present are left alone.
+		-->
+		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'MyLeaveRequests' from %SCHEMA%.roles r where r.reference = 'Instructor' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyLeaveRequests')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'MyReliefDuties' from %SCHEMA%.roles r where r.reference = 'Instructor' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyReliefDuties')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'MyInvigilationDuties' from %SCHEMA%.roles r where r.reference = 'Instructor' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'MyInvigilationDuties')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'AttendanceTake' from %SCHEMA%.roles r where r.reference = 'Instructor' and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AttendanceTake')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'AssignmentChangeApprove' from %SCHEMA%.roles r where (r.reference = 'Session Admin' or r.abbv = 'Session Administrator') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AssignmentChangeApprove')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'AttendanceManage' from %SCHEMA%.roles r where (r.reference = 'Session Admin' or r.abbv = 'Session Administrator') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AttendanceManage')</sql>
+		<sql>insert into %SCHEMA%.rights (role_id, value) select r.role_id, 'AttendanceTake' from %SCHEMA%.roles r where (r.reference = 'Session Admin' or r.abbv = 'Session Administrator') and not exists (select 1 from %SCHEMA%.rights x where x.role_id = r.role_id and x.value = 'AttendanceTake')</sql>
 	</update>
 </dbupdate>

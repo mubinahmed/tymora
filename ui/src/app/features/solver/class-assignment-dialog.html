@@ -148,9 +148,9 @@
           </div>
         </div>
         <div class="asg-legend">
-          Colours show preferences: <span style="color:#3c3cb4">required</span> · <span style="color:#0f821e">strongly preferred</span> ·
-          <span style="color:#32c814">preferred</span> · <span style="color:#c49a0a">discouraged</span> ·
-          <span style="color:#f06428">strongly discouraged</span> · <span style="color:#c81e14">prohibited</span>
+          Colours show preferences: <span [style.color]="prefColor('R')">required</span> · <span [style.color]="prefColor('-2')">strongly preferred</span> ·
+          <span [style.color]="prefColor('-1')">preferred</span> · <span [style.color]="prefColor('1')">discouraged</span> ·
+          <span [style.color]="prefColor('2')">strongly discouraged</span> · <span [style.color]="prefColor('P')">prohibited</span>
         </div>
       </section>
 

@@ -1,0 +1,4 @@
+# Build context of tomcat.Dockerfile is the repository root: send only what the image needs.
+*
+!target/UniTime.war
+!Documentation/Docker/tymora-entrypoint.sh

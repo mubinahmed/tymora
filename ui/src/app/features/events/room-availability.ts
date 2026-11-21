@@ -105,14 +105,14 @@ const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       .ra-dates-row { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
       .ra-dates { flex: 1 1 260px; min-width: 220px; }
       .ra-past { display: flex; align-items: center; gap: 0.4rem; padding-bottom: 0.4rem; }
-      .ra-date-caption { margin: 0 0 0.5rem; font-size: 0.85rem; color: var(--text-color-secondary, #6c757d); }
+      .ra-date-caption { margin: 0 0 0.5rem; font-size: 0.85rem; color: var(--ut-muted); }
       table.ra-date-table { border-collapse: collapse; font-size: 0.85rem; width: 100%; margin-bottom: 0.75rem; }
-      table.ra-date-table th, table.ra-date-table td { border: 1px solid var(--surface-border, #dee2e6); padding: 4px 8px; text-align: left; vertical-align: top; }
-      table.ra-date-table th.date-c { white-space: nowrap; background: var(--surface-100, #f8f9fa); }
+      table.ra-date-table th, table.ra-date-table td { border: 1px solid var(--ut-border); padding: 4px 8px; text-align: left; vertical-align: top; }
+      table.ra-date-table th.date-c { white-space: nowrap; background: var(--ut-surface); }
       table.ra-date-table tr.free td.status-c { color: #1b7f3b; }
       table.ra-date-table tr.busy td.status-c { color: #b3261e; }
       table.ra-date-table .ra-slot { display: inline-block; margin-right: 0.75rem; white-space: nowrap; }
-      table.ra-date-table .ra-slot .ra-time { color: var(--text-color-secondary, #6c757d); }
+      table.ra-date-table .ra-slot .ra-time { color: var(--ut-muted); }
       tr.wknd th.date-c { font-style: italic; }
       tr.hol th.date-c { color: #b26a00; }
     `,

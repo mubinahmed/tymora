@@ -39,7 +39,8 @@ import org.unitime.timetable.security.rights.Right;
 /**
  * Read backend for the migrated Scheduling Subpart Edit page (legacy
  * schedulingSubpartEdit.action). Loads the editable subpart-row fields plus the
- * instructional-type and date-pattern option lists. See
+ * instructional-type and date-pattern option lists, and the time pattern / time
+ * preference / room preference state ({@link CoursePreferencesHelper}). See
  * {@link org.unitime.timetable.gwt.shared.SchedulingSubpartEditInterface}; gated by
  * {@link Right#SchedulingSubpartEdit}. The companion {@code SchedulingSubpartEditUpdateBackend} saves.
  *
@@ -110,6 +111,14 @@ public class SchedulingSubpartEditBackend implements GwtRpcImplementation<Subpar
 			for (ItypeDesc it : ItypeDesc.findAll(false))
 				r.addItypeOption(new IdName(it.getItype() == null ? null : it.getItype().longValue(), it.getDesc()));
 		} catch (Exception e) {}
+
+		// Time pattern / time preference / room preference state (legacy PreferencesAction2)
+		r.setPreferences(CoursePreferencesHelper.load(ss, context,
+				ss.getMinutesPerWk() == null ? 0 : ss.getMinutesPerWk().intValue(),
+				ss.effectiveDatePattern(),
+				ioc.getDurationModel(),
+				ss.getManagingDept(),
+				ss.getMaxRooms()));
 	}
 
 	private static DatePattern inheritedDatePattern(SchedulingSubpart ss) {

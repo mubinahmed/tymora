@@ -96,7 +96,16 @@ public class UpdateCourseOfferingBackend implements GwtRpcImplementation<UpdateC
 		}
 		switch (request.getAction()) {
 		case CREATE:
+			if (request.getCourseOffering().getSubjectAreaId() == null) {
+				request.getCourseOffering().setErrorMessage("Subject is required.");
+				return request.getCourseOffering();
+			}
 			context.checkPermission(request.getCourseOffering().getSubjectAreaId(), "SubjectArea", Right.AddCourseOffering);
+			String createError = validateNewCourse(request.getCourseOffering());
+			if (createError != null) {
+				request.getCourseOffering().setErrorMessage(createError);
+				return request.getCourseOffering();
+			}
 			courseOffering = save(request.getCourseOffering(), context);
 			request.getCourseOffering().setInstrOfferingId(courseOffering.getInstructionalOffering().getUniqueId());
 			break;
@@ -119,6 +128,37 @@ public class UpdateCourseOfferingBackend implements GwtRpcImplementation<UpdateC
 		return request.getCourseOffering();
 	}
 	
+	/**
+	 * Server-side counterpart of the course number checks the GWT Course Offering Edit page did on the client
+	 * before a CREATE (CourseOfferingEdit.validate + CourseOfferingCheckExists): upper-casing
+	 * (tmtbl.courseNumber.upperCase), the tmtbl.courseNumber.pattern regular expression (its patternInfo text is the
+	 * error message) and uniqueness within the subject area (tmtbl.courseNumber.unique).
+	 * Normalizes the course number on the given object. Returns an error message, or null when valid.
+	 */
+	protected String validateNewCourse(CourseOfferingInterface course) {
+		String courseNbr = (course.getCourseNbr() == null ? "" : course.getCourseNbr().trim());
+		if (courseNbr.isEmpty()) return "Course Number is required.";
+		if (ApplicationProperty.CourseOfferingNumberUpperCase.isTrue())
+			courseNbr = courseNbr.toUpperCase();
+		course.setCourseNbr(courseNbr);
+		String regex = ApplicationProperty.CourseOfferingNumberPattern.value();
+		if (regex != null && !regex.isEmpty()) {
+			try {
+				if (!java.util.regex.Pattern.compile(regex).matcher(courseNbr).find())
+					return ApplicationProperty.CourseOfferingNumberPatternInfo.value();
+			} catch (java.util.regex.PatternSyntaxException e) {
+				return "Course Number cannot be matched to regular expression: " + regex + " . Reason: " + e.getMessage();
+			}
+		}
+		if (ApplicationProperty.CourseOfferingNumberMustBeUnique.isTrue()) {
+			SubjectArea sa = SubjectAreaDAO.getInstance().get(course.getSubjectAreaId());
+			if (sa == null) return "Subject is required.";
+			if (CourseOffering.findBySessionSubjAreaIdCourseNbr(sa.getSessionId(), sa.getUniqueId(), courseNbr) != null)
+				return MSG.errorCourseCannotBeCreated();
+		}
+		return null;
+	}
+
 	private Boolean isWaitlistingProhibited(CourseOfferingInterface courseOfferingInterface, OverrideType prohibitedOverride) {
 		if (prohibitedOverride != null && (courseOfferingInterface.getWaitList() == null ? InstructionalOffering.getDefaultWaitListMode().isWaitlist() : courseOfferingInterface.getWaitList() == OfferingWaitListMode.WaitList.ordinal()) && !courseOfferingInterface.getCourseOverrides().contains(prohibitedOverride.getUniqueId().toString())) {
 			return true;

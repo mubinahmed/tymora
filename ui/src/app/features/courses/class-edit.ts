@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -13,13 +13,16 @@ import { MessageService } from 'primeng/api';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
+import { CoursePrefsEditor } from '../../shared/course-prefs-editor';
 import { ClassEditRequest, ClassEditResponse, ClassEditUpdateRequest, IdName } from './class-edit.models';
 
 /**
- * Class Edit (legacy classEdit.action) — read + save of the class-data fields,
- * backed by ClassEditRequest (load) and ClassEditUpdateRequest (save). Instructor
- * assignment and time/room preferences keep their own screens, so they are not
- * edited here. Reached by class id from Class Detail.
+ * Class Edit (legacy classEdit.action) — read + save of the class-data fields plus
+ * time pattern / time preferences and room / building / room group / room feature
+ * preferences (shared CoursePrefsEditor; preferences inherited from the subpart are
+ * shown tagged "Inherited"), backed by ClassEditRequest (load) and
+ * ClassEditUpdateRequest (save). Instructor assignment keeps its own screen.
+ * Reached by class id from Class Detail.
  */
 @Component({
   selector: 'app-class-edit',
@@ -34,6 +37,7 @@ import { ClassEditRequest, ClassEditResponse, ClassEditUpdateRequest, IdName } f
     CheckboxModule,
     MessageModule,
     ProgressSpinnerModule,
+    CoursePrefsEditor,
   ],
   templateUrl: './class-edit.html',
 })
@@ -45,6 +49,7 @@ export class ClassEdit implements OnInit {
   private messages = inject(MessageService);
 
   readonly id = input<string>();
+  private readonly prefsEditor = viewChild(CoursePrefsEditor);
 
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -109,6 +114,12 @@ export class ClassEdit implements OnInit {
   save(): void {
     const cid = this.data()?.classId;
     if (cid == null) return;
+    const editor = this.prefsEditor();
+    const invalid = editor?.validate();
+    if (invalid) {
+      this.messages.add({ severity: 'error', summary: 'Invalid preferences', detail: invalid });
+      return;
+    }
     this.saving.set(true);
     const v = this.form.getRawValue();
     const request: ClassEditUpdateRequest = {
@@ -123,6 +134,7 @@ export class ClassEdit implements OnInit {
       displayInstructor: !!v.displayInstructor,
       notes: v.notes ?? '',
       schedulePrintNote: v.schedulePrintNote ?? '',
+      preferences: editor && this.data()?.preferences ? editor.toUpdate() : undefined,
     };
     this.rpc.execute<ClassEditResponse>('ClassEditUpdateRequest', request).subscribe({
       next: (d) => {

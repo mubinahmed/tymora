@@ -21,6 +21,7 @@ package org.unitime.timetable.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -59,6 +60,8 @@ public class ReliefAssignment extends BaseReliefAssignment {
 	}
 
 	public Status status() { return Status.fromValue(getStatus()); }
+	@Transient
 	public boolean isManual() { return status() == Status.MANUAL; }
+	@Transient
 	public boolean isAssigned() { return getReliefUid() != null && !getReliefUid().isEmpty(); }
 }

@@ -19,6 +19,9 @@
       <input pInputText type="text" placeholder="Course number (optional)" [(ngModel)]="courseNumber"
         (keyup.enter)="search()" />
       <p-button label="Search" icon="pi pi-search" (onClick)="search()" [disabled]="subjectAreaId == null" [loading]="searching()" />
+      @if (canAdd() && subjectAreaId != null) {
+        <p-button label="Add Course" icon="pi pi-plus" severity="secondary" (onClick)="addCourse()" />
+      }
     </div>
 
     @if (error()) {

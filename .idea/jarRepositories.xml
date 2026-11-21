@@ -2,9 +2,19 @@
 <project version="4">
   <component name="RemoteRepositoriesConfiguration">
     <remote-repository>
+      <option name="id" value="project-lib" />
+      <option name="name" value="Libraries kept in this project (lib/maven-repo)" />
+      <option name="url" value="file:///home/mubin/unitime/lib/maven-repo" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="central" />
       <option name="name" value="Central Repository" />
       <option name="url" value="https://repo.maven.apache.org/maven2" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="project-lib" />
+      <option name="name" value="Libraries kept in this project (lib/maven-repo)" />
+      <option name="url" value="file://D:\git-projects\experiments\unitime/lib/maven-repo" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="snapshot-repo" />

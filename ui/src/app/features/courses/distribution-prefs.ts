@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -29,6 +30,7 @@ interface DistributionPrefListResponse {
   subjectAreas?: SubjectAreaInfo[];
   columns?: string[];
   rows?: DistPrefRow[];
+  canAdd?: boolean;
 }
 
 /** Request payload for the DistributionPrefListRequest command bean. */
@@ -43,12 +45,15 @@ interface DistributionPrefListRequest {
  * instructor preferences) projected to string rows (Preference, Distribution
  * Type, Owner, Applies To). Served by the new DistributionPrefListBackend command
  * bean; gated by Right.DistributionPreferences for the current academic session.
- * Add/edit/delete and PDF/CSV export remain on the legacy page (deferred).
+ * "Add Distribution Preference" opens the create dialog on the sibling
+ * /distribution-prefs-edit screen (query param add=1); edit / delete live there too.
+ * PDF/CSV export remain on the legacy page (deferred).
  */
 @Component({
   selector: 'app-distribution-prefs',
   imports: [
     FormsModule,
+    RouterLink,
     TableModule,
     ButtonModule,
     InputTextModule,

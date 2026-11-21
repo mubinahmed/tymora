@@ -77,8 +77,18 @@ public class InstructionalOfferingDetailInterface implements IsSerializable {
 		private List<CoordinatorInfo> iCoordinators = new ArrayList<CoordinatorInfo>();
 		private List<CrossListInfo> iCrossListings = new ArrayList<CrossListInfo>();
 		private List<ConfigInfo> iConfigs = new ArrayList<ConfigInfo>();
+		private boolean iCanAddConfig;
+		private boolean iCanAddExam;
 
 		public InstructionalOfferingDetailResponse() {}
+
+		/** Right.InstrOfferingConfigAdd on the offering (legacy "Add Configuration" button). */
+		public boolean isCanAddConfig() { return iCanAddConfig; }
+		public void setCanAddConfig(boolean canAddConfig) { iCanAddConfig = canAddConfig; }
+
+		/** Right.ExaminationAdd (legacy "Add Examination" button of the exams section). */
+		public boolean isCanAddExam() { return iCanAddExam; }
+		public void setCanAddExam(boolean canAddExam) { iCanAddExam = canAddExam; }
 
 		public Long getOfferingId() { return iOfferingId; }
 		public void setOfferingId(Long offeringId) { iOfferingId = offeringId; }

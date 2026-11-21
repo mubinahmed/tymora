@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata modelVersion="1.1.0">
+  <groupId>org.unitime</groupId>
+  <artifactId>cpsolver</artifactId>
+  <versioning>
+    <lastUpdated>20261120155311</lastUpdated>
+    <snapshot>
+      <timestamp>20261120.155311</timestamp>
+      <buildNumber>1</buildNumber>
+    </snapshot>
+    <snapshotVersions>
+      <snapshotVersion>
+        <extension>jar</extension>
+        <value>1.4-20261120.155311-1</value>
+        <updated>20261120155311</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>pom</extension>
+        <value>1.4-20261120.155311-1</value>
+        <updated>20261120155311</updated>
+      </snapshotVersion>
+    </snapshotVersions>
+  </versioning>
+  <version>1.4-SNAPSHOT</version>
+</metadata>

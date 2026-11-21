@@ -194,7 +194,8 @@ public class InstrOfferingConfigBackend implements GwtRpcImplementation<InstrOff
 				"from ItypeDesc order by itype", ItypeDesc.class).setCacheable(true).list()) {
 			form.addInstructionalType(itype.getItype().longValue(), itype.getAbbv(), itype.getDesc().trim(), itype.getBasic());
 		}
-		if (form.getDurationTypes().size() <= 1) {
+		// no class duration types at all (e.g. a database created from blank-data.sql): the list is null
+		if (!form.hasDurationTypes() || form.getDurationTypes().size() <= 1) {
         	ClassDurationType dtype = (ioc == null ? io.getSession().getDefaultClassDurationType() : ioc.getEffectiveDurationType());
         	if (dtype != null && dtype.isVisible())
         		form.setDurationTypeEditable(false);

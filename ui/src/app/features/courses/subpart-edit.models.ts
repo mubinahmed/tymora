@@ -2,6 +2,8 @@
 // (org.unitime.timetable.gwt.shared.SchedulingSubpartEditInterface). Hand-written
 // to match the Gson iName->name field mapping.
 
+import { PreferencesData, PreferencesUpdate } from '../../shared/course-prefs.models';
+
 export interface IdName {
   id?: number;
   name?: string;
@@ -28,6 +30,8 @@ export interface SubpartEditResponse {
   autoSpreadInTime?: boolean;
   studentAllowOverlap?: boolean;
   datePatternOptions?: IdName[];
+  /** time pattern / time preference / room preference state */
+  preferences?: PreferencesData;
   itypeOptions?: IdName[];
 }
 
@@ -41,4 +45,6 @@ export interface SubpartEditUpdateRequest {
   datePatternId?: number | null;
   autoSpreadInTime?: boolean;
   studentAllowOverlap?: boolean;
+  /** time / room preferences to save; omitted = preferences untouched */
+  preferences?: PreferencesUpdate;
 }

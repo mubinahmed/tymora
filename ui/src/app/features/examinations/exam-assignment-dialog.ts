@@ -18,6 +18,8 @@ import { MessageService } from 'primeng/api';
 import { RpcService } from '../../core/rpc.service';
 import { ApiError } from '../../core/models';
 import { prefColor, prefLevel } from '../../shared/preference';
+import { readableTextColor } from '../../shared/contrast';
+import { ThemeService } from '../../core/theme.service';
 import { ChangeRequestsService } from '../../core/change-requests.service';
 import { MIN_REASON_LENGTH } from '../approval/change-requests.models';
 import {
@@ -112,7 +114,9 @@ export class ExamAssignmentDialog {
     { label: 'Name (Z-A)', value: 'NameDesc' },
   ];
 
-  protected readonly prefColor = prefColor;
+  private readonly theme = inject(ThemeService);
+  /** Preference colours as TEXT, adjusted for readable contrast on the current theme (light and dark). */
+  protected readonly prefColor = (prolog: string | null | undefined) => readableTextColor(prefColor(prolog), this.theme.isDark());
 
   protected readonly periods = computed(() => this.data()?.periods ?? []);
   protected readonly rooms = computed(() => this.data()?.rooms ?? null);

@@ -13,3 +13,5 @@
 /WebContent/WEB-INF/deploy
 /analysis/
 /requirements/
+# Docker: external database settings (credentials)
+/Documentation/Docker/external-db.env

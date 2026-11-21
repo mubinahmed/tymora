@@ -62,7 +62,7 @@ import {
       .osd-center { display: flex; justify-content: center; padding: 2rem; }
       .osd-mt { margin-top: 1rem; }
       .osd-mb { margin-bottom: 0.5rem; }
-      .osd-muted { color: var(--text-color-secondary); font-size: 0.875rem; }
+      .osd-muted { color: var(--ut-muted); font-size: 0.875rem; }
       .osd-status { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
       .osd-filter { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
       .osd-num { text-align: right; }

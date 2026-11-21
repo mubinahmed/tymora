@@ -55,7 +55,7 @@ interface InstructorDetailResponse {
       }
       .detail-grid dt {
         font-weight: 600;
-        color: var(--text-color-secondary, #6c757d);
+        color: var(--ut-muted);
       }
       .detail-grid dd {
         margin: 0;

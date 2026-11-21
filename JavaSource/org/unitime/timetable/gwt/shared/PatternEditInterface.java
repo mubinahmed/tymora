@@ -33,7 +33,8 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  * The {@code kind} discriminator (DATE|TIME) selects the entity. One request
  * drives LOAD (return all patterns of the current academic session plus the
  * available type options and permission flags), SAVE (merge-on-update the
- * descriptive fields of one existing pattern) and DELETE (remove one pattern).
+ * descriptive fields of one existing pattern, or create a new one when the
+ * record has no id) and DELETE (remove one pattern).
  *
  * The backend ({@code PatternEditBackend}) gates every operation with
  * {@link org.unitime.timetable.security.rights.Right#DatePatterns} /
@@ -47,9 +48,12 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  *     and {@code startSlots}); the backend rewrites the TimePatternDays /
  *     TimePatternTime sets like {@code TimePatternEditForm.update}.
  *
- * STILL DEFERRED (edited only on the legacy JSP page): DatePattern numberOfWeeks,
- * the department / parent / child (pattern-set) associations, and creating a
- * brand-new pattern.
+ * SAVE with {@code record.id == null} CREATES a new pattern (legacy "Add Date
+ * Pattern" / "Add Time Pattern"). For a date pattern {@code record.default == true}
+ * additionally makes it the session's default date pattern (legacy "Make Default").
+ *
+ * STILL DEFERRED (edited only on the legacy JSP page): DatePattern numberOfWeeks
+ * and the department / parent / child (pattern-set) associations.
  *
  * @author Angular migration
  */
@@ -151,6 +155,14 @@ public class PatternEditInterface implements IsSerializable {
 		private List<Integer> iStartSlots;
 		private boolean iGridEditable = false;
 
+		// Time pattern legacy text entry (SAVE only, used when creating a pattern):
+		// day combinations one per line / comma separated (e.g. "M\nT\nW\nTh\nF" or
+		// "MWF") and start times as HHMM (e.g. "0800\n1000"). Parsed on the server by
+		// the legacy TimePatternEditForm.str2dayCodes / str2startSlots. When supplied
+		// they take precedence over dayCodes / startSlots.
+		private String iDayCodesText;
+		private String iStartTimesText;
+
 		public PatternRecord() {}
 
 		public Long getId() { return iId; }
@@ -218,6 +230,12 @@ public class PatternEditInterface implements IsSerializable {
 
 		public boolean isGridEditable() { return iGridEditable; }
 		public void setGridEditable(boolean editable) { iGridEditable = editable; }
+
+		public String getDayCodesText() { return iDayCodesText; }
+		public void setDayCodesText(String text) { iDayCodesText = text; }
+
+		public String getStartTimesText() { return iStartTimesText; }
+		public void setStartTimesText(String text) { iStartTimesText = text; }
 	}
 
 	public static class PatternEditRequest implements GwtRpcRequest<PatternEditResponse> {

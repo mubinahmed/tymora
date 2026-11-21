@@ -41,6 +41,14 @@ export class MenuService {
     reliefReport: '/relief-report',
     // Reason and approval step for assignment changes
     changeRequests: '/change-requests',
+    // Examination seat allocation and invigilation
+    examSeating: '/exam-seating',
+    invigilation: '/invigilation',
+    myExams: '/my-exams',
+    // Attendance
+    attendance: '/attendance',
+    myAttendance: '/my-attendance',
+    studentImport: '/student-import',
     // Wave 1 GWT-backed screens
     traveltimes: '/travel-times',
     password: '/change-password',

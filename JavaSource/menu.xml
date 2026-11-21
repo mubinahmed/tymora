@@ -463,6 +463,16 @@
 					<hasPermission name="ExaminationAssignmentChanges"/>
 				</condition>
 			</item>
+			<item name="Seating" page="examSeating" type="gwt">
+				<condition>
+					<hasPermission name="ExamSeating"/>
+				</condition>
+			</item>
+			<item name="Invigilation" page="invigilation" type="gwt">
+				<condition>
+					<hasPermission name="Invigilation"/>
+				</condition>
+			</item>
 			<item name="Change Requests" page="changeRequests" type="gwt">
 				<condition>
 					<or>
@@ -545,6 +555,36 @@
 					<propertyEquals name="tmtbl.menu.display_personal_schedule" value="true" defaultValue="true"/>
 					<hasPermission name="PersonalSchedule"/>
 				</and>
+			</or>
+		</condition>
+	</item>
+	<menu name="Attendance">
+		<condition>
+			<or>
+				<hasPermission name="AttendanceTake"/>
+				<hasPermission name="AttendanceManage"/>
+				<hasPermission name="MyAttendance"/>
+			</or>
+		</condition>
+		<item name="Take Attendance" page="attendance" type="gwt">
+			<condition>
+				<or>
+					<hasPermission name="AttendanceTake"/>
+					<hasPermission name="AttendanceManage"/>
+				</or>
+			</condition>
+		</item>
+		<item name="My Attendance" page="myAttendance" type="gwt">
+			<condition>
+				<hasPermission name="MyAttendance"/>
+			</condition>
+		</item>
+	</menu>
+	<item name="My Examinations" page="myExams" type="gwt">
+		<condition>
+			<or>
+				<hasPermission name="MyExamSeats"/>
+				<hasPermission name="MyInvigilationDuties"/>
 			</or>
 		</condition>
 	</item>
@@ -874,6 +914,11 @@
 				</condition>
 			</item>
 			<separator/>
+			<item name="Student Import" page="studentImport" type="gwt">
+				<condition>
+					<hasPermission name="DataExchange"/>
+				</condition>
+			</item>
 			<item name="Data Exchange" page="dataImport.action">
 				<condition>
 					<hasPermission name="DataExchange"/>

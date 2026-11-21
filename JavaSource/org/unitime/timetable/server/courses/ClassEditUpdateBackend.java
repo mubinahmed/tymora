@@ -35,8 +35,9 @@ import org.unitime.timetable.security.rights.Right;
 /**
  * Save backend for the migrated Class Edit page (legacy classEdit.action). Persists
  * the class-data subset that {@code ClassEditAction.doUpdate()} saves for the class
- * row itself (capacity, rooms, date pattern, scheduling flags, notes); instructor
- * assignment and preferences are handled by their own screens. Gated by
+ * row itself (capacity, rooms, date pattern, scheduling flags, notes) plus, when
+ * sent, the time and room preferences ({@link CoursePreferencesHelper}); instructor
+ * assignment and date pattern preferences are handled by their own screens. Gated by
  * {@link Right#ClassEdit}, transactional, and change-logged.
  *
  * @author Angular migration
@@ -78,6 +79,9 @@ public class ClassEditUpdateBackend implements GwtRpcImplementation<ClassEditUpd
 			c.setSchedulePrintNote(request.getSchedulePrintNote());
 			c.setEnabledForStudentScheduling(Boolean.valueOf(request.isEnabledForStudentScheduling()));
 			c.setDisplayInstructor(Boolean.valueOf(request.isDisplayInstructor()));
+
+			// Time / room preferences (null = untouched, older payloads)
+			CoursePreferencesHelper.save(c, request.getPreferences(), context);
 
 			ChangeLog.addChange(
 					hibSession,

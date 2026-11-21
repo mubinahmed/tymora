@@ -121,7 +121,7 @@ const MS_PER_DAY = 86400000;
       .mb-toolbar { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
       .mb-toolbar .spacer { flex: 1 1 auto; }
       .mb-step { display: flex; flex-direction: column; gap: 1rem; min-width: 420px; }
-      .mb-hint { color: var(--text-color-secondary, #6c757d); font-size: 0.85rem; margin: 0; }
+      .mb-hint { color: var(--ut-muted); font-size: 0.85rem; margin: 0; }
       .mb-legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.8rem; align-items: center; }
       .mb-legend .sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; margin-right: 4px; vertical-align: middle; border: 1px solid rgba(0,0,0,0.15); }
       .sw.free { background: #e6f4ea; }
@@ -130,16 +130,16 @@ const MS_PER_DAY = 86400000;
 
       .mb-matrix-wrap { overflow-x: auto; max-height: 60vh; overflow-y: auto; }
       table.mb-matrix { border-collapse: collapse; font-size: 0.8rem; }
-      table.mb-matrix th, table.mb-matrix td { border: 1px solid var(--surface-border, #dee2e6); padding: 0; text-align: center; }
-      table.mb-matrix th.corner { background: var(--surface-100, #f8f9fa); position: sticky; left: 0; z-index: 2; }
-      table.mb-matrix th.room-h { min-width: 84px; padding: 4px 6px; background: var(--surface-100, #f8f9fa); cursor: pointer; }
-      table.mb-matrix th.room-h small { display: block; font-weight: 400; color: var(--text-color-secondary, #6c757d); }
-      table.mb-matrix th.date-h { white-space: nowrap; padding: 4px 8px; text-align: right; background: var(--surface-50, #fcfcfd); cursor: pointer; position: sticky; left: 0; z-index: 1; }
+      table.mb-matrix th, table.mb-matrix td { border: 1px solid var(--ut-border); padding: 0; text-align: center; }
+      table.mb-matrix th.corner { background: var(--ut-surface); position: sticky; left: 0; z-index: 2; }
+      table.mb-matrix th.room-h { min-width: 84px; padding: 4px 6px; background: var(--ut-surface); cursor: pointer; }
+      table.mb-matrix th.room-h small { display: block; font-weight: 400; color: var(--ut-muted); }
+      table.mb-matrix th.date-h { white-space: nowrap; padding: 4px 8px; text-align: right; background: var(--ut-surface); cursor: pointer; position: sticky; left: 0; z-index: 1; }
       table.mb-matrix td.cell { width: 84px; height: 34px; cursor: pointer; user-select: none; }
       td.cell .inner { display: flex; align-items: center; justify-content: center; height: 34px; }
-      td.cell.free { background: #e6f4ea; }
+      td.cell.free { background: #e6f4ea; color: #1e4620; }
       td.cell.conflict { background: #fdecea; color: #b3261e; font-weight: 600; }
-      td.cell.selected { outline: 3px solid #2684ff; outline-offset: -3px; background: #cfe8ff; }
+      td.cell.selected { outline: 3px solid #2684ff; outline-offset: -3px; background: #cfe8ff; color: #042c53; }
       td.cell.selected.conflict { background: #f7cfca; }
       td.cell:hover { filter: brightness(0.96); }
       .conf-badge { font-weight: 700; }

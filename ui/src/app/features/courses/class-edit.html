@@ -56,7 +56,7 @@
         <span class="section-icon"><i class="pi pi-sliders-h"></i></span>
         <div>
           <h2>Scheduling &amp; notes</h2>
-          <p>Student-scheduling flags and notes. Instructors and preferences are edited on their own screens.</p>
+          <p>Student-scheduling flags and notes. Instructors are edited on their own screen.</p>
         </div>
       </div>
 
@@ -80,6 +80,10 @@
         <textarea pTextarea id="ce-notes" formControlName="notes" rows="3"></textarea>
       </div>
     </fieldset>
+
+    @if (d.preferences) {
+      <app-course-prefs-editor [data]="d.preferences" />
+    }
 
     <div class="form-actions">
       <p-button label="Cancel" severity="secondary" [text]="true" icon="pi pi-arrow-left" type="button"

@@ -25,6 +25,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Transient;
 
 import java.io.Serializable;
 
@@ -71,16 +72,19 @@ public abstract class BaseReliefConfiguration implements Serializable {
 
 	@Column(name = "prefer_continuity", nullable = true)
 	public Boolean isPreferContinuity() { return iPreferContinuity; }
+	@Transient
 	public Boolean getPreferContinuity() { return iPreferContinuity; }
 	public void setPreferContinuity(Boolean preferContinuity) { iPreferContinuity = preferContinuity; }
 
 	@Column(name = "exclude_non_teaching", nullable = true)
 	public Boolean isExcludeNonTeaching() { return iExcludeNonTeaching; }
+	@Transient
 	public Boolean getExcludeNonTeaching() { return iExcludeNonTeaching; }
 	public void setExcludeNonTeaching(Boolean excludeNonTeaching) { iExcludeNonTeaching = excludeNonTeaching; }
 
 	@Column(name = "same_dept_first", nullable = true)
 	public Boolean isSameDeptFirst() { return iSameDeptFirst; }
+	@Transient
 	public Boolean getSameDeptFirst() { return iSameDeptFirst; }
 	public void setSameDeptFirst(Boolean sameDeptFirst) { iSameDeptFirst = sameDeptFirst; }
 

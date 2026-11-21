@@ -1,0 +1,195 @@
+<div class="db">
+  <!-- filters: one row above the charts -->
+  <div class="db-bar">
+    <p-button icon="pi pi-chevron-left" [text]="true" (onClick)="shiftDay(-1)" pTooltip="Previous day" ariaLabel="Previous day" />
+    <label><span>Day</span><input pInputText type="date" [(ngModel)]="date" (change)="load()" [min]="termStart()" [max]="termEnd()" /></label>
+    <p-button icon="pi pi-chevron-right" [text]="true" (onClick)="shiftDay(1)" pTooltip="Next day" ariaLabel="Next day" />
+    <label><span>Group by</span><p-select [options]="groupOptions" [(ngModel)]="groupBy" optionLabel="label" optionValue="value" (onChange)="load()" /></label>
+    <label><span>Over</span><p-selectButton [options]="periodOptions" [(ngModel)]="period" optionLabel="label" optionValue="value" [allowEmpty]="false" (onChange)="load()" /></label>
+    <span class="spacer"></span>
+    @if (loading()) { <p-progressSpinner strokeWidth="5" [style]="{ width: '1.5rem', height: '1.5rem' }" /> }
+  </div>
+
+  @if (data(); as d) {
+    <!-- the day -->
+    <section class="db-card db-day">
+      <div class="db-head">
+        <div>
+          <h3>{{ weekday(d.date) }} {{ d.date | date: 'd MMMM y' }}</h3>
+          <div class="muted">{{ d.sessionsFinalised }} of {{ d.sessionsScheduled }} timetabled sessions finalised
+            @if (d.sessionsOpen) { · {{ d.sessionsOpen }} in progress } @if (d.sessionsNotTaken) { · {{ d.sessionsNotTaken }} not taken }</div>
+        </div>
+      </div>
+      <div class="db-hero-row">
+        <div class="db-hero">
+          <div class="lbl">Attendance on the day</div>
+          <div class="hero">{{ d.dayRatePct != null ? (d.dayRatePct | number: '1.1-1') + '%' : '—' }}</div>
+          <div class="muted small">Week to date {{ d.weekRatePct != null ? (d.weekRatePct | number: '1.1-1') + '%' : '—' }} · term to date {{ d.termRatePct != null ? (d.termRatePct | number: '1.1-1') + '%' : '—' }}</div>
+        </div>
+        <div class="db-tiles">
+          <div class="tile"><div class="lbl">Students expected</div><div class="val">{{ d.expected | number }}</div></div>
+          <div class="tile"><div class="lbl"><i class="sw s-present"></i>Present</div><div class="val">{{ d.present | number }}</div></div>
+          <div class="tile"><div class="lbl"><i class="sw s-late"></i>Late</div><div class="val">{{ d.late | number }}</div></div>
+          <div class="tile"><div class="lbl"><i class="sw s-partial"></i>Partly absent</div><div class="val">{{ d.partial | number }}</div></div>
+          <div class="tile"><div class="lbl"><i class="sw s-absent"></i>Absent</div><div class="val">{{ d.absent | number }}</div></div>
+          <div class="tile"><div class="lbl"><i class="sw s-excused"></i>Excused</div><div class="val">{{ d.excused | number }}</div></div>
+          <div class="tile"><div class="lbl"><i class="sw s-none"></i>Not recorded</div><div class="val">{{ d.notRecorded | number }}</div></div>
+        </div>
+      </div>
+      @if (d.expected) {
+        <div class="seg" role="img" [attr.aria-label]="'Students on ' + d.date + ': ' + d.present + ' present, ' + d.late + ' late, ' + d.partial + ' partly absent, ' + d.absent + ' absent, ' + d.excused + ' excused, ' + d.notRecorded + ' not recorded'">
+          @for (s of segments(); track s.label) {
+            @if (s.count) {
+              <div class="part" [class]="'part ' + s.cls" [style.flex-grow]="s.count" [pTooltip]="s.label + ': ' + s.count + ' (' + (s.share | number: '1.0-1') + '%)'" tooltipPosition="top">
+                @if (s.share >= 6) { <span>{{ s.share | number: '1.0-0' }}%</span> }
+              </div>
+            }
+          }
+          @if (d.notRecorded) {
+            <div class="part s-none" [style.flex-grow]="d.notRecorded" [pTooltip]="'Not recorded: ' + d.notRecorded + ' (' + (notRecordedShare() | number: '1.0-1') + '%)'" tooltipPosition="top">
+              @if (notRecordedShare() >= 6) { <span>{{ notRecordedShare() | number: '1.0-0' }}%</span> }
+            </div>
+          }
+        </div>
+        <div class="legend">
+          @for (s of segments(); track s.label) { <span><i class="sw" [class]="'sw ' + s.cls"></i>{{ s.label }} {{ s.count | number }}</span> }
+          <span><i class="sw s-none"></i>Not recorded {{ d.notRecorded | number }}</span>
+        </div>
+        <div class="muted small">Each student counts once for the day: absent = absent without excuse from every recorded session; partly absent = from some; late = attended all, late in at least one; not recorded = none of the student's sessions finalised.</div>
+      } @else {
+        <div class="muted">No timetabled sessions with enrolled students on this day.</div>
+      }
+    </section>
+
+    <div class="db-grid">
+      <!-- by group -->
+      <section class="db-card">
+        <div class="db-head">
+          <div>
+            <h3>Attendance by {{ groupLabel().toLowerCase() }}</h3>
+            <div class="muted">{{ d.periodFrom === d.periodTo ? (d.periodTo | date: 'd MMM y') : (d.periodFrom | date: 'd MMM') + ' – ' + (d.periodTo | date: 'd MMM y') }} · finalised sessions</div>
+          </div>
+          <p-button [label]="groupTable() ? 'Chart' : 'Table'" [icon]="groupTable() ? 'pi pi-chart-bar' : 'pi pi-table'" size="small" [text]="true" (onClick)="groupTable.set(!groupTable())" />
+        </div>
+        @if (!d.byGroup.length) {
+          <div class="muted">No finalised attendance in this period.</div>
+        } @else if (groupTable()) {
+          <table class="db-table">
+            <thead><tr><th>{{ groupLabel() }}</th><th class="r">Sessions</th><th class="r">Present</th><th class="r">Late</th><th class="r">Absent</th><th class="r">Excused</th><th class="r">Attendance</th></tr></thead>
+            <tbody>@for (r of d.byGroup; track r.key) {
+              <tr><td>{{ r.label }}</td><td class="r">{{ r.sessions }}</td><td class="r">{{ r.present }}</td><td class="r">{{ r.late }}</td><td class="r">{{ r.absent }}</td><td class="r">{{ r.excused }}</td><td class="r">{{ r.ratePct | number: '1.1-1' }}%</td></tr>
+            }</tbody>
+          </table>
+        } @else {
+          <div class="hbars">
+            @for (r of d.byGroup; track r.key) {
+              <div class="hrow" (pointerenter)="groupHover.set(r)" (pointerleave)="groupHover.set(null)" tabindex="0" (focus)="groupHover.set(r)" (blur)="groupHover.set(null)">
+                <div class="hl" [title]="r.label">{{ r.label }}</div>
+                <div class="ht">
+                  <div class="hb" [style.width.%]="r.ratePct"></div>
+                  @if (config(); as c) {
+                    <div class="ref min" [style.left.%]="c.minPct"></div>
+                    @if (c.eligibilityPct != null) { <div class="ref elig" [style.left.%]="c.eligibilityPct"></div> }
+                  }
+                </div>
+                <div class="hv">{{ r.ratePct | number: '1.1-1' }}%
+                  @if (below(r.ratePct) === 'risk') { <i class="pi pi-exclamation-circle risk" pTooltip="Below the examination eligibility threshold"></i> }
+                  @else if (below(r.ratePct) === 'below') { <i class="pi pi-exclamation-triangle warn" pTooltip="Below the minimum"></i> }
+                </div>
+                @if (groupHover() === r) {
+                  <div class="tip"><b>{{ r.ratePct | number: '1.1-1' }}%</b> {{ r.label }}<br />{{ r.sessions }} sessions · {{ r.present }} present · {{ r.late }} late · {{ r.absent }} absent · {{ r.excused }} excused</div>
+                }
+              </div>
+            }
+            <div class="hrow axis"><div></div><div class="ht ticks"><span style="left:0">0%</span><span style="left:25%">25%</span><span style="left:50%">50%</span><span style="left:75%">75%</span><span style="left:100%">100%</span></div><div></div></div>
+          </div>
+          @if (config(); as c) {
+            <div class="muted small refkey"><i class="rk min"></i>Minimum {{ c.minPct }}% @if (c.eligibilityPct != null) { <i class="rk elig"></i>Examination eligibility {{ c.eligibilityPct }}% }</div>
+          }
+        }
+      </section>
+
+      <!-- alerts -->
+      <section class="db-card">
+        <div class="db-head"><div><h3>Operational alerts</h3><div class="muted">Select one to open the list behind it</div></div></div>
+        <ul class="alerts">
+          @for (a of d.alerts; track a.key) {
+            <li>
+              <button type="button" (click)="open(a)">
+                <i [class]="severityIcon(a) + ' sev-' + a.severity" [attr.aria-label]="severityLabel(a)"></i>
+                <span class="al"><b>{{ a.label }}</b><span class="muted small">{{ a.detail }}</span></span>
+                <span class="cnt" [class]="'cnt sev-bg-' + a.severity">{{ a.count | number }}</span>
+              </button>
+            </li>
+          }
+          <li class="static" role="button" tabindex="0" (click)="navigate.emit('report:BELOW')" (keydown.enter)="navigate.emit('report:BELOW')">
+            <span class="al"><b>Students below the thresholds</b><span class="muted small">Term to date, in at least one class</span></span>
+            <span class="pair"><span class="cnt sev-bg-critical">{{ d.studentsAtRisk }}</span><span class="muted small">at risk</span><span class="cnt sev-bg-warning">{{ d.studentsBelowMin }}</span><span class="muted small">below minimum</span></span>
+          </li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- trend -->
+    <section class="db-card">
+      <div class="db-head">
+        <div><h3>Daily attendance, term to date</h3><div class="muted">Each teaching day's attendance rate over finalised sessions</div></div>
+        <p-button [label]="trendTable() ? 'Chart' : 'Table'" [icon]="trendTable() ? 'pi pi-chart-line' : 'pi pi-table'" size="small" [text]="true" (onClick)="trendTable.set(!trendTable())" />
+      </div>
+      @if (!d.trend.length) {
+        <div class="muted">No finalised attendance yet.</div>
+      } @else if (trendTable()) {
+        <div class="scroll">
+          <table class="db-table">
+            <thead><tr><th>Date</th><th class="r">Records</th><th class="r">Attendance</th></tr></thead>
+            <tbody>@for (p of d.trend; track p.date) { <tr><td>{{ p.date | date: 'EEE d MMM y' }}</td><td class="r">{{ p.records | number }}</td><td class="r">{{ p.ratePct | number: '1.1-1' }}%</td></tr> }</tbody>
+          </table>
+        </div>
+      }
+      <div class="trend" #trendBox [hidden]="trendTable() || !d.trend.length">
+        <svg [attr.viewBox]="'0 0 ' + width() + ' ' + height" [attr.width]="width()" [attr.height]="height" role="img"
+             [attr.aria-label]="'Daily attendance rate from ' + d.trend[0]?.date + ' to ' + d.date"
+             (pointermove)="onTrendMove($event)" (pointerleave)="hover.set(null)">
+          @for (t of yTicks(); track t) {
+            <line class="grid" [attr.x1]="pad.l" [attr.x2]="width() - pad.r" [attr.y1]="y(t)" [attr.y2]="y(t)" />
+            <text class="tick" [attr.x]="pad.l - 6" [attr.y]="y(t) + 4" text-anchor="end">{{ t }}%</text>
+          }
+          @for (m of monthTicks(); track m.label) { <text class="tick" [attr.x]="m.x" [attr.y]="height - 8" text-anchor="start">{{ m.label }}</text> }
+          @if (config(); as c) {
+            <line class="refl min" [attr.x1]="pad.l" [attr.x2]="width() - pad.r" [attr.y1]="y(c.minPct)" [attr.y2]="y(c.minPct)" />
+            <text class="reft" [attr.x]="width() - pad.r" [attr.y]="y(c.minPct) - 4" text-anchor="end">Minimum {{ c.minPct }}%</text>
+            @if (c.eligibilityPct != null && c.eligibilityPct >= yDomain()[0]) {
+              <line class="refl elig" [attr.x1]="pad.l" [attr.x2]="width() - pad.r" [attr.y1]="y(c.eligibilityPct)" [attr.y2]="y(c.eligibilityPct)" />
+              <text class="reft" [attr.x]="width() - pad.r" [attr.y]="y(c.eligibilityPct) - 4" text-anchor="end">Eligibility {{ c.eligibilityPct }}%</text>
+            }
+          }
+          <path class="line" [attr.d]="trendPath()" />
+          @if (hover(); as h) {
+            <line class="cross" [attr.x1]="h.x" [attr.x2]="h.x" [attr.y1]="pad.t" [attr.y2]="height - pad.b" />
+            <circle class="dot" [attr.cx]="h.x" [attr.cy]="h.y" r="4.5" />
+          }
+        </svg>
+        @if (hoverPoint(); as p) {
+          <div class="tip trend-tip" [style.left.px]="tooltipLeft()" [style.top.px]="tooltipTop()"><b>{{ p.ratePct | number: '1.1-1' }}%</b><br />{{ p.date | date: 'EEE d MMM y' }}<br /><span class="muted">{{ p.records | number }} records</span></div>
+        }
+      </div>
+    </section>
+
+    <!-- lowest classes -->
+    <section class="db-card">
+      <div class="db-head">
+        <div><h3>Lowest attendance by class</h3><div class="muted">Term to date</div></div>
+        <p-button label="All classes" icon="pi pi-arrow-right" iconPos="right" size="small" [text]="true" (onClick)="navigate.emit('report:CLASS')" />
+      </div>
+      <table class="db-table">
+        <thead><tr><th>Class</th><th class="r">Sessions</th><th class="r">Absent</th><th class="r">Attendance</th></tr></thead>
+        <tbody>@for (r of d.lowestClasses; track r.key) {
+          <tr><td>{{ r.label }}</td><td class="r">{{ r.sessions }}</td><td class="r">{{ r.absent }}</td>
+            <td class="r">{{ r.ratePct | number: '1.1-1' }}% @if (below(r.ratePct) === 'risk') { <i class="pi pi-exclamation-circle risk"></i> } @else if (below(r.ratePct) === 'below') { <i class="pi pi-exclamation-triangle warn"></i> }</td></tr>
+        }</tbody>
+      </table>
+    </section>
+  } @else if (!loading()) {
+    <div class="muted">No dashboard data.</div>
+  }
+</div>

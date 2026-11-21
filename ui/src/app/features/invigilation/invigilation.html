@@ -1,0 +1,227 @@
+@if (loading()) {
+  <div class="center"><p-progressSpinner strokeWidth="4" /></div>
+} @else if (error()) {
+  <p-message severity="error" [text]="error()!" />
+} @else if (data(); as d) {
+  <div class="iv-page">
+    <div class="iv-head">
+      <label><span>Examination type</span><p-select [options]="typeOptions()" [(ngModel)]="examTypeId" (onChange)="onTypeChange()" [style]="{ minWidth: '9rem' }" /></label>
+      <div class="iv-kpi"><b>{{ d.assigned }}</b> / {{ d.required }} duties staffed</div>
+      <div class="iv-kpi" [class.bad]="d.nrErrors"><b>{{ d.nrErrors }}</b> error(s)</div>
+      <div class="iv-kpi" [class.warn]="d.nrWarnings"><b>{{ d.nrWarnings }}</b> warning(s)</div>
+      <span class="spacer"></span>
+      @if (d.status; as st) {
+        <p-tag [value]="st.status === 'PUBLISHED' ? 'Published' : st.status === 'APPROVED' ? 'Approved' : (st.publishedTs ? 'Draft (changed after publication)' : 'Draft')"
+          [severity]="st.status === 'PUBLISHED' ? 'success' : st.status === 'APPROVED' ? 'info' : st.publishedTs ? 'warn' : 'secondary'" />
+      }
+    </div>
+
+    <p-tabs [value]="tab" (valueChange)="onTab($event)">
+      <p-tablist>
+        <p-tab value="board">Duty board</p-tab>
+        <p-tab value="invigilators">Invigilators &amp; availability</p-tab>
+        <p-tab value="rules">Staffing rules</p-tab>
+        <p-tab value="problems">Conflicts @if (d.nrErrors) { <span class="badge-n">{{ d.nrErrors }}</span> }</p-tab>
+        <p-tab value="reports">Reports</p-tab>
+        <p-tab value="publication">Approval &amp; publication</p-tab>
+      </p-tablist>
+      <p-tabpanels>
+        <!-- ===== board ===== -->
+        <p-tabpanel value="board">
+          <div class="iv-bar">
+            <p-select [options]="[{ label: 'All venues', value: 'all' }, { label: 'Only short-staffed or with problems', value: 'problems' }]" [(ngModel)]="boardFilter" optionLabel="label" optionValue="value" />
+            <span class="spacer"></span>
+            @if (canEdit()) {
+              <label class="chk"><p-checkbox [(ngModel)]="keepLocked" [binary]="true" /> Keep locked duties</label>
+              <p-button label="Allocate invigilators" icon="pi pi-users" (onClick)="allocate()" [loading]="busy()" />
+            }
+          </div>
+          @if (!d.periods?.length) { <div class="empty-state">No examination of this type has a period yet.</div> }
+          @for (pc of periodsWithCells(); track pc.period.id) {
+            @if (visibleCells(pc.cells).length) {
+              <section class="iv-period">
+                <h3>{{ pc.period.name }} <span class="muted">· {{ pc.period.nrExams }} exam(s), {{ pc.period.nrStudents }} student(s)</span></h3>
+                <div class="iv-cells">
+                  @for (c of visibleCells(pc.cells); track c.room) {
+                    <div class="iv-cell" [class]="cellClass(c)">
+                      <div class="iv-cell-head">
+                        <b>{{ c.room }}</b>
+                        @if (c.special) { <p-tag value="separate room" severity="warn" /> }
+                        <span class="spacer"></span>
+                        <span class="muted">{{ c.roomId != null ? c.students + ' students · ' : '' }}{{ c.assigned }}/{{ c.required }}</span>
+                      </div>
+                      @for (du of c.duties ?? []; track du.id) {
+                        <div class="iv-duty" [class.prob]="du.problems?.length">
+                          <span class="role" [class.chief]="du.dutyType === 'CHIEF'">{{ dutyLabel(du.dutyType) }}</span>
+                          <span class="nm">{{ du.invigilator }}</span>
+                          @if (du.locked) { <i class="pi pi-lock" title="locked (kept when re-allocating)"></i> }
+                          @if (du.problems?.length) { <i class="pi pi-exclamation-triangle" [pTooltip]="du.problems!.join('; ')"></i> }
+                          <span class="spacer"></span>
+                          @if (canEdit()) {
+                            <p-button icon="pi pi-sync" size="small" [text]="true" pTooltip="Replace" (onClick)="openCandidates(c, du.dutyType!, du)" />
+                            <p-button [icon]="du.locked ? 'pi pi-lock-open' : 'pi pi-lock'" size="small" [text]="true" severity="secondary" [pTooltip]="du.locked ? 'Unlock' : 'Lock'" (onClick)="dutyAction(du, du.locked ? 'UNLOCK' : 'LOCK')" />
+                            <p-button icon="pi pi-times" size="small" [text]="true" severity="danger" pTooltip="Remove" (onClick)="dutyAction(du, 'UNASSIGN')" />
+                          }
+                        </div>
+                      }
+                      @for (t of openSlots(c); track $index) {
+                        <button type="button" class="iv-open" [disabled]="!canEdit()" (click)="openCandidates(c, t)">
+                          <i class="pi pi-plus"></i> {{ dutyLabel(t) }} needed
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              </section>
+            }
+          }
+        </p-tabpanel>
+
+        <!-- ===== invigilators ===== -->
+        <p-tabpanel value="invigilators">
+          <div class="iv-bar">
+            <span class="muted">Click an availability cell to cycle available → unavailable → preferred. "absent" comes from approved staff absences (Relief Planning).</span>
+            <span class="spacer"></span>
+            @if (canEdit()) {
+              <p-button label="Import CSV" icon="pi pi-upload" size="small" severity="secondary" (onClick)="importOpen.set(true)" />
+              <p-button label="Add invigilator" icon="pi pi-plus" size="small" (onClick)="edit()" />
+            }
+          </div>
+          <div class="iv-tablewrap">
+            <table class="iv-avail">
+              <thead>
+                <tr><th>Invigilator</th><th>Department</th><th>Duties</th><th>Load</th>
+                  @for (p of d.periods ?? []; track p.id) { <th class="per" [title]="p.name">{{ p.name }}</th> }
+                  <th></th></tr>
+              </thead>
+              <tbody>
+                @for (i of invigilators(); track i.id) {
+                  <tr [class.inactive]="!i.active">
+                    <td><b>{{ i.name }}</b><div class="muted">{{ i.email }}{{ i.externalId ? ' · ' + i.externalId : '' }}</div></td>
+                    <td>{{ i.department }}</td>
+                    <td>{{ i.dutyTypes }}</td>
+                    <td class="r">{{ i.nrDuties }}</td>
+                    @for (p of d.periods ?? []; track p.id) {
+                      <td class="av" [class]="'av-' + (availabilityOf(i, p.id) || 'none').toLowerCase()" (click)="cycleAvailability(i, p.id)">{{ availabilityOf(i, p.id).toLowerCase() }}</td>
+                    }
+                    <td class="act">@if (canEdit()) { <p-button icon="pi pi-pencil" size="small" [text]="true" (onClick)="edit(i)" /><p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" (onClick)="remove(i)" /> }</td>
+                  </tr>
+                } @empty { <tr><td [attr.colspan]="5 + (d.periods?.length ?? 0)">No invigilators yet. Add them one by one or import a CSV.</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        </p-tabpanel>
+
+        <!-- ===== rules ===== -->
+        <p-tabpanel value="rules">
+          @if (config; as c) {
+            <div class="iv-rules">
+              <label><span>Students per invigilator</span><p-inputNumber [(ngModel)]="c.studentsPerInvigilator" [min]="1" [disabled]="!canEdit()" /></label>
+              <label><span>Minimum invigilators per venue</span><p-inputNumber [(ngModel)]="c.minPerRoom" [min]="0" [disabled]="!canEdit()" /></label>
+              <label class="chk"><p-checkbox [(ngModel)]="c.chiefPerRoom" [binary]="true" [disabled]="!canEdit()" /> A chief invigilator in each venue</label>
+              <label><span>Extra invigilators in a separate (special-arrangement) venue</span><p-inputNumber [(ngModel)]="c.extraSpecialRoom" [min]="0" [disabled]="!canEdit()" /></label>
+              <label><span>Reserves per session</span><p-inputNumber [(ngModel)]="c.reservesPerPeriod" [min]="0" [disabled]="!canEdit()" /></label>
+              <label><span>Default maximum duties per day</span><p-inputNumber [(ngModel)]="c.defaultMaxPerDay" [min]="1" [disabled]="!canEdit()" /></label>
+              <label><span>Default maximum duties in total</span><p-inputNumber [(ngModel)]="c.defaultMaxTotal" [min]="1" [disabled]="!canEdit()" /></label>
+              <label class="chk"><p-checkbox [(ngModel)]="c.avoidOwnExam" [binary]="true" [disabled]="!canEdit()" /> Examiners do not invigilate their own paper</label>
+              @if (canEdit()) { <div><p-button label="Save rules" icon="pi pi-check" (onClick)="saveConfig()" [loading]="busy()" /></div> }
+              <div class="muted">Requirement of a venue = max(minimum, students ÷ students per invigilator, rounded up), plus the extra for separate venues. Invigilators' own limits override the defaults.</div>
+            </div>
+          }
+        </p-tabpanel>
+
+        <!-- ===== conflicts ===== -->
+        <p-tabpanel value="problems">
+          <p-table [value]="issues()" styleClass="p-datatable-sm" [paginator]="issues().length > 50" [rows]="50">
+            <ng-template pTemplate="header"><tr><th style="width:6rem"></th><th>Period</th><th>Venue</th><th>Problem</th><th>What to do</th></tr></ng-template>
+            <ng-template pTemplate="body" let-i>
+              <tr><td><p-tag [value]="i.severity === 'ERROR' ? 'Error' : 'Warning'" [severity]="i.severity === 'ERROR' ? 'danger' : 'warn'" /></td>
+                <td>{{ i.period }}</td><td>{{ i.room }}</td><td class="wrap">{{ i.message }}</td><td class="wrap muted">{{ i.action }}</td></tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage"><tr><td colspan="5">No conflicts: every venue is staffed within the rules.</td></tr></ng-template>
+          </p-table>
+        </p-tabpanel>
+
+        <!-- ===== reports ===== -->
+        <p-tabpanel value="reports">
+          <div class="iv-bar">
+            <p-select [options]="reportOptions" [(ngModel)]="reportKind" optionLabel="label" optionValue="value" [style]="{ minWidth: '18rem' }" />
+            <span class="spacer"></span>
+            <p-button label="CSV" icon="pi pi-download" size="small" severity="secondary" [text]="true" (onClick)="exportReport()" />
+          </div>
+          @if (reportRows(); as rep) {
+            <div class="iv-tablewrap">
+              <table class="iv-report">
+                <thead><tr>@for (c of rep.columns; track $index) { <th>{{ c }}</th> }</tr></thead>
+                <tbody>
+                  @for (r of rep.rows; track $index) { <tr>@for (v of r; track $index) { <td>{{ v }}</td> }</tr> }
+                  @empty { <tr><td [attr.colspan]="rep.columns.length">Nothing to report.</td></tr> }
+                </tbody>
+              </table>
+            </div>
+          }
+        </p-tabpanel>
+
+        <!-- ===== publication ===== -->
+        <p-tabpanel value="publication">
+          <app-publication-panel [status]="d.status" [nrErrors]="d.nrErrors ?? 0" [log]="log()" [busy]="busy()" (action)="decide($event)" (loadLog)="loadLog()" />
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+  </div>
+
+  <!-- candidates / replacement -->
+  <p-dialog [visible]="!!slot()" (visibleChange)="!$event && slot.set(null)" [modal]="true" [style]="{ width: 'min(720px, 96vw)' }"
+    [header]="slot()?.duty ? 'Replace ' + slot()!.duty!.invigilator : 'Assign ' + dutyLabel(slot()?.dutyType).toLowerCase()">
+    @if (slot(); as s) {
+      <div class="muted">{{ s.period }} · {{ s.room }}</div>
+      @if (candidates(); as list) {
+        <p-table [value]="list" styleClass="p-datatable-sm" [scrollable]="true" scrollHeight="50vh">
+          <ng-template pTemplate="header"><tr><th>Invigilator</th><th class="r">Duties</th><th class="r">That day</th><th>Suitability</th><th></th></tr></ng-template>
+          <ng-template pTemplate="body" let-c>
+            <tr [class.unsuitable]="!c.suitable">
+              <td>{{ c.name }} @if (c.preferred) { <p-tag value="prefers" severity="success" /> }</td>
+              <td class="r">{{ c.load }}</td><td class="r">{{ c.dutiesThatDay }}</td>
+              <td>{{ c.suitable ? 'suitable' : c.reason }}</td>
+              <td class="act">
+                @if (c.suitable) { <p-button label="Assign" size="small" (onClick)="assign(c)" /> }
+                @else if (!c.reason?.startsWith('already on duty')) { <p-button label="Assign anyway" size="small" severity="secondary" [text]="true" (onClick)="assign(c, true)" /> }
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      } @else { <div class="center"><p-progressSpinner strokeWidth="4" /></div> }
+    }
+  </p-dialog>
+
+  <!-- invigilator edit -->
+  <p-dialog [visible]="!!editInv()" (visibleChange)="!$event && editInv.set(null)" header="Invigilator" [modal]="true" [style]="{ width: 'min(560px, 96vw)' }">
+    @if (editInv(); as i) {
+      <div class="iv-form">
+        <label><span>Name</span><input pInputText [(ngModel)]="i.name" /></label>
+        <label><span>Email</span><input pInputText [(ngModel)]="i.email" /></label>
+        <label><span>Staff id (links absences and own papers)</span><input pInputText [(ngModel)]="i.externalId" /></label>
+        <label><span>Department</span><p-select [options]="deptOptions()" [(ngModel)]="i.departmentId" [showClear]="true" [filter]="true" filterBy="label" placeholder="None" /></label>
+        <label><span>Duty types</span><p-multiSelect [options]="dutyTypeOptions" [ngModel]="dutyTypes(i)" (ngModelChange)="setDutyTypes(i, $event)" optionLabel="label" optionValue="value" display="chip" /></label>
+        <label><span>Max duties per day (empty = default)</span><p-inputNumber [(ngModel)]="i.maxPerDay" [min]="1" /></label>
+        <label><span>Max duties in total (empty = default)</span><p-inputNumber [(ngModel)]="i.maxTotal" [min]="1" /></label>
+        <label class="chk"><p-checkbox [(ngModel)]="i.active" [binary]="true" /> Active</label>
+        <label><span>Note</span><textarea pTextarea [(ngModel)]="i.note" rows="2"></textarea></label>
+      </div>
+    }
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="editInv.set(null)" />
+      <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="busy()" />
+    </ng-template>
+  </p-dialog>
+
+  <!-- import -->
+  <p-dialog [visible]="importOpen()" (visibleChange)="importOpen.set($event)" header="Import invigilators" [modal]="true" [style]="{ width: 'min(680px, 96vw)' }">
+    <div class="muted">One per line: name, email, staff id, department code, duty types (CHIEF;INVIGILATOR;RESERVE), max per day, max total. Existing staff ids are updated.</div>
+    <textarea pTextarea [(ngModel)]="csv" rows="12" style="width: 100%; font-family: var(--ut-mono); margin-top: 0.5rem" placeholder="Tan Mei Ling, mei.ling@example.edu, S1001, 0100, CHIEF;INVIGILATOR, 2, 8"></textarea>
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="importOpen.set(false)" />
+      <p-button label="Import" icon="pi pi-upload" (onClick)="doImport()" [loading]="busy()" />
+    </ng-template>
+  </p-dialog>
+}

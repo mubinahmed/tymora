@@ -22,10 +22,12 @@ package org.unitime.timetable.server.courses;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -34,15 +36,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.unitime.timetable.gwt.command.client.GwtRpcException;
 import org.unitime.timetable.gwt.command.server.GwtRpcImplementation;
 import org.unitime.timetable.gwt.command.server.GwtRpcImplements;
+import org.unitime.timetable.defaults.ApplicationProperty;
+import org.unitime.timetable.gwt.shared.DistributionPrefEditInterface.ClassLine;
 import org.unitime.timetable.gwt.shared.DistributionPrefEditInterface.DistributionPrefEditRequest;
 import org.unitime.timetable.gwt.shared.DistributionPrefEditInterface.DistributionPrefEditResponse;
 import org.unitime.timetable.gwt.shared.DistributionPrefEditInterface.DistributionPrefRecord;
 import org.unitime.timetable.gwt.shared.DistributionPrefEditInterface.DistributionTypeInfo;
+import org.unitime.timetable.gwt.shared.DistributionPrefEditInterface.IdLabel;
 import org.unitime.timetable.gwt.shared.DistributionPrefEditInterface.PrefLevelInfo;
+import org.unitime.timetable.gwt.shared.DistributionPrefEditInterface.StructureInfo;
 import org.unitime.timetable.gwt.shared.DistributionPrefEditInterface.SubjectAreaInfo;
 import org.unitime.timetable.gwt.shared.SimpleListInterface.Row;
 import org.unitime.timetable.model.ChangeLog;
 import org.unitime.timetable.model.Class_;
+import org.unitime.timetable.model.CourseOffering;
 import org.unitime.timetable.model.Department;
 import org.unitime.timetable.model.DepartmentalInstructor;
 import org.unitime.timetable.model.DistributionObject;
@@ -54,8 +61,13 @@ import org.unitime.timetable.model.PreferenceLevel;
 import org.unitime.timetable.model.SchedulingSubpart;
 import org.unitime.timetable.model.StudentSectioningQueue;
 import org.unitime.timetable.model.SubjectArea;
+import org.unitime.timetable.model.comparators.ClassComparator;
+import org.unitime.timetable.model.comparators.SchedulingSubpartComparator;
+import org.unitime.timetable.model.dao.Class_DAO;
+import org.unitime.timetable.model.dao.CourseOfferingDAO;
 import org.unitime.timetable.model.dao.DistributionPrefDAO;
 import org.unitime.timetable.model.dao.DistributionTypeDAO;
+import org.unitime.timetable.model.dao.SchedulingSubpartDAO;
 import org.unitime.timetable.security.SessionContext;
 import org.unitime.timetable.security.permissions.Permission;
 import org.unitime.timetable.security.rights.Right;
@@ -77,9 +89,14 @@ import org.unitime.timetable.security.rights.Right;
  *     detaches every distribution object from its preference group, removes the
  *     preference from its owner, and records ChangeLog / StudentSectioningQueue.
  *
- * Deferred (noted, not implemented here): creating a brand new preference and
- * editing the owners (adding / removing / re-ordering the classes and subparts a
- * preference applies to) which are relational and encoded on the legacy page.
+ *   - SAVE with a record without an id (or with class lines) creates a new
+ *     preference / replaces the structure and the ordered distribution objects,
+ *     mirroring DistributionPrefsAction.doAddOrUpdate (owner = managing department
+ *     with the highest distribution preference priority; sequence numbers; prefGroup
+ *     = subpart for "All" or the class), gated by DistributionPreferenceAdd and the
+ *     per-preference DistributionPreferenceEdit check.
+ *   - COURSES / SUBPARTS / CLASSES drive the Subject -> Course -> Subpart -> Class
+ *     cascade of the add / edit dialog (same queries and labels as the legacy page).
  *
  * Every operation is gated by {@link Right#DistributionPreferences}; SAVE and
  * DELETE additionally check the per-preference {@link Right#DistributionPreferenceEdit}
@@ -97,9 +114,19 @@ public class DistributionPrefEditBackend implements GwtRpcImplementation<Distrib
 	public DistributionPrefEditResponse execute(DistributionPrefEditRequest request, SessionContext context) {
 		context.checkPermission(Right.DistributionPreferences);
 
+		Long savedId = null;
 		switch (request.getOperation() == null ? org.unitime.timetable.gwt.shared.DistributionPrefEditInterface.Operation.LOAD : request.getOperation()) {
+		case COURSES:
+			return lookupCourses(request.getLookupId(), context);
+		case SUBPARTS:
+			return lookupSubparts(request.getLookupId(), context);
+		case CLASSES:
+			return lookupClasses(request.getLookupId(), context);
 		case SAVE:
-			save(request.getRecord(), context);
+			if (request.getRecord() != null && (request.getRecord().getId() == null || request.getRecord().getId() < 0 || request.getRecord().getLines() != null))
+				savedId = saveFull(request.getRecord(), context);
+			else
+				save(request.getRecord(), context);
 			break;
 		case DELETE:
 			delete(request.getRecord(), context);
@@ -109,7 +136,9 @@ public class DistributionPrefEditBackend implements GwtRpcImplementation<Distrib
 			break;
 		}
 
-		return load(request, context);
+		DistributionPrefEditResponse response = load(request, context);
+		if (savedId != null) response.setSavedId(savedId);
+		return response;
 	}
 
 	protected DistributionPrefEditResponse load(DistributionPrefEditRequest request, SessionContext context) {
@@ -121,6 +150,9 @@ public class DistributionPrefEditBackend implements GwtRpcImplementation<Distrib
 		response.setTitle("Distribution Preferences");
 		response.setEditable(context.hasPermission(Right.DistributionPreferences));
 		response.setDeletable(context.hasPermission(Right.DistributionPreferences));
+		response.setCanAdd(context.hasPermission(Right.DistributionPreferenceAdd));
+		for (DistributionPref.Structure st : DistributionPref.Structure.values())
+			response.addStructure(new StructureInfo(st.name(), st.getName(), st.getDescription()));
 
 		// Subject areas visible to the current user (drive the filter selector).
 		TreeSet<SubjectArea> userSubjectAreas = SubjectArea.getUserSubjectAreas(context.getUser());
@@ -191,6 +223,22 @@ public class DistributionPrefEditBackend implements GwtRpcImplementation<Distrib
 				try { record.setPrefLevelId(current.getPrefLevel() == null ? null : current.getPrefLevel().getPrefId()); } catch (Exception e) {}
 				try { record.setTypeLabel(current.getLabel()); } catch (Exception e) {}
 				try { record.setOwnerLabel(ownerLabel(current.getOwner())); } catch (Exception e) {}
+				try { record.setStructure(current.getStructure() == null ? DistributionPref.Structure.AllClasses.name() : current.getStructure().name()); } catch (Exception e) {}
+				try {
+					if (current.getOwner() instanceof Department) {
+						for (DistributionObject dObj : new TreeSet<DistributionObject>(current.getDistributionObjects())) {
+							if (dObj.getPrefGroup() instanceof Class_) {
+								Class_ c = (Class_) dObj.getPrefGroup();
+								CourseOffering co = c.getSchedulingSubpart().getInstrOfferingConfig().getInstructionalOffering().getControllingCourseOffering();
+								record.addLine(new ClassLine(co.getSubjectArea().getUniqueId(), co.getUniqueId(), c.getSchedulingSubpart().getUniqueId(), c.getUniqueId()));
+							} else if (dObj.getPrefGroup() instanceof SchedulingSubpart) {
+								SchedulingSubpart ss = (SchedulingSubpart) dObj.getPrefGroup();
+								CourseOffering co = ss.getInstrOfferingConfig().getInstructionalOffering().getControllingCourseOffering();
+								record.addLine(new ClassLine(co.getSubjectArea().getUniqueId(), co.getUniqueId(), ss.getUniqueId(), -1l));
+							}
+						}
+					}
+				} catch (Exception e) {}
 				try {
 					StringBuilder sb = new StringBuilder();
 					for (Iterator<DistributionObject> it = current.getOrderedSetOfDistributionObjects().iterator(); it.hasNext();) {
@@ -354,6 +402,236 @@ public class DistributionPrefEditBackend implements GwtRpcImplementation<Distrib
 		}
 		if (!changedOfferingIds.isEmpty())
 			StudentSectioningQueue.offeringChanged(hibSession, context.getUser(), context.getUser().getCurrentAcademicSessionId(), changedOfferingIds);
+	}
+
+	// ---------------------------------------------------------------- cascade lookups
+
+	private static boolean isUserSubjectArea(Long subjectAreaId, SessionContext context) {
+		if (subjectAreaId == null) return false;
+		for (SubjectArea sa : SubjectArea.getUserSubjectAreas(context.getUser()))
+			if (sa.getUniqueId().equals(subjectAreaId)) return true;
+		return false;
+	}
+
+	/** Controlling, offered courses of a subject area (legacy setLookupLists, first query). */
+	protected DistributionPrefEditResponse lookupCourses(Long subjectAreaId, SessionContext context) {
+		DistributionPrefEditResponse response = new DistributionPrefEditResponse();
+		if (subjectAreaId == null || !isUserSubjectArea(subjectAreaId, context)) return response;
+		List<Object[]> result = DistributionPrefDAO.getInstance().getSession().createQuery(
+				"select co.uniqueId, co.courseNbr, co.title from InstructionalOffering as io, CourseOffering co " +
+				"where co.subjectArea.uniqueId = :subjectAreaId and io.uniqueId = co.instructionalOffering.uniqueId " +
+				"and io.notOffered = false and co.isControl = true order by co.courseNbr", Object[].class)
+				.setParameter("subjectAreaId", subjectAreaId)
+				.setCacheable(true).list();
+		for (Object[] a : result)
+			response.addOption(new IdLabel((Long) a[0], a[1].toString() + " - " + (a[2] == null ? "" : a[2].toString())));
+		return response;
+	}
+
+	/** Scheduling subparts of a course (itype abbv, indented by parent, [config], (suffix)). */
+	protected DistributionPrefEditResponse lookupSubparts(Long courseId, SessionContext context) {
+		DistributionPrefEditResponse response = new DistributionPrefEditResponse();
+		if (courseId == null) return response;
+		CourseOffering course = CourseOfferingDAO.getInstance().get(courseId);
+		if (course == null) return response;
+		List<SchedulingSubpart> subparts = new ArrayList<SchedulingSubpart>(DistributionPrefDAO.getInstance().getSession().createQuery(
+				"select distinct s from CourseOffering co, InstructionalOffering io, InstrOfferingConfig ioc, SchedulingSubpart s " +
+				"where co.uniqueId = :courseId and co.instructionalOffering.uniqueId = io.uniqueId " +
+				"and ioc.instructionalOffering.uniqueId = io.uniqueId and s.instrOfferingConfig.uniqueId = ioc.uniqueId", SchedulingSubpart.class)
+				.setParameter("courseId", courseId)
+				.setCacheable(true).list());
+		Collections.sort(subparts, new SchedulingSubpartComparator(course.getSubjectArea().getUniqueId()));
+		for (SchedulingSubpart subpart : subparts) {
+			String name = subpart.getItype().getAbbv();
+			String suffix = subpart.getSchedulingSubpartSuffix();
+			SchedulingSubpart a = subpart;
+			while (a.getParentSubpart() != null) {
+				name = "\u00A0\u00A0\u00A0\u00A0" + name;
+				a = a.getParentSubpart();
+			}
+			if (a.getInstrOfferingConfig().getInstructionalOffering().getInstrOfferingConfigs().size() > 1)
+				name += " [" + a.getInstrOfferingConfig().getName() + "]";
+			response.addOption(new IdLabel(subpart.getUniqueId(), name + (suffix == null || suffix.isEmpty() ? "" : " (" + suffix + ")")));
+		}
+		return response;
+	}
+
+	/** Classes of a subpart; the first option (-1) is All (= the whole subpart). */
+	protected DistributionPrefEditResponse lookupClasses(Long subpartId, SessionContext context) {
+		DistributionPrefEditResponse response = new DistributionPrefEditResponse();
+		if (subpartId == null) return response;
+		List<Class_> classes = new ArrayList<Class_>(DistributionPrefDAO.getInstance().getSession().createQuery(
+				"select distinct c from SchedulingSubpart s, Class_ c where s.uniqueId = :subpartId and s.uniqueId = c.schedulingSubpart.uniqueId", Class_.class)
+				.setParameter("subpartId", subpartId)
+				.setCacheable(true).list());
+		if (classes.isEmpty()) return response;
+		Collections.sort(classes, new ClassComparator(ClassComparator.COMPARE_BY_HIERARCHY));
+		boolean showSuffix = ApplicationProperty.DistributionsShowClassSufix.isTrue();
+		response.addOption(new IdLabel(-1l, "All"));
+		for (Class_ clazz : classes) {
+			String label = clazz.getSectionNumberString();
+			if (showSuffix) {
+				String extId = clazz.getClassSuffix(clazz.getSchedulingSubpart().getControllingCourseOffering());
+				if (extId != null && !extId.isEmpty() && !extId.equalsIgnoreCase(clazz.getSectionNumberString()))
+					label = clazz.getSectionNumberString() + " - " + extId;
+			}
+			response.addOption(new IdLabel(clazz.getUniqueId(), label));
+		}
+		return response;
+	}
+
+	// ------------------------------------------------------------------ create / full update
+
+	private static boolean isAll(Long classId) {
+		return classId == null || classId < 0;
+	}
+
+	/** Mirrors DistributionPrefsForm.validate (save) + DistributionPrefsAction.doAddOrUpdate. */
+	protected Long saveFull(DistributionPrefRecord record, SessionContext context) {
+		if (record.getDistributionTypeId() == null)
+			throw new GwtRpcException("Distribution type is required.");
+		if (record.getPrefLevelId() == null)
+			throw new GwtRpcException("Preference level is required.");
+		boolean add = (record.getId() == null || record.getId() < 0);
+		if (add) context.checkPermission(Right.DistributionPreferenceAdd);
+
+		List<ClassLine> lines = new ArrayList<ClassLine>();
+		if (record.getLines() != null)
+			for (ClassLine line : record.getLines())
+				if (line != null && (line.getSubpartId() != null || line.getClassId() != null || line.getCourseId() != null || line.getSubjectAreaId() != null))
+					lines.add(line);
+		// Blank / duplicate rows
+		Set<String> seen = new HashSet<String>();
+		for (ClassLine line : lines) {
+			if (line.getSubpartId() == null)
+				throw new GwtRpcException("Invalid class selections: Select a subpart (and a class or All) on every line.");
+			String key = line.getSubpartId() + ":" + (isAll(line.getClassId()) ? "-1" : line.getClassId().toString());
+			if (!seen.add(key))
+				throw new GwtRpcException("Invalid class selections: Check for duplicate / blank selection.");
+		}
+		if (lines.isEmpty())
+			throw new GwtRpcException("Invalid class selections: Select at least one subpart.");
+		if (lines.size() == 1 && !isAll(lines.get(0).getClassId()))
+			throw new GwtRpcException("Invalid class selections: Select at least two classes.");
+		if (lines.size() > 1) {
+			Map<Long, Boolean> subparts = new HashMap<Long, Boolean>(); // subpart -> whole subpart selected
+			for (ClassLine line : lines) {
+				Boolean prev = subparts.get(line.getSubpartId());
+				boolean all = isAll(line.getClassId());
+				if (prev != null && (prev.booleanValue() || all))
+					throw new GwtRpcException("Invalid class selections: An individual class cannot be selected when all classes of its subpart are selected.");
+				subparts.put(line.getSubpartId(), all);
+			}
+		}
+
+		DistributionPref.Structure structure = DistributionPref.Structure.AllClasses;
+		if (record.getStructure() != null && !record.getStructure().isEmpty()) {
+			try { structure = DistributionPref.Structure.valueOf(record.getStructure()); }
+			catch (IllegalArgumentException e) { throw new GwtRpcException("Unknown structure " + record.getStructure() + "."); }
+		}
+
+		Transaction tx = null;
+		org.hibernate.Session hibSession = DistributionPrefDAO.getInstance().getSession();
+		Set<InstructionalOffering> related = new HashSet<InstructionalOffering>();
+		try {
+			tx = hibSession.beginTransaction();
+
+			DistributionPref dp = null;
+			if (!add) {
+				dp = DistributionPrefDAO.getInstance().get(record.getId(), hibSession);
+				if (dp == null)
+					throw new GwtRpcException("The distribution preference no longer exists.");
+				if (!(dp.getOwner() instanceof Department))
+					throw new GwtRpcException("Only class distribution preferences owned by a department can be edited here.");
+				context.checkPermission(dp, Right.DistributionPreferenceEdit);
+				Set<DistributionObject> s = dp.getDistributionObjects();
+				for (Iterator<DistributionObject> i = s.iterator(); i.hasNext();) {
+					DistributionObject dObj = i.next();
+					PreferenceGroup pg = dObj.getPrefGroup();
+					related.add((pg instanceof Class_ ? ((Class_) pg).getSchedulingSubpart() : (SchedulingSubpart) pg).getInstrOfferingConfig().getInstructionalOffering());
+					pg.getDistributionObjects().remove(dObj);
+					hibSession.remove(dObj);
+				}
+				s.clear();
+				dp.setDistributionObjects(s);
+			} else {
+				dp = new DistributionPref();
+			}
+
+			DistributionType type = DistributionTypeDAO.getInstance().get(record.getDistributionTypeId(), hibSession);
+			if (type == null)
+				throw new GwtRpcException("The selected distribution type no longer exists.");
+			PreferenceLevel level = PreferenceLevel.getPreferenceLevel(record.getPrefLevelId());
+			if (level == null)
+				throw new GwtRpcException("The selected preference level is invalid.");
+			if (!type.isAllowed(level))
+				throw new GwtRpcException("Preference '" + level.getPrefName() + "' is not allowed for distribution type '" + type.getLabel() + "'.");
+
+			dp.setDistributionType(type);
+			dp.setStructure(structure);
+			dp.setPrefLevel(level);
+
+			Department owningDept = null;
+			List<DistributionObject> distributionObjects = new ArrayList<DistributionObject>();
+			int seq = 1;
+			for (ClassLine line : lines) {
+				DistributionObject dObj = new DistributionObject();
+				Department dept = null;
+				if (isAll(line.getClassId())) {
+					SchedulingSubpart subpart = SchedulingSubpartDAO.getInstance().get(line.getSubpartId(), hibSession);
+					if (subpart == null) throw new GwtRpcException("Subpart " + line.getSubpartId() + " does not exist.");
+					dept = subpart.getManagingDept();
+					dObj.setPrefGroup(subpart);
+					related.add(subpart.getInstrOfferingConfig().getInstructionalOffering());
+				} else {
+					Class_ clazz = Class_DAO.getInstance().get(line.getClassId(), hibSession);
+					if (clazz == null) throw new GwtRpcException("Class " + line.getClassId() + " does not exist.");
+					dept = clazz.getManagingDept();
+					dObj.setPrefGroup(clazz);
+					related.add(clazz.getSchedulingSubpart().getInstrOfferingConfig().getInstructionalOffering());
+				}
+				if (owningDept == null) owningDept = dept;
+				else if (dept != null && !owningDept.getUniqueId().equals(dept.getUniqueId())) {
+					int p1 = (owningDept.getDistributionPrefPriority() == null ? 0 : owningDept.getDistributionPrefPriority().intValue());
+					int p2 = (dept.getDistributionPrefPriority() == null ? 0 : dept.getDistributionPrefPriority().intValue());
+					if (p1 < p2)
+						owningDept = dept;
+					else if (p1 == p2) {
+						if (!context.getUser().getCurrentAuthority().hasQualifier(owningDept) && context.getUser().getCurrentAuthority().hasQualifier(dept))
+							owningDept = dept;
+					}
+				}
+				dObj.setSequenceNumber(Integer.valueOf(seq++));
+				distributionObjects.add(dObj);
+			}
+
+			dp.setOwner(owningDept);
+			if (dp.getUniqueId() == null) hibSession.persist(dp);
+
+			for (DistributionObject dObj : distributionObjects) {
+				dObj.setDistributionPref(dp);
+				dp.addToDistributionObjects(dObj);
+				hibSession.persist(dObj);
+				dObj.getPrefGroup().addToDistributionObjects(dObj);
+			}
+
+			context.checkPermission(dp, Right.DistributionPreferenceEdit);
+
+			hibSession.merge(dp);
+
+			logOfferings(related, context, hibSession, add ? ChangeLog.Operation.CREATE : ChangeLog.Operation.UPDATE);
+
+			tx.commit(); tx = null;
+			return dp.getUniqueId();
+		} catch (GwtRpcException e) {
+			if (tx != null && tx.isActive()) tx.rollback();
+			hibSession.clear();
+			throw e;
+		} catch (Throwable t) {
+			if (tx != null && tx.isActive()) tx.rollback();
+			hibSession.clear();
+			throw new GwtRpcException(t.getMessage(), t);
+		}
 	}
 
 	private static String ownerLabel(PreferenceGroup owner) {

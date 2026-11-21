@@ -106,6 +106,8 @@ public class InstructionalOfferingDetailBackend implements GwtRpcImplementation<
 		response.setConsent(consent(io));
 		response.setCredit(credit(io));
 		response.setWaitList(waitList(io));
+		response.setCanAddConfig(context.hasPermission(io, Right.InstrOfferingConfigAdd));
+		response.setCanAddExam(context.hasPermission(Right.ExaminationAdd));
 
 		boolean unlimited = false;
 		for (Iterator<?> i = io.getInstrOfferingConfigs().iterator(); i.hasNext(); ) {

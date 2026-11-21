@@ -3,7 +3,7 @@
 @if (authenticated()) {
   <div class="app-shell">
     <header class="app-topbar">
-      <img class="brand-logo" src="assets/logo-mark-dark.svg" width="34" height="34" alt="Tymora" />
+      <img class="brand-logo" src="assets/logo.png" width="34" height="34" alt="Tymora" />
       <div class="brand">
         <span class="brand-name">Tymora</span>
         <span class="brand-sub">{{ subtitle() }}</span>
@@ -15,6 +15,12 @@
         <a class="help" [href]="page.helpUrl()" target="_blank" rel="noopener" title="Help">
           <i class="pi pi-question-circle"></i>
         </a>
+      }
+
+      @if (assistant.available()) {
+        <button type="button" class="ai-btn" [class.on]="assistant.open()" (click)="assistant.toggle()" title="Assistant (Claude)" aria-label="Open the assistant">
+          <i class="pi pi-sparkles"></i>
+        </button>
       }
 
       @if (changes.visible()) {
@@ -76,6 +82,7 @@
           </div>
         }
         <router-outlet />
+        <app-assistant-panel />
       </main>
     </div>
 

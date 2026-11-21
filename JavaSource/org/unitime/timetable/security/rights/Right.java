@@ -553,6 +553,29 @@ public enum Right {
 	/** approve or reject assignment change requests; own changes are applied directly */
 	AssignmentChangeApprove,
 
+	/** examination seat allocation: view seating plans, layouts, special arrangements and reports */
+	ExamSeating,
+	/** examination seat allocation: edit layouts and arrangements, allocate and move seats */
+	ExamSeatingEdit,
+	/** invigilation: view invigilators, availability, the duty board and reports */
+	Invigilation,
+	/** invigilation: edit invigilators, rules and availability, allocate duties */
+	InvigilationEdit,
+	/** an invigilator's own duties and availability (My Examinations) */
+	MyInvigilationDuties,
+	/** a student's own published examination seats (My Examinations) */
+	MyExamSeats,
+
+	/** attendance: manage every class, settings, reports, excuses (office) and follow-up cases */
+	AttendanceManage,
+	/** attendance: take attendance (roll call, QR check-in) for the classes one teaches or covers */
+	AttendanceTake,
+	/** attendance: a student's own attendance, QR check-in and medical certificates / leave */
+	MyAttendance,
+
+	/** AI assistant (chat with Claude); its tools still check the user's own rights */
+	AssistantUse,
+
 	StudentSchedulingStatusTypes,
 	StudentSchedulingStatusTypeEdit,
     

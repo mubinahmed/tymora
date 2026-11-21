@@ -11,6 +11,8 @@ import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
+import { ThemeService } from '../../core/theme.service';
+import { readableTextColor } from '../../shared/contrast';
 import {
   ApiError,
   InfoPair,
@@ -58,6 +60,12 @@ interface Col {
   templateUrl: './list-solutions.html',
 })
 export class ListSolutions implements OnInit {
+  private readonly theme = inject(ThemeService);
+  /** Server-sent cell text colour, adjusted for readable contrast on the current theme. */
+  protected cellColor(color: string | null | undefined): string {
+    return readableTextColor(color, this.theme.isDark());
+  }
+
   private rpc = inject(RpcService);
   private page = inject(PageService);
 

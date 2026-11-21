@@ -94,8 +94,14 @@
           <p>Instructional configurations, their scheduling subparts and classes.</p>
         </div>
         <span class="head-spacer"></span>
-        <p-button label="Modify configuration" icon="pi pi-pencil" severity="secondary"
-          [routerLink]="['/offering-modify', offeringId()]" />
+        @if (d.canAddConfig) {
+          <p-button label="Add Configuration" icon="pi pi-plus" severity="secondary"
+            [routerLink]="['/instructional-offering-config', 'new']" [queryParams]="{ offering: offeringId() }" />
+        }
+        @if (d.configs?.length) {
+          <p-button label="Modify configuration" icon="pi pi-pencil" severity="secondary"
+            [routerLink]="['/offering-modify', offeringId()]" />
+        }
       </div>
 
       @for (cfg of d.configs; track cfg.id) {
@@ -116,10 +122,12 @@
           @for (sp of cfg.subparts; track sp.id) {
             <div class="subpart" [style.margin-left.px]="(sp.indent || 0) * 16">
               <a class="subpart-type link" [routerLink]="['/subpart-detail', sp.id]">{{ sp.type }}</a>
+              <p-button icon="pi pi-pencil" severity="secondary" [text]="true" size="small" title="Edit subpart"
+                [routerLink]="['/subpart-edit', sp.id]" />
               @if (sp.classes?.length) {
                 <p-table [value]="sp.classes!" styleClass="p-datatable-sm">
                   <ng-template pTemplate="header">
-                    <tr><th>Section</th><th>Limit</th><th>Enrolled</th><th>Assigned time</th><th>Room</th><th>Instructors</th></tr>
+                    <tr><th>Section</th><th>Limit</th><th>Enrolled</th><th>Assigned time</th><th>Room</th><th>Instructors</th><th></th></tr>
                   </ng-template>
                   <ng-template pTemplate="body" let-c>
                     <tr>
@@ -129,6 +137,10 @@
                       <td>{{ c.time || '—' }}</td>
                       <td>{{ c.room || '—' }}</td>
                       <td>{{ c.instructors || '—' }}</td>
+                      <td class="row-actions">
+                        <p-button icon="pi pi-pencil" severity="secondary" [text]="true" size="small" title="Edit class"
+                          [routerLink]="['/class-edit', c.id]" />
+                      </td>
                     </tr>
                   </ng-template>
                 </p-table>
@@ -139,7 +151,12 @@
           }
         </div>
       } @empty {
-        <div class="empty-state">This offering has no configurations.</div>
+        <div class="empty-state">
+          This offering has no configurations.
+          @if (d.canAddConfig) {
+            Use <b>Add Configuration</b> to create its subparts and classes.
+          }
+        </div>
       }
     </fieldset>
 
@@ -148,6 +165,10 @@
       <p-button label="Back to offerings" severity="secondary" [text]="true" icon="pi pi-arrow-left"
         routerLink="/offerings" />
       <span class="spacer"></span>
+      @if (d.canAddExam) {
+        <p-button label="Add Examination" icon="pi pi-calendar-plus" severity="secondary"
+          [routerLink]="['/exam-edit', 'new']" [queryParams]="{ firstType: 'CourseOffering', firstId: courseId() }" />
+      }
       <p-button label="Edit course offering" icon="pi pi-pencil" [routerLink]="['/course-offering', courseId()]" />
     </div>
   </div>

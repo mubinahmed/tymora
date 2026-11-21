@@ -38,8 +38,9 @@ import org.unitime.timetable.security.rights.Right;
  * Save backend for the migrated Scheduling Subpart Edit page (legacy
  * schedulingSubpartEdit.action). Persists the subpart-row subset that
  * {@code SchedulingSubpartEditAction.doUpdate()} saves (instructional type, date
- * pattern, auto-spread-in-time, student-allow-overlap); credit configuration and
- * preferences are out of scope. Gated by {@link Right#SchedulingSubpartEdit},
+ * pattern, auto-spread-in-time, student-allow-overlap) plus, when sent, the time
+ * and room preferences ({@link CoursePreferencesHelper}); credit configuration and
+ * date pattern preferences are out of scope. Gated by {@link Right#SchedulingSubpartEdit},
  * transactional, and change-logged.
  *
  * @author Angular migration
@@ -77,6 +78,9 @@ public class SchedulingSubpartEditUpdateBackend implements GwtRpcImplementation<
 				if (newItype != null)
 					ss.setItype(newItype);
 			}
+
+			// Time / room preferences (null = untouched, older payloads)
+			CoursePreferencesHelper.save(ss, request.getPreferences(), context);
 
 			ChangeLog.addChange(
 					hibSession,

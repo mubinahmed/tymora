@@ -2,6 +2,8 @@
 // (org.unitime.timetable.gwt.shared.ClassEditInterface). Hand-written to match
 // the Gson iName->name field mapping.
 
+import { PreferencesData, PreferencesUpdate } from '../../shared/course-prefs.models';
+
 export interface IdName {
   id?: number;
   name?: string;
@@ -32,6 +34,8 @@ export interface ClassEditResponse {
   enabledForStudentScheduling?: boolean;
   displayInstructor?: boolean;
   datePatternOptions?: IdName[];
+  /** time pattern / time preference / room preference state */
+  preferences?: PreferencesData;
 }
 
 export interface ClassEditRequest {
@@ -50,4 +54,6 @@ export interface ClassEditUpdateRequest {
   schedulePrintNote?: string;
   enabledForStudentScheduling?: boolean;
   displayInstructor?: boolean;
+  /** time / room preferences to save; omitted = preferences untouched */
+  preferences?: PreferencesUpdate;
 }

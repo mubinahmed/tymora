@@ -62,6 +62,10 @@ export interface OfferingDetailResponse {
   coordinators?: CoordinatorInfo[];
   crossListings?: CrossListInfo[];
   configs?: ConfigInfo[];
+  /** Right.InstrOfferingConfigAdd on the offering */
+  canAddConfig?: boolean;
+  /** Right.ExaminationAdd */
+  canAddExam?: boolean;
 }
 
 export interface OfferingDetailRequest {

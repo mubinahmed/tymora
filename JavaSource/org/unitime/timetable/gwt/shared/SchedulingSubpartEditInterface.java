@@ -24,6 +24,8 @@ import java.util.List;
 
 import org.unitime.timetable.gwt.command.client.GwtRpcRequest;
 import org.unitime.timetable.gwt.command.client.GwtRpcResponse;
+import org.unitime.timetable.gwt.shared.CoursePreferencesInterface.PreferencesData;
+import org.unitime.timetable.gwt.shared.CoursePreferencesInterface.PreferencesUpdate;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
@@ -37,8 +39,9 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  *       {@code SchedulingSubpartEditAction.doUpdate()} saves (itype, date pattern,
  *       auto-spread-in-time, student-allow-overlap).</li>
  * </ul>
- * Credit configuration and time/room/distribution preferences keep their own
- * handling and are read-only here. Additive.
+ * Credit configuration and distribution preferences keep their own handling;
+ * time and room preferences travel in the optional {@code preferences} field
+ * (see {@link CoursePreferencesInterface}). Additive.
  *
  * @author Angular migration
  */
@@ -80,6 +83,11 @@ public class SchedulingSubpartEditInterface implements IsSerializable {
 
 		public boolean isStudentAllowOverlap() { return iStudentAllowOverlap; }
 		public void setStudentAllowOverlap(boolean studentAllowOverlap) { iStudentAllowOverlap = studentAllowOverlap; }
+
+		/** Time / room preferences to save; null = leave preferences untouched. */
+		private PreferencesUpdate iPreferences;
+		public PreferencesUpdate getPreferences() { return iPreferences; }
+		public void setPreferences(PreferencesUpdate preferences) { iPreferences = preferences; }
 
 		@Override
 		public String toString() { return "SubpartEditUpdate[" + iSubpartId + "]"; }
@@ -166,6 +174,10 @@ public class SchedulingSubpartEditInterface implements IsSerializable {
 
 		public boolean isStudentAllowOverlap() { return iStudentAllowOverlap; }
 		public void setStudentAllowOverlap(boolean studentAllowOverlap) { iStudentAllowOverlap = studentAllowOverlap; }
+
+		private PreferencesData iPreferences;
+		public PreferencesData getPreferences() { return iPreferences; }
+		public void setPreferences(PreferencesData preferences) { iPreferences = preferences; }
 
 		public List<IdName> getDatePatternOptions() { return iDatePatternOptions; }
 		public void addDatePatternOption(IdName option) { iDatePatternOptions.add(option); }

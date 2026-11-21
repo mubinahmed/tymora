@@ -30,6 +30,9 @@
           [value]="filter()"
           (input)="filter.set($any($event.target).value)"
         />
+        @if (canAdd()) {
+          <p-button label="Add Distribution Preference" icon="pi pi-plus" (onClick)="openAdd()" />
+        }
       </div>
     </ng-template>
 
@@ -72,17 +75,20 @@
       [visible]="dialogVisible()"
       (visibleChange)="dialogVisible.set($event)"
       [modal]="true"
-      [style]="{ width: '42rem' }"
-      header="Edit Distribution Preference"
+      [style]="{ width: '60rem' }"
+      [header]="e.id == null ? 'Add Distribution Preference' : 'Edit Distribution Preference'"
     >
       <div class="form-grid">
-        <label>Owner</label>
-        <span>{{ e.ownerLabel || '—' }}</span>
+        @if (e.id != null) {
+          <label>Owner</label>
+          <span>{{ e.ownerLabel || '—' }}</span>
+          @if (!e.linesEditable) {
+            <label>Applies To</label>
+            <span>{{ e.appliesTo || '—' }}</span>
+          }
+        }
 
-        <label>Applies To</label>
-        <span>{{ e.appliesTo || '—' }}</span>
-
-        <label for="dp-type">Distribution Type</label>
+        <label for="dp-type">Type</label>
         <p-select
           inputId="dp-type"
           [options]="typeOptions()"
@@ -93,6 +99,22 @@
           appendTo="body"
           [style]="{ width: '100%' }"
         />
+
+        @if (e.linesEditable) {
+          <label for="dp-structure">Structure</label>
+          <div>
+            <p-select
+              inputId="dp-structure"
+              [options]="structureOptions()"
+              [(ngModel)]="e.structure"
+              appendTo="body"
+              [style]="{ width: '100%' }"
+            />
+            @if (structureDescription()) {
+              <small class="hint">{{ structureDescription() }}</small>
+            }
+          </div>
+        }
 
         <label for="dp-level">Preference</label>
         <p-select
@@ -105,8 +127,81 @@
         />
       </div>
 
+      @if (e.linesEditable) {
+        <div class="field mt">
+          <label>Classes</label>
+          <table style="border-collapse: separate; border-spacing: 0 0.35rem;">
+            <thead>
+              <tr>
+                <th style="text-align: left;">Subject</th>
+                <th style="text-align: left;">Course Number</th>
+                <th style="text-align: left;">Subpart</th>
+                <th style="text-align: left;">Class</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (line of editLines(); track $index; let i = $index, last = $last, first = $first) {
+                <tr>
+                  <td>
+                    <p-select
+                      [options]="lineSubjectOptions()"
+                      [(ngModel)]="line.subjectAreaId"
+                      (onChange)="onLineSubjectChange(line)"
+                      placeholder="Subject"
+                      appendTo="body"
+                      [style]="{ width: '8rem' }"
+                      [filter]="true"
+                    />
+                  </td>
+                  <td>
+                    <p-select
+                      [options]="line.courseOptions"
+                      [(ngModel)]="line.courseId"
+                      (onChange)="onLineCourseChange(line)"
+                      placeholder="Course"
+                      appendTo="body"
+                      [style]="{ width: '16rem' }"
+                      [filter]="true"
+                      [disabled]="line.subjectAreaId == null"
+                    />
+                  </td>
+                  <td>
+                    <p-select
+                      [options]="line.subpartOptions"
+                      [(ngModel)]="line.subpartId"
+                      (onChange)="onLineSubpartChange(line)"
+                      placeholder="Subpart"
+                      appendTo="body"
+                      [style]="{ width: '11rem' }"
+                      [disabled]="line.courseId == null"
+                    />
+                  </td>
+                  <td>
+                    <p-select
+                      [options]="line.classOptions"
+                      [(ngModel)]="line.classId"
+                      placeholder="Class"
+                      appendTo="body"
+                      [style]="{ width: '8rem' }"
+                      [disabled]="line.subpartId == null"
+                    />
+                  </td>
+                  <td style="white-space: nowrap;">
+                    <p-button icon="pi pi-arrow-up" severity="secondary" [text]="true" [disabled]="first" (onClick)="moveLine(i, -1)" pTooltip="Move up" />
+                    <p-button icon="pi pi-arrow-down" severity="secondary" [text]="true" [disabled]="last" (onClick)="moveLine(i, 1)" pTooltip="Move down" />
+                    <p-button icon="pi pi-times" severity="danger" [text]="true" (onClick)="removeLine(i)" pTooltip="Remove" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <p-button label="Add Class" icon="pi pi-plus" severity="secondary" [text]="true" (onClick)="addLine()" />
+        </div>
+      }
+
       <ng-template pTemplate="footer">
-        <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" />
+        <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="cancel()" [disabled]="saving()" />
         <p-button label="Save" icon="pi pi-check" [loading]="saving()" (onClick)="submit()" />
       </ng-template>
     </p-dialog>

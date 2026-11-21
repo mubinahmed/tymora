@@ -213,6 +213,41 @@ export const routes: Routes = [
     loadComponent: () => import('./features/solver/solver-log').then((m) => m.SolverLog),
   },
   {
+    path: 'exam-seating',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/seating/exam-seating').then((m) => m.ExamSeating),
+  },
+  {
+    path: 'invigilation',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/invigilation/invigilation').then((m) => m.Invigilation),
+  },
+  {
+    path: 'my-exams',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/seating/my-exams').then((m) => m.MyExams),
+  },
+  {
+    path: 'student-import',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/student-import').then((m) => m.StudentImport),
+  },
+  {
+    path: 'attendance',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/attendance/attendance').then((m) => m.Attendance),
+  },
+  {
+    path: 'my-attendance',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/attendance/my-attendance').then((m) => m.MyAttendance),
+  },
+  {
+    path: 'attend',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/attendance/attend').then((m) => m.Attend),
+  },
+  {
     path: 'solution-compare',
     canActivate: [authGuard],
     loadComponent: () => import('./features/solver/solution-compare').then((m) => m.SolutionCompare),

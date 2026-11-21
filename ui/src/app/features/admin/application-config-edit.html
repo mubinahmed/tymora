@@ -20,6 +20,9 @@
         <span class="spacer"></span>
         <input pInputText type="text" placeholder="Filter…" [value]="filter()" (input)="filter.set($any($event.target).value)" />
         <p-button label="CSV" icon="pi pi-download" severity="secondary" [text]="true" (onClick)="exportCsv()" [disabled]="!rows().length" />
+        @if (editable()) {
+          <p-button label="Add Setting" icon="pi pi-plus" (onClick)="openAdd()" />
+        }
       </div>
     </ng-template>
 
@@ -34,12 +37,16 @@
 
     <ng-template pTemplate="body" let-c>
       <tr>
-        <td><code>{{ c.key }}</code></td>
+        <td>
+          <code>{{ c.key }}</code>
+          @if (c.allSessions === false) { <p-tag value="session" severity="info" title="Applies to the current academic session only" /> }
+        </td>
         <td class="acfg-value">{{ c.value }}</td>
         <td>{{ c.description }}</td>
         <td class="row-actions">
           @if (editable()) {
             <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="openEdit(c)" />
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" title="Delete" (onClick)="confirmDelete(c)" />
           }
         </td>
       </tr>
@@ -55,13 +62,18 @@
     (visibleChange)="dialogVisible.set($event)"
     [modal]="true"
     [style]="{ width: '40rem' }"
-    header="Edit Setting"
+    [header]="edit()?.isNew ? 'Add Setting' : 'Edit Setting'"
   >
     @if (edit(); as e) {
       <div class="building-form">
         <div class="field">
-          <label>Key</label>
-          <input pInputText [value]="e.key" disabled />
+          <label for="acfg-key">Key</label>
+          @if (e.isNew) {
+            <input pInputText id="acfg-key" [ngModel]="e.key" (ngModelChange)="setKey($event)" placeholder="e.g. tmtbl.courseNumber.pattern" autocomplete="off" />
+            @if (e.key && keyError()) { <small class="p-error">{{ keyError() }}</small> }
+          } @else {
+            <input pInputText id="acfg-key" [value]="e.key" disabled />
+          }
         </div>
         <div class="field">
           <label for="acfg-val">Value</label>
@@ -71,15 +83,31 @@
           <label for="acfg-desc">Description</label>
           <input pInputText id="acfg-desc" [ngModel]="e.description" (ngModelChange)="setDescription($event)" />
         </div>
+        @if (e.isNew) {
+          <div class="field">
+            <label for="acfg-all">
+              <p-checkbox inputId="acfg-all" [binary]="true" [ngModel]="e.allSessions" (ngModelChange)="setAllSessions($event)" />
+              Applies to all sessions
+            </label>
+            @if (!e.allSessions) { <small>Only the current academic session will use this value.</small> }
+          </div>
+        } @else {
+          <div class="field">
+            <label>Applies to</label>
+            <span>{{ e.allSessions ? 'All sessions' : 'Current academic session only' }}</span>
+          </div>
+        }
         <p-message
           severity="warn"
-          text="This changes application-wide configuration. It may require a configuration refresh or server restart to take effect."
+          text="This changes application configuration. The running application picks up the new value immediately; some settings are only read when a page or solver is (re)loaded."
         />
       </div>
     }
     <ng-template pTemplate="footer">
       <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="dialogVisible.set(false)" [disabled]="saving()" />
-      <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="saving()" />
+      <p-button label="Save" icon="pi pi-check" (onClick)="save()" [loading]="saving()" [disabled]="!!edit()?.isNew && !!keyError()" />
     </ng-template>
   </p-dialog>
+
+  <p-confirmDialog />
 }
