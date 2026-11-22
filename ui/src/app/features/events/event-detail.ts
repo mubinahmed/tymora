@@ -25,7 +25,8 @@ import {
   RelatedObjectInterface,
   SaveOrApproveEventRpcRequest_Operation,
   SaveOrApproveEventRpcResponse,
-} from '../../core/models';
+} from '../../core/models';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 interface MeetingRow {
   id?: number;
@@ -80,7 +81,7 @@ const EVENT_TYPE_LABELS: { [k: string]: string } = {
  */
 @Component({
   selector: 'app-event-detail',
-  imports: [
+  imports: [DisplayDatePipe, 
     FormsModule,
     CardModule,
     TableModule,

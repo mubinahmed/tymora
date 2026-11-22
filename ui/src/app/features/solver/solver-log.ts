@@ -18,7 +18,8 @@ import {
   SolverLogPageRequest,
   SolverLogPageResponse,
   SolverType,
-} from '../../core/models';
+} from '../../core/models';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 /** A flat log section: either the live solver log, or one saved solution's log. */
 interface LogSection {
@@ -41,7 +42,7 @@ interface LogSection {
  */
 @Component({
   selector: 'app-solver-log',
-  imports: [
+  imports: [DisplayDatePipe, 
     FormsModule,
     TableModule,
     ButtonModule,

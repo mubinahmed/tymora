@@ -4,7 +4,7 @@
       [options]="bases"
       optionLabel="label"
       optionValue="value"
-      [(ngModel)]="base"
+      [ngModel]="base()" (ngModelChange)="base.set($event)"
       [disabled]="!ready()"
       styleClass="rt-select"
     />

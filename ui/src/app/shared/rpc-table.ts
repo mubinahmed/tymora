@@ -4,6 +4,7 @@ import { MessageModule } from 'primeng/message';
 import { TableInterface, TableRowInterface } from '../core/models';
 import { ThemeService } from '../core/theme.service';
 import { readableTextColor } from './contrast';
+import { AnyTableCell, cellHtml } from './table-cell';
 
 interface Col {
   index: number;
@@ -28,6 +29,11 @@ export class RpcTable {
   /** Server-sent cell text colour, adjusted for readable contrast on the current theme. */
   protected cellColor(color: string | null | undefined): string {
     return readableTextColor(color, this.theme.isDark());
+  }
+
+  /** Cell display HTML: formattedValue, or the value / rooms / items / chunks the server sent instead. */
+  protected html(cell: unknown): string {
+    return cellHtml(cell as AnyTableCell);
   }
 
   readonly table = input.required<TableInterface | null>();

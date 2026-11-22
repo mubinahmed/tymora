@@ -8,7 +8,7 @@
         [options]="roomOptions()"
         optionValue="id"
         optionLabel="label"
-        [(ngModel)]="selectedRoomIds"
+        [ngModel]="selectedRoomIds()" (ngModelChange)="selectedRoomIds.set($event)"
         [filter]="true"
         filterBy="label"
         display="chip"

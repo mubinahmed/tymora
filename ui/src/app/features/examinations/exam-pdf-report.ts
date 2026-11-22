@@ -161,10 +161,13 @@ export class ExamPdfReport implements OnInit, OnDestroy {
   protected readonly data = signal<ExamPdfReportResponse | null>(null);
 
   protected examTypeId: number | null = null;
-  protected selectedReports: string[] = [];
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly selectedReports = signal<string[]>([]);
   protected mode: string | null = null;
-  protected all = true;
-  protected selectedSubjects: number[] = [];
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly all = signal(true);
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly selectedSubjects = signal<number[]>([]);
   protected limit = '';
   protected roomCodes = '';
   protected noRoom = '';
@@ -202,7 +205,7 @@ export class ExamPdfReport implements OnInit, OnDestroy {
   protected readonly queue = computed<QueueRow[]>(() => this.data()?.queue ?? []);
 
   protected readonly canGenerate = computed(
-    () => this.selectedReports.length > 0 && (this.all || this.selectedSubjects.length > 0),
+    () => this.selectedReports().length > 0 && (this.all() || this.selectedSubjects().length > 0),
   );
 
   ngOnInit(): void {
@@ -222,7 +225,7 @@ export class ExamPdfReport implements OnInit, OnDestroy {
     this.data.set(d);
     this.examTypeId = d.examTypeId ?? null;
     this.mode = d.mode ?? this.mode;
-    this.all = d.all ?? this.all;
+    this.all.set(d.all ?? this.all());
     this.options = {
       dispRooms: !!d.dispRooms,
       dispLimit: !!d.dispLimit,
@@ -280,9 +283,9 @@ export class ExamPdfReport implements OnInit, OnDestroy {
     this.generating.set(true);
     const request: ExamPdfReportRequest = {
       operation: 'GENERATE',
-      reports: this.selectedReports,
-      all: this.all,
-      subjects: this.all ? [] : this.selectedSubjects,
+      reports: this.selectedReports(),
+      all: this.all(),
+      subjects: this.all() ? [] : this.selectedSubjects(),
       ...this.options,
       limit: this.limit,
       roomCodes: this.roomCodes,

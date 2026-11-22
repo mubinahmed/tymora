@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { DatePickerModule } from 'primeng/datepicker';
+import { DateInput } from '../../shared/date-input';
 import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -10,6 +10,7 @@ import { MessageService } from 'primeng/api';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 import { RpcService } from '../../core/rpc.service';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 /**
  * Relief Planning report (ReliefReportRequest): absence and relief-coverage figures
@@ -26,16 +27,16 @@ interface ReliefReportResponse { byReason?: SummaryRow[]; byRelief?: SummaryRow[
 
 @Component({
   selector: 'app-relief-report',
-  imports: [
-    FormsModule, TableModule, ButtonModule, DatePickerModule, CardModule,
+  imports: [DisplayDatePipe, 
+    FormsModule, TableModule, ButtonModule, DateInput, CardModule,
     MessageModule, ProgressSpinnerModule,
   ],
   template: `
     <div class="page">
       <div class="toolbar">
         <div class="left">
-          <div><label>From</label><p-datepicker [(ngModel)]="from" dataType="string" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" /></div>
-          <div><label>To</label><p-datepicker [(ngModel)]="to" dataType="string" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" /></div>
+          <div><label>From</label><app-date-input [(ngModel)]="from" /></div>
+          <div><label>To</label><app-date-input [(ngModel)]="to" /></div>
           <p-button label="Run report" icon="pi pi-search" (onClick)="run()" [disabled]="!from() || !to()" [loading]="loading()" />
         </div>
         <p-button label="Export CSV" icon="pi pi-download" severity="secondary" [text]="true"
@@ -69,7 +70,7 @@ interface ReliefReportResponse { byReason?: SummaryRow[]; byRelief?: SummaryRow[
             </ng-template>
             <ng-template pTemplate="body" let-d>
               <tr>
-                <td>{{ d.date }}</td><td>{{ d.absentName }}</td><td>{{ d.reasonLabel }}</td><td>{{ d.timeText }}</td>
+                <td>{{ d.date | displayDate }}</td><td>{{ d.absentName }}</td><td>{{ d.reasonLabel }}</td><td>{{ d.timeText }}</td>
                 <td>{{ d.className }}</td><td>{{ d.roomName }}</td><td>{{ d.reliefName }}</td><td>{{ d.assignedBy }}</td><td>{{ d.statusLabel }}</td>
               </tr>
             </ng-template>

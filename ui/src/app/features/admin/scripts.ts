@@ -82,9 +82,11 @@ export class Scripts implements OnInit, OnDestroy {
     this.scripts().filter((s) => s.canExecute || s.canEdit || s.canDelete),
   );
 
-  protected selectedId: number | null = null;
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+
+  protected readonly selectedId = signal<number | null>(null);
   protected readonly selectedScript = computed(
-    () => this.visibleScripts().find((s) => s.id === this.selectedId) ?? null,
+    () => this.visibleScripts().find((s) => s.id === this.selectedId()) ?? null,
   );
 
   /** Per-parameter working values keyed by parameter name (raw ngModel values). */
@@ -115,7 +117,7 @@ export class Scripts implements OnInit, OnDestroy {
     if (this.pollTimer) clearInterval(this.pollTimer);
   }
 
-  reload(selectId: number | null = this.selectedId): void {
+  reload(selectId: number | null = this.selectedId()): void {
     this.loading.set(true);
     this.error.set(null);
     this.rpc.execute<ScriptOptionsInterface>('GetScriptOptionsRpcRequest', {}).subscribe({
@@ -126,7 +128,7 @@ export class Scripts implements OnInit, OnDestroy {
           next: (list) => {
             this.scripts.set(list ?? []);
             const still = this.visibleScripts().some((s) => s.id === selectId);
-            this.selectedId = still ? selectId : null;
+            this.selectedId.set(still ? selectId : null);
             this.onScriptChange();
             this.loading.set(false);
           },

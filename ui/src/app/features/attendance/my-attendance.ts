@@ -15,6 +15,8 @@ import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 import { ClassStat, MyAttendanceResponse } from './attendance.models';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
+import { DateInput } from '../../shared/date-input';
 
 /**
  * My Attendance: a student's attendance per class against the configured minimum and examination eligibility
@@ -23,7 +25,7 @@ import { ClassStat, MyAttendanceResponse } from './attendance.models';
  */
 @Component({
   selector: 'app-my-attendance',
-  imports: [DatePipe, DecimalPipe, FormsModule, ButtonModule, TableModule, TagModule, MessageModule, SelectModule, DialogModule, InputTextModule, TextareaModule, ProgressSpinnerModule],
+  imports: [DateInput, DisplayDatePipe, DatePipe, DecimalPipe, FormsModule, ButtonModule, TableModule, TagModule, MessageModule, SelectModule, DialogModule, InputTextModule, TextareaModule, ProgressSpinnerModule],
   template: `
     @if (loading()) {
       <div class="center"><p-progressSpinner strokeWidth="4" /></div>
@@ -79,7 +81,7 @@ import { ClassStat, MyAttendanceResponse } from './attendance.models';
             <p-table [value]="d.records ?? []" styleClass="p-datatable-sm p-datatable-striped" [paginator]="(d.records?.length ?? 0) > 20" [rows]="20">
               <ng-template pTemplate="header"><tr><th>Date</th><th>Time</th><th>Class</th><th>Room</th><th>Status</th><th>Recorded</th></tr></ng-template>
               <ng-template pTemplate="body" let-r>
-                <tr><td>{{ r.date }}</td><td>{{ r.time }}</td><td>{{ r.className }}</td><td>{{ r.room }}</td>
+                <tr><td>{{ r.date | displayDate }}</td><td>{{ r.time }}</td><td>{{ r.className }}</td><td>{{ r.room }}</td>
                   <td><span [class]="'cnt ' + (r.status ?? '').toLowerCase()">{{ r.status }}</span></td><td class="muted">{{ (r.source ?? '').toLowerCase() }}</td></tr>
               </ng-template>
               <ng-template pTemplate="emptymessage"><tr><td colspan="6">No attendance recorded yet.</td></tr></ng-template>
@@ -92,8 +94,8 @@ import { ClassStat, MyAttendanceResponse } from './attendance.models';
         <div class="ma-form">
           <label><span>Type</span><p-select [options]="types" [(ngModel)]="type" optionLabel="label" optionValue="value" /></label>
           <div class="row">
-            <label><span>From</span><input pInputText type="date" [(ngModel)]="from" /></label>
-            <label><span>To</span><input pInputText type="date" [(ngModel)]="to" /></label>
+            <label><span>From</span><app-date-input [(ngModel)]="from" /></label>
+            <label><span>To</span><app-date-input [(ngModel)]="to" /></label>
           </div>
           <label><span>Note</span><textarea pTextarea rows="3" [(ngModel)]="note"></textarea></label>
           <label><span>Document {{ type === 'MC' ? '(required, max 5 MB)' : '(optional, max 5 MB)' }}</span><input type="file" accept="image/*,application/pdf" (change)="pick($event)" /></label>

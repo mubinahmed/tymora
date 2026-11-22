@@ -32,6 +32,7 @@ import {
   SeatLayout,
   SeatRow,
 } from './seating.models';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 const RPC = 'ExamSeatingRequest';
 const PALETTE = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#db2777', '#0891b2', '#65a30d', '#dc2626', '#4f46e5', '#0d9488'];
@@ -55,7 +56,7 @@ interface Pick {
  */
 @Component({
   selector: 'app-exam-seating',
-  imports: [
+  imports: [DisplayDatePipe, 
     FormsModule,
     ButtonModule,
     SelectModule,

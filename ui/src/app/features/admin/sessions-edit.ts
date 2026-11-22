@@ -289,10 +289,10 @@ export class SessionsEdit {
     this.dateBoundaries.set(map);
   }
 
-  /** "MM/dd/yyyy" (the picker/back-end entry format) -> ISO "yyyy-MM-dd", or null. */
+  /** "dd/MM/yyyy" (the picker/back-end entry format, GwtConstants.dateEntryFormat) -> ISO "yyyy-MM-dd", or null. */
   private mmddyyyyToIso(value: string): string | null {
     const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((value ?? '').trim());
-    return m ? `${m[3]}-${m[1]}-${m[2]}` : null;
+    return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
   }
 
   save(): void {

@@ -167,8 +167,8 @@
         @if (editing.patternEditable) {
           <div class="range-box">
             <strong>Select weekdays in range</strong>
-            <label>From <input type="date" [(ngModel)]="rangeFrom" [min]="sessionRange().min" [max]="sessionRange().max" /></label>
-            <label>To <input type="date" [(ngModel)]="rangeTo" [min]="sessionRange().min" [max]="sessionRange().max" /></label>
+            <label>From <app-date-input [(ngModel)]="rangeFrom" [min]="sessionRange().min" [max]="sessionRange().max" /></label>
+            <label>To <app-date-input [(ngModel)]="rangeTo" [min]="sessionRange().min" [max]="sessionRange().max" /></label>
             @for (wd of weekdayLabels; track $index) {
               <label><p-checkbox [binary]="true" [(ngModel)]="rangeDays[$index]" />{{ wd }}</label>
             }
@@ -211,11 +211,11 @@
             One day combination per line, e.g. M, T, W, Th, F (for 1 meeting per week) or MWF, TTh.
             Day names: {{ (dayNames().length ? dayNames() : ['M', 'T', 'W', 'Th', 'F', 'S', 'Su']).join(', ') }}.
           </p>
-          <textarea pTextarea class="legacy-text" rows="5" [(ngModel)]="editing.dayCodesText" placeholder="M&#10;T&#10;W&#10;Th&#10;F"></textarea>
+          <textarea pTextarea class="legacy-text" rows="5" [(ngModel)]="editing.dayCodesText" placeholder="(empty: type the days here, one per line)"></textarea>
 
           <h4>Start Times</h4>
           <p class="grid-hint">One start time per line in HHMM (24-hour) format, minutes divisible by 5, e.g. 0730, 1330.</p>
-          <textarea pTextarea class="legacy-text" rows="5" [(ngModel)]="editing.startTimesText" placeholder="0800&#10;1000&#10;1300&#10;1500"></textarea>
+          <textarea pTextarea class="legacy-text" rows="5" [(ngModel)]="editing.startTimesText" placeholder="(empty: type the start times here, one per line)"></textarea>
         } @else {
         <h4>Meeting Day Combinations</h4>
         @if (editing.gridEditable) {

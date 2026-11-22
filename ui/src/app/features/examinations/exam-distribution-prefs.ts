@@ -139,7 +139,8 @@ export class ExamDistributionPrefs implements OnInit {
 
   protected readonly dialogVisible = signal(false);
   protected editId: number | null = null;
-  protected editTypeId: number | null = null;
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly editTypeId = signal<number | null>(null);
   protected editLevelId: number | null = null;
   protected editLines: EditLine[] = [];
 
@@ -166,7 +167,7 @@ export class ExamDistributionPrefs implements OnInit {
 
   /** Preference levels allowed by the currently selected distribution type. */
   protected readonly levelOptions = computed(() => {
-    const type = this.distributionTypes().find((t) => t.id === this.editTypeId);
+    const type = this.distributionTypes().find((t) => t.id === this.editTypeId());
     const allowed = type?.allowed ?? '';
     return this.prefLevels()
       .filter((l) => !allowed || (l.char != null && allowed.indexOf(l.char) >= 0))
@@ -174,7 +175,7 @@ export class ExamDistributionPrefs implements OnInit {
   });
 
   protected readonly typeDescription = computed(
-    () => this.distributionTypes().find((t) => t.id === this.editTypeId)?.description ?? '',
+    () => this.distributionTypes().find((t) => t.id === this.editTypeId())?.description ?? '',
   );
 
   protected readonly columns = computed<string[]>(() => this.data()?.columns ?? []);
@@ -242,7 +243,7 @@ export class ExamDistributionPrefs implements OnInit {
 
   add(): void {
     this.editId = null;
-    this.editTypeId = null;
+    this.editTypeId.set(null);
     this.editLevelId = null;
     this.editLines = [this.blankLine()];
     this.dialogVisible.set(true);
@@ -262,7 +263,7 @@ export class ExamDistributionPrefs implements OnInit {
           return;
         }
         this.editId = rec.id;
-        this.editTypeId = rec.distributionTypeId ?? null;
+        this.editTypeId.set(rec.distributionTypeId ?? null);
         this.editLevelId = rec.prefLevelId ?? null;
         this.editLines = [];
         // Build one editable line per grouped exam, prefetching its course/exam options.
@@ -342,7 +343,7 @@ export class ExamDistributionPrefs implements OnInit {
   }
 
   submit(): void {
-    if (this.editTypeId == null) {
+    if (this.editTypeId() == null) {
       this.messages.add({ severity: 'error', summary: 'Validation', detail: 'Distribution type is required.' });
       return;
     }
@@ -363,7 +364,7 @@ export class ExamDistributionPrefs implements OnInit {
     }
     const record: DistPrefRecord = {
       id: this.editId,
-      distributionTypeId: this.editTypeId,
+      distributionTypeId: this.editTypeId(),
       prefLevelId: this.editLevelId,
       exams,
     };

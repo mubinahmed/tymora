@@ -137,8 +137,10 @@ export class RoomAvailability implements OnInit {
 
   /** Optional time-of-day window (hour 0–24); filters displayed meetings. */
   protected readonly hours = Array.from({ length: 25 }, (_, h) => ({ label: `${h}:00`, value: h }));
-  protected startHour: number | null = null;
-  protected endHour: number | null = null;
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly startHour = signal<number | null>(null);
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly endHour = signal<number | null>(null);
 
   // --- session-date calendar ---
   private sessionMonths: SessionMonth[] = [];
@@ -159,8 +161,10 @@ export class RoomAvailability implements OnInit {
    * when any session dates are picked, to those day-of-year values.
    */
   protected readonly filtered = computed<RoomResult[]>(() => {
-    const from = this.startHour == null ? null : this.startHour * 12;
-    const to = this.endHour == null ? null : this.endHour * 12;
+    const sh = this.startHour();
+    const eh = this.endHour();
+    const from = sh == null ? null : sh * 12;
+    const to = eh == null ? null : eh * 12;
     const doys = this.selectedDateDoys();
     const doySet = doys.length ? new Set(doys) : null;
     if (from == null && to == null && !doySet) return this.results();
@@ -404,8 +408,8 @@ export class RoomAvailability implements OnInit {
 
   clear(): void {
     this.selectedRoomIds = [];
-    this.startHour = null;
-    this.endHour = null;
+    this.startHour.set(null);
+    this.endHour.set(null);
     this.selectedDateDoys.set([]);
     this.results.set([]);
     this.searched.set(false);

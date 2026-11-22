@@ -64,7 +64,8 @@ export class TravelTimes implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   protected readonly roomOptions = signal<PickerItem[]>([]);
-  protected selectedRoomIds: number[] = [];
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly selectedRoomIds = signal<number[]>([]);
 
   /** Rooms of the currently displayed matrix, in order. */
   protected readonly rooms = signal<Room[]>([]);
@@ -78,7 +79,7 @@ export class TravelTimes implements OnInit {
   /** Snapshot of `values` taken at load / last save, restored by Back. */
   private baseline = new Map<string, number>();
 
-  protected readonly canShow = computed(() => this.selectedRoomIds.length >= 2);
+  protected readonly canShow = computed(() => this.selectedRoomIds().length >= 2);
 
   ngOnInit(): void {
     this.page.set('Travel Times');
@@ -125,7 +126,7 @@ export class TravelTimes implements OnInit {
     this.loadingMatrix.set(true);
     const request: TravelTimesRequest = {
       command: 'LOAD',
-      rooms: this.selectedRoomIds.map((id) => ({ id })),
+      rooms: this.selectedRoomIds().map((id) => ({ id })),
     };
     this.rpc.execute<TravelTimeResponse>('TravelTimesRequest', request).subscribe({
       next: (res) => {

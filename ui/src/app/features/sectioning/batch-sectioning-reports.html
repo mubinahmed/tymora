@@ -10,7 +10,7 @@
             [options]="reportOptions()"
             optionLabel="label"
             optionValue="value"
-            [(ngModel)]="reference"
+            [ngModel]="reference()" (ngModelChange)="reference.set($event)"
             (onChange)="onReportChange()"
             placeholder="Select a report"
             [filter]="true"
@@ -37,7 +37,7 @@
             label="Execute"
             icon="pi pi-play"
             (onClick)="execute()"
-            [disabled]="!reference"
+            [disabled]="!reference()"
             [loading]="executing()"
           />
         </div>

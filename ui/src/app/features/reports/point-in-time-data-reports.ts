@@ -70,7 +70,8 @@ export class PointInTimeDataReports implements OnInit {
   protected readonly table = signal<Table | null>(null);
 
   /** id of the currently selected report (bound to the select) */
-  protected reportId: string | null = null;
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly reportId = signal<string | null>(null);
 
   /** parameter type -> current value(s); string for text/single, string[] for multi */
   protected paramValues: Record<string, string | string[]> = {};
@@ -80,7 +81,7 @@ export class PointInTimeDataReports implements OnInit {
   );
 
   protected readonly selectedReport = computed<Report | null>(
-    () => this.reports().find((r) => r.id === this.reportId) ?? null,
+    () => this.reports().find((r) => r.id === this.reportId()) ?? null,
   );
 
   protected readonly visibleParameters = computed<Parameter[]>(() => {

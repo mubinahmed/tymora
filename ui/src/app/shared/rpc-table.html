@@ -35,7 +35,7 @@
             [style.text-align]="c.align"
             [style.color]="cellColor(row.cells?.[c.index]?.color)"
             [title]="row.cells?.[c.index]?.title || ''"
-            [innerHTML]="row.cells?.[c.index]?.formattedValue"
+            [innerHTML]="html(row.cells?.[c.index])"
           ></td>
         }
       </tr>

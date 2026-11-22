@@ -14,6 +14,7 @@ import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 import { downloadCsv } from '../../core/csv';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 type Change = 'SAME' | 'TIME' | 'ROOM' | 'TIME_AND_ROOM' | 'ONLY_A' | 'ONLY_B';
 
@@ -88,7 +89,7 @@ const NEUTRAL = /^(time|iteration|memory usage|speed)$/i;
  */
 @Component({
   selector: 'app-solution-compare',
-  imports: [
+  imports: [DisplayDatePipe, 
     DatePipe,
     FormsModule,
     RouterLink,
@@ -195,7 +196,8 @@ export class SolutionCompare implements OnInit {
 
   protected optionLabel(s: SolutionOption): string {
     const d = s.created ? new Date(s.created) : null;
-    const when = d ? d.toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const when = d ? `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}` : '';
     return `${s.owner} · ${when}${s.committed ? ' · committed' : ''}${s.note ? ' · ' + s.note : ''}`;
   }
 

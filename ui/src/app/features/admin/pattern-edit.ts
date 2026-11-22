@@ -18,6 +18,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 import { RpcService } from '../../core/rpc.service';
+import { DateInput } from '../../shared/date-input';
 
 /**
  * Create / Edit Date Patterns (legacy datePatternEdit.action) and Time Patterns
@@ -147,7 +148,7 @@ const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 @Component({
   selector: 'app-pattern-edit',
-  imports: [
+  imports: [DateInput, 
     FormsModule,
     TableModule,
     ButtonModule,
@@ -514,6 +515,16 @@ export class PatternEdit {
       type: this.editing.type,
       visible: this.editing.visible,
     };
+    if (this.isTime() && this.editing.isNew && !(this.typeLabel(this.editing.type) ?? '').toLowerCase().includes('exact')) {
+      if (!(this.editing.dayCodesText ?? '').trim() || !(this.editing.startTimesText ?? '').trim()) {
+        this.messages.add({
+          severity: 'error',
+          summary: 'Validation',
+          detail: 'Type at least one day (Days) and one start time (Start Times). A time pattern without them has no times to schedule.',
+        });
+        return;
+      }
+    }
     if (this.isTime() && this.editing.isNew) {
       record.nrMeetings = this.editing.nrMeetings;
       record.minPerMtg = this.editing.minPerMtg;

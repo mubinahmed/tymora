@@ -92,7 +92,8 @@ export class OnlineSectioningReports implements OnInit {
   protected readonly table = signal<TableInterface | null>(null);
 
   /** reference of the currently selected report (bound to the select) */
-  protected reportRef: string | null = null;
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly reportRef = signal<string | null>(null);
   /** free-text filter value (legacy SectioningStatusFilterBox is deferred) */
   protected filter = '';
 
@@ -101,7 +102,7 @@ export class OnlineSectioningReports implements OnInit {
   );
 
   protected readonly selectedType = computed<ReportTypeInterface | null>(
-    () => this.reportTypes().find((t) => t.reference === this.reportRef) ?? null,
+    () => this.reportTypes().find((t) => t.reference === this.reportRef()) ?? null,
   );
 
   ngOnInit(): void {

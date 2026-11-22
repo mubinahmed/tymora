@@ -22,11 +22,11 @@
 
       <div class="field">
         <label for="ra-from">From</label>
-        <p-select inputId="ra-from" [options]="hours" optionLabel="label" optionValue="value" [(ngModel)]="startHour" placeholder="Any" [showClear]="true" appendTo="body" />
+        <p-select inputId="ra-from" [options]="hours" optionLabel="label" optionValue="value" [ngModel]="startHour()" (ngModelChange)="startHour.set($event)" placeholder="Any" [showClear]="true" appendTo="body" />
       </div>
       <div class="field">
         <label for="ra-to">To</label>
-        <p-select inputId="ra-to" [options]="hours" optionLabel="label" optionValue="value" [(ngModel)]="endHour" placeholder="Any" [showClear]="true" appendTo="body" />
+        <p-select inputId="ra-to" [options]="hours" optionLabel="label" optionValue="value" [ngModel]="endHour()" (ngModelChange)="endHour.set($event)" placeholder="Any" [showClear]="true" appendTo="body" />
       </div>
 
       <div class="field ra-rooms">

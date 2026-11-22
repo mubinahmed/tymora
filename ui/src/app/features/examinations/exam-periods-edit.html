@@ -96,10 +96,10 @@
       />
 
       <label for="ep-date">Date</label>
-      <input id="ep-date" pInputText [(ngModel)]="editing.date" placeholder="mm/dd/yyyy" />
+      <p-datepicker inputId="ep-date" [(ngModel)]="editing.date" dataType="string" dateFormat="dd/mm/yy" placeholder="dd/mm/yyyy" [showIcon]="true" appendTo="body" />
 
-      <label for="ep-start">Start Time (hhmm)</label>
-      <p-inputNumber inputId="ep-start" [(ngModel)]="editing.start" [useGrouping]="false" [min]="0" [max]="2359" />
+      <label for="ep-start">Start Time (hh:mm, 24-hour)</label>
+      <input id="ep-start" pInputText [(ngModel)]="editing.startText" placeholder="hh:mm" maxlength="5" autocomplete="off" />
 
       <label for="ep-length">Length (minutes)</label>
       <p-inputNumber inputId="ep-length" [(ngModel)]="editing.length" [showButtons]="true" [min]="0" [step]="5" />

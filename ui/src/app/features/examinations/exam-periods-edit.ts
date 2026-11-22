@@ -4,6 +4,7 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
@@ -82,6 +83,8 @@ interface Editing {
   examTypeId: number | null;
   date: string;
   start: number | null;
+  /** start time as typed, "hh:mm" (24-hour); converted to/from the HHMM number the back-end uses */
+  startText: string;
   length: number | null;
   startOffset: number | null;
   stopOffset: number | null;
@@ -92,6 +95,7 @@ interface Editing {
   selector: 'app-exam-periods-edit',
   imports: [
     FormsModule,
+    DatePickerModule,
     TableModule,
     ButtonModule,
     InputTextModule,
@@ -148,7 +152,7 @@ export class ExamPeriodsEdit {
   }
 
   private blank(): Editing {
-    return { id: null, examTypeId: null, date: '', start: null, length: null, startOffset: 0, stopOffset: 0, prefLevelId: null };
+    return { id: null, examTypeId: null, date: '', start: null, startText: '', length: null, startOffset: 0, stopOffset: 0, prefLevelId: null };
   }
 
   reload(): void {
@@ -209,6 +213,7 @@ export class ExamPeriodsEdit {
       examTypeId: r.examTypeId ?? null,
       date: r.date ?? '',
       start: r.start ?? null,
+      startText: hhmmToText(r.start),
       length: r.length ?? null,
       startOffset: r.startOffset ?? 0,
       stopOffset: r.stopOffset ?? 0,
@@ -230,10 +235,16 @@ export class ExamPeriodsEdit {
       this.messages.add({ severity: 'error', summary: 'Validation', detail: 'An examination type is required.' });
       return;
     }
-    if (this.editing.start == null || this.editing.start <= 0) {
-      this.messages.add({ severity: 'error', summary: 'Validation', detail: 'A start time is required.' });
+    const start = textToHhmm(this.editing.startText);
+    if (start == null) {
+      this.messages.add({
+        severity: 'error',
+        summary: 'Validation',
+        detail: 'Type the start time as hh:mm in 24-hour time, for example 09:00 or 14:00 (minutes in steps of 5).',
+      });
       return;
     }
+    this.editing.start = start;
     if (this.editing.length == null || this.editing.length <= 0) {
       this.messages.add({ severity: 'error', summary: 'Validation', detail: 'A length is required.' });
       return;
@@ -282,4 +293,26 @@ export class ExamPeriodsEdit {
       (e) => this.messages.add({ severity: 'error', summary: 'Delete failed', detail: e.message }),
     );
   }
+}
+
+/** HHMM number (e.g. 900, 1400) -> "09:00" / "14:00"; empty for none. */
+export function hhmmToText(hhmm: number | null | undefined): string {
+  if (hhmm == null || hhmm < 0) return '';
+  const h = Math.floor(hhmm / 100);
+  const m = hhmm % 100;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/**
+ * "hh:mm" (also "h:mm", "hh.mm" or a bare "hhmm") -> HHMM number, or null if it is not a valid 24-hour time
+ * whose minutes are a multiple of 5 (exam periods start on 5-minute slots).
+ */
+export function textToHhmm(text: string | null | undefined): number | null {
+  const t = (text ?? '').trim();
+  const m = /^(\d{1,2})[:.](\d{2})$/.exec(t) ?? /^(\d{1,2})(\d{2})$/.exec(t);
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h > 23 || min > 59 || min % 5 !== 0) return null;
+  return h * 100 + min;
 }

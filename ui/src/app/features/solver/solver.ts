@@ -178,6 +178,16 @@ export class Solver implements OnInit, OnDestroy {
     this.resp.set(r);
   }
 
+  /**
+   * Solver log messages carry legacy HTML (links to the old class pages, <i> hints). Show them as plain text: the
+   * tags are dropped and entities decoded, so the line reads "Class IT 1101 Lec 1 has no time pattern selected …".
+   */
+  protected plainText(message: string | null | undefined): string {
+    if (!message) return '';
+    const doc = new DOMParser().parseFromString(message, 'text/html');
+    return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim();
+  }
+
   /** Keep polling status while the solver is working. */
   private schedulePoll(): void {
     if (this.pollHandle) clearTimeout(this.pollHandle);

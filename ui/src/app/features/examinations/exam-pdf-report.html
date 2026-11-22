@@ -51,7 +51,7 @@
           [options]="reportOptions()"
           optionLabel="label"
           optionValue="value"
-          [(ngModel)]="selectedReports"
+          [ngModel]="selectedReports()" (ngModelChange)="selectedReports.set($event)"
           display="chip"
           placeholder="Select one or more reports"
           appendTo="body"
@@ -62,12 +62,12 @@
       <div class="field">
         <label>Scope</label>
         <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.4rem;">
-          <p-checkbox [(ngModel)]="all" [binary]="true" inputId="epr-all" />
+          <p-checkbox [ngModel]="all()" (ngModelChange)="all.set($event)" [binary]="true" inputId="epr-all" />
           <label for="epr-all" style="margin:0; font-weight:normal;">All subject areas in the session</label>
         </div>
       </div>
 
-      @if (!all) {
+      @if (!all()) {
         <div class="field">
           <label for="epr-subjects">Subject areas *</label>
           <p-multiSelect
@@ -75,7 +75,7 @@
             [options]="subjectOptions()"
             optionLabel="label"
             optionValue="value"
-            [(ngModel)]="selectedSubjects"
+            [ngModel]="selectedSubjects()" (ngModelChange)="selectedSubjects.set($event)"
             [filter]="true"
             display="chip"
             placeholder="Select subject areas"
@@ -104,7 +104,7 @@
         </div>
         <div class="field">
           <label for="epr-since">Changes since</label>
-          <input pInputText id="epr-since" type="text" [(ngModel)]="since" placeholder="MM/DD/YYYY" style="width: 10rem;" />
+          <input pInputText id="epr-since" type="text" [(ngModel)]="since" placeholder="DD/MM/YYYY" style="width: 10rem;" />
         </div>
         <div class="field">
           <label for="epr-roomcodes">Room codes</label>

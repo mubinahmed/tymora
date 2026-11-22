@@ -41,7 +41,7 @@
           <div class="ed-prop"><span class="k">Attendance / Capacity</span><span class="v">{{ ev.maxCapacity }}</span></div>
         }
         @if (ev.expirationDate) {
-          <div class="ed-prop"><span class="k">Expiration Date</span><span class="v">{{ ev.expirationDate }}</span></div>
+          <div class="ed-prop"><span class="k">Expiration Date</span><span class="v">{{ ev.expirationDate | displayDate }}</span></div>
         }
         @if (ev.lastChange) {
           <div class="ed-prop"><span class="k">Last Change</span><span class="v">{{ ev.lastChange }}</span></div>
@@ -81,7 +81,7 @@
           </ng-template>
           <ng-template pTemplate="body" let-m>
             <tr [class.ed-past]="m.past">
-              <td>{{ m.date }}</td>
+              <td>{{ m.date | displayDate }}</td>
               <td>{{ m.time }}</td>
               <td>{{ m.room }}</td>
               <td><p-tag [value]="m.status" [severity]="statusSeverity(m.status)" /></td>
@@ -112,7 +112,7 @@
               <td>{{ o.course }}</td>
               <td>{{ o.section }}</td>
               <td>{{ o.type }}</td>
-              <td>{{ o.date }}</td>
+              <td>{{ o.date | displayDate }}</td>
               <td>{{ o.time }}</td>
               <td>{{ o.location }}</td>
             </tr>
@@ -129,7 +129,7 @@
           </ng-template>
           <ng-template pTemplate="body" let-n>
             <tr>
-              <td>{{ n.date }}</td>
+              <td>{{ n.date | displayDate }}</td>
               <td>{{ n.user }}</td>
               <td>{{ n.type }}</td>
               <td>{{ n.meetings }}</td>

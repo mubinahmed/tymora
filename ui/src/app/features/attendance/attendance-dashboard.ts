@@ -11,6 +11,7 @@ import { MessageService } from 'primeng/api';
 import { RpcService } from '../../core/rpc.service';
 import { ApiError } from '../../core/models';
 import { AttendanceConfig, AttendanceResponse, Dashboard, DashboardAlert, ReportRow, TrendPoint } from './attendance.models';
+import { DateInput } from '../../shared/date-input';
 
 /** Student-day statuses in severity order; colours validated as an adjacent set in both modes (dataviz validator). */
 const SEGMENTS: { key: keyof Dashboard; label: string; cls: string }[] = [
@@ -31,7 +32,7 @@ interface Segment { label: string; cls: string; count: number; share: number; }
  */
 @Component({
   selector: 'app-attendance-dashboard',
-  imports: [DatePipe, DecimalPipe, FormsModule, ButtonModule, SelectModule, SelectButtonModule, InputTextModule, ProgressSpinnerModule, TooltipModule],
+  imports: [DateInput, DatePipe, DecimalPipe, FormsModule, ButtonModule, SelectModule, SelectButtonModule, InputTextModule, ProgressSpinnerModule, TooltipModule],
   templateUrl: './attendance-dashboard.html',
   styleUrl: './attendance-dashboard.scss',
 })

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
-import { DatePickerModule } from 'primeng/datepicker';
+import { DateInput } from '../../shared/date-input';
 import { TagModule } from 'primeng/tag';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -39,7 +39,7 @@ interface ReliefBoardResponse { date?: string; canManage?: boolean; generatedCou
 @Component({
   selector: 'app-relief-board',
   imports: [
-    FormsModule, TableModule, ButtonModule, SelectModule, DatePickerModule,
+    FormsModule, TableModule, ButtonModule, SelectModule, DateInput,
     TagModule, MessageModule, ProgressSpinnerModule,
   ],
   template: `
@@ -47,8 +47,7 @@ interface ReliefBoardResponse { date?: string; canManage?: boolean; generatedCou
       <div class="toolbar">
         <div class="left">
           <label for="rb-date">Date</label>
-          <p-datepicker inputId="rb-date" [(ngModel)]="date" dataType="string" dateFormat="yy-mm-dd"
-            [showIcon]="true" appendTo="body" placeholder="yyyy-mm-dd" (onSelect)="load()" />
+          <app-date-input inputId="rb-date" [(ngModel)]="date" (changed)="load()" />
           <p-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true"
             (onClick)="load()" [disabled]="!date()" />
         </div>

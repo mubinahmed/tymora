@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { DatePickerModule } from 'primeng/datepicker';
+import { DateInput } from '../../shared/date-input';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -10,6 +10,7 @@ import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 import { RpcService } from '../../core/rpc.service';
 import { HandoverNotes, HandoverNoteInfo } from './handover-notes';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 /**
  * Teacher self-service "My Relief Duties" (MyReliefDutiesRequest). Read-only view
@@ -32,14 +33,14 @@ interface MyReliefDutiesResponse { duties?: DutyInfo[]; }
 
 @Component({
   selector: 'app-my-relief-duties',
-  imports: [FormsModule, TableModule, ButtonModule, DatePickerModule, DialogModule, MessageModule, ProgressSpinnerModule, HandoverNotes],
+  imports: [DisplayDatePipe, FormsModule, TableModule, ButtonModule, DateInput, DialogModule, MessageModule, ProgressSpinnerModule, HandoverNotes],
   template: `
     <div class="page">
       <div class="toolbar">
         <h2>My relief duties</h2>
         <div class="filters">
-          <div><label>From</label><p-datepicker [(ngModel)]="from" dataType="string" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" (onSelect)="load()" /></div>
-          <div><label>To</label><p-datepicker [(ngModel)]="to" dataType="string" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" (onSelect)="load()" /></div>
+          <div><label>From</label><app-date-input [(ngModel)]="from" (changed)="load()" /></div>
+          <div><label>To</label><app-date-input [(ngModel)]="to" (changed)="load()" /></div>
           <p-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true" (onClick)="load()" />
         </div>
       </div>
@@ -55,7 +56,7 @@ interface MyReliefDutiesResponse { duties?: DutyInfo[]; }
           </ng-template>
           <ng-template pTemplate="body" let-d>
             <tr>
-              <td>{{ d.meetingDate }}</td>
+              <td>{{ d.meetingDate | displayDate }}</td>
               <td>{{ d.timeText }}</td>
               <td>{{ d.className }}</td>
               <td>{{ d.roomName }}</td>
@@ -73,7 +74,7 @@ interface MyReliefDutiesResponse { duties?: DutyInfo[]; }
 
       <p-dialog [(visible)]="handoverVisible" [modal]="true" [style]="{ width: '34rem' }" header="Relief handover instructions">
         @if (handoverTarget) {
-          <p class="hint">Shared by {{ handoverTarget.absentName }} for {{ handoverTarget.className }} on {{ handoverTarget.meetingDate }} ({{ handoverTarget.timeText }}).</p>
+          <p class="hint">Shared by {{ handoverTarget.absentName }} for {{ handoverTarget.className }} on {{ handoverTarget.meetingDate | displayDate }} ({{ handoverTarget.timeText }}).</p>
           <app-handover-notes [notes]="handoverTarget.handoverNotes" [canAdd]="false" />
         }
         <ng-template pTemplate="footer">

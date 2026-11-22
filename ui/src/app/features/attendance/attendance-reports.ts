@@ -12,6 +12,7 @@ import { RpcService } from '../../core/rpc.service';
 import { ApiError } from '../../core/models';
 import { downloadCsv } from '../../core/csv';
 import { AttendanceConfig, AttendanceResponse, ReportInfo, ReportTable } from './attendance.models';
+import { DateInput } from '../../shared/date-input';
 
 type Row = Record<string, string | number>;
 
@@ -23,7 +24,7 @@ type Row = Record<string, string | number>;
  */
 @Component({
   selector: 'app-attendance-reports',
-  imports: [DecimalPipe, FormsModule, ButtonModule, SelectModule, InputTextModule, TableModule, TagModule, ProgressSpinnerModule],
+  imports: [DateInput, DecimalPipe, FormsModule, ButtonModule, SelectModule, InputTextModule, TableModule, TagModule, ProgressSpinnerModule],
   template: `
     <div class="rp">
       <nav class="rp-list" aria-label="Reports">
@@ -34,10 +35,10 @@ type Row = Record<string, string | number>;
       <div class="rp-main">
         @if (selected(); as r) {
           <div class="rp-bar">
-            @if (r.params.includes('DATE')) { <label><span>Day</span><input pInputText type="date" [(ngModel)]="date" /></label> }
+            @if (r.params.includes('DATE')) { <label><span>Day</span><app-date-input [(ngModel)]="date" /></label> }
             @if (r.params.includes('RANGE')) {
-              <label><span>From</span><input pInputText type="date" [(ngModel)]="fromDate" /></label>
-              <label><span>To</span><input pInputText type="date" [(ngModel)]="toDate" /></label>
+              <label><span>From</span><app-date-input [(ngModel)]="fromDate" /></label>
+              <label><span>To</span><app-date-input [(ngModel)]="toDate" /></label>
             }
             @if (r.params.includes('DIMENSION')) { <label><span>Group by</span><p-select [options]="dimensionOptions" [(ngModel)]="dimension" optionLabel="label" optionValue="value" /></label> }
             <p-button label="Run" icon="pi pi-play" size="small" (onClick)="run()" [loading]="loading()" />

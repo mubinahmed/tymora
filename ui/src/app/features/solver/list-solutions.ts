@@ -13,6 +13,7 @@ import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ThemeService } from '../../core/theme.service';
 import { readableTextColor } from '../../shared/contrast';
+import { AnyTableCell, cellHtml as toCellHtml } from '../../shared/table-cell';
 import {
   ApiError,
   InfoPair,
@@ -62,6 +63,11 @@ interface Col {
 export class ListSolutions implements OnInit {
   private readonly theme = inject(ThemeService);
   /** Server-sent cell text colour, adjusted for readable contrast on the current theme. */
+  /** Cell display HTML: formattedValue, or the value / rooms / items / chunks the server sent instead. */
+  protected cellHtml(cell: unknown): string {
+    return toCellHtml(cell as AnyTableCell);
+  }
+
   protected cellColor(color: string | null | undefined): string {
     return readableTextColor(color, this.theme.isDark());
   }

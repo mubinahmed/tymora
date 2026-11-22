@@ -110,22 +110,22 @@ public interface StudentSectioningConstants extends Constants {
 	@DoNotTranslate
 	int numberOfAlternatives();
 	
-	@DefaultStringValue("MM/dd/yyyy")
+	@DefaultStringValue("dd/MM/yyyy")
 	String requestDateFormat();
 	
-	@DefaultStringValue("MM/dd/yyyy HH:mm:ss")
+	@DefaultStringValue("dd/MM/yyyy HH:mm:ss")
 	String timeStampFormat();
 	
-	@DefaultStringValue("MM/dd/yyyy hh:mmaa")
+	@DefaultStringValue("dd/MM/yyyy hh:mmaa")
 	String requestWaitListedDateFormat();
 
 	@DefaultBooleanValue(true)
 	boolean useAmPm();
 	
-	@DefaultStringValue("MM/dd")
+	@DefaultStringValue("dd/MM")
 	String patternDateFormat();
 	
-	@DefaultStringValue("MM/dd hh:mmaa")
+	@DefaultStringValue("dd/MM hh:mmaa")
 	String advisedDateFormat();
 	
 	@DefaultBooleanValue(false)

@@ -10,7 +10,7 @@
             [options]="reportOptions()"
             optionLabel="label"
             optionValue="value"
-            [(ngModel)]="reportId"
+            [ngModel]="reportId()" (ngModelChange)="reportId.set($event)"
             (onChange)="onReportChange()"
             placeholder="Select a report"
             [filter]="true"
@@ -62,7 +62,7 @@
             label="Execute"
             icon="pi pi-play"
             (onClick)="execute()"
-            [disabled]="!reportId"
+            [disabled]="!reportId()"
             [loading]="executing()"
           />
           <p-button

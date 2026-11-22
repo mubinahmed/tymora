@@ -63,7 +63,8 @@ export class TeachingAssignmentChanges implements OnInit {
     { label: 'Best Solution', value: 'BEST' as ChangesType },
     { label: 'Saved Assignments', value: 'SAVED' as ChangesType },
   ];
-  protected base: ChangesType = 'INITIAL';
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly base = signal<ChangesType>('INITIAL');
 
   protected readonly loading = signal(false);
   protected readonly searching = signal(false);
@@ -73,7 +74,7 @@ export class TeachingAssignmentChanges implements OnInit {
   protected readonly rows = signal<ChangeRow[]>([]);
 
   protected readonly baseLabel = computed(
-    () => this.bases.find((b) => b.value === this.base)?.label ?? '',
+    () => this.bases.find((b) => b.value === this.base())?.label ?? '',
   );
 
   ngOnInit(): void {
@@ -103,7 +104,7 @@ export class TeachingAssignmentChanges implements OnInit {
     if (!this.ready()) return;
     this.searching.set(true);
     this.error.set(null);
-    const request: AssignmentChangesRequest = { type: this.base };
+    const request: AssignmentChangesRequest = { type: this.base() };
     this.rpc.execute<AssignmentChangesResponse>('AssignmentChangesRequest', request).subscribe({
       next: (res) => {
         this.rows.set((res.changes ?? []).map((a) => this.toRow(a)));

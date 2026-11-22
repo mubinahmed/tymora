@@ -107,7 +107,7 @@
         <div class="solver-log">
           @for (m of logTail(); track $index) {
             <div class="log-line" [class]="'lvl-' + (m.level ?? 'INFO').toLowerCase()">
-              <span class="log-msg">{{ m.message }}</span>
+              <span class="log-msg">{{ plainText(m.message) }}</span>
             </div>
           }
         </div>

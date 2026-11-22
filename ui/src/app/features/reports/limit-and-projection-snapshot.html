@@ -14,7 +14,7 @@
           <div style="font-weight:600;">Current Snapshot Date</div>
           <div style="margin-top:.25rem;">
             @if (snapshotDate()) {
-              {{ snapshotDate() | date: 'medium' }}
+              {{ snapshotDate() | date: 'dd/MM/yyyy, HH:mm:ss' }}
             } @else {
               <span style="opacity:.7;">No snapshot has been taken.</span>
             }

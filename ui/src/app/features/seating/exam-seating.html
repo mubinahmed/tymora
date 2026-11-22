@@ -171,7 +171,7 @@
           <p-table [value]="listRows()" styleClass="p-datatable-sm p-datatable-striped" [paginator]="listRows().length > 50" [rows]="50">
             <ng-template pTemplate="header"><tr><th>Date</th><th>Time</th><th>Venue</th><th>Seat</th><th>Student id</th><th>Student</th><th>Examination</th><th></th></tr></ng-template>
             <ng-template pTemplate="body" let-r>
-              <tr><td>{{ r.date }}</td><td>{{ r.time }}</td><td>{{ r.room }}</td><td><b>{{ r.seat }}</b></td><td>{{ r.studentExternalId }}</td><td>{{ r.studentName }}</td><td>{{ r.exam }}</td>
+              <tr><td>{{ r.date | displayDate }}</td><td>{{ r.time }}</td><td>{{ r.room }}</td><td><b>{{ r.seat }}</b></td><td>{{ r.studentExternalId }}</td><td>{{ r.studentName }}</td><td>{{ r.exam }}</td>
                 <td>@if (r.locked) { <i class="pi pi-lock" title="locked"></i> } @if (r.special) { <span class="sp" title="special arrangement">★</span> }</td></tr>
             </ng-template>
             <ng-template pTemplate="emptymessage"><tr><td colspan="8">No seats allocated yet.</td></tr></ng-template>

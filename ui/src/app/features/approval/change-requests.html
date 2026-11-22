@@ -31,7 +31,7 @@
       <ng-template pTemplate="body" let-r>
         <tr>
           <td>
-            <div>{{ r.requestedTs | date: 'd MMM y, HH:mm' }}</div>
+            <div>{{ r.requestedTs | date: 'dd/MM/yyyy, HH:mm' }}</div>
             <div class="muted">{{ r.requestedName }}</div>
           </td>
           <td>
@@ -46,7 +46,7 @@
             <p-tag [value]="r.selfApproved ? 'Applied (self-approved)' : status(r.status).label" [severity]="status(r.status).severity" />
             @if (r.decidedName && r.status !== 'PENDING') {
               <div class="muted cr-decision">
-                {{ r.status === 'CANCELLED' ? 'Withdrawn' : r.selfApproved ? 'By' : 'Decided by' }} {{ r.decidedName }}, {{ r.decidedTs | date: 'd MMM, HH:mm' }}
+                {{ r.status === 'CANCELLED' ? 'Withdrawn' : r.selfApproved ? 'By' : 'Decided by' }} {{ r.decidedName }}, {{ r.decidedTs | date: 'dd/MM, HH:mm' }}
               </div>
             }
             @if (r.decisionNote && !r.selfApproved) { <div class="cr-note">“{{ r.decisionNote }}”</div> }

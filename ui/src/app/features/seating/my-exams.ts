@@ -11,6 +11,7 @@ import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 import { MyExamsResponse } from './seating.models';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 /**
  * My Examinations: a student's published examination seats (date, time, venue, seat, extra time), and an
@@ -19,7 +20,7 @@ import { MyExamsResponse } from './seating.models';
  */
 @Component({
   selector: 'app-my-exams',
-  imports: [FormsModule, ButtonModule, TableModule, TagModule, MessageModule, SelectModule, ProgressSpinnerModule],
+  imports: [DisplayDatePipe, FormsModule, ButtonModule, TableModule, TagModule, MessageModule, SelectModule, ProgressSpinnerModule],
   template: `
     @if (loading()) {
       <div class="center"><p-progressSpinner strokeWidth="4" /></div>
@@ -37,7 +38,7 @@ import { MyExamsResponse } from './seating.models';
               <p-table [value]="d.seats ?? []" styleClass="p-datatable-sm p-datatable-striped">
                 <ng-template pTemplate="header"><tr><th>Date</th><th>Time</th><th>Examination</th><th>Venue</th><th>Seat</th><th></th></tr></ng-template>
                 <ng-template pTemplate="body" let-s>
-                  <tr><td>{{ s.date }}</td><td>{{ s.time }}</td><td>{{ s.exam }}</td><td>{{ s.room }}</td><td><b class="seat">{{ s.seat }}</b></td>
+                  <tr><td>{{ s.date | displayDate }}</td><td>{{ s.time }}</td><td>{{ s.exam }}</td><td>{{ s.room }}</td><td><b class="seat">{{ s.seat }}</b></td>
                     <td>@if (s.extraTimePct) { <p-tag [value]="s.extraTimePct + '% extra time'" severity="info" /> }
                       @if (clash(s.periodId)) { <p-tag value="Clash: contact the examination office" severity="danger" /> }</td></tr>
                 </ng-template>
@@ -54,7 +55,7 @@ import { MyExamsResponse } from './seating.models';
               <p-table [value]="d.duties ?? []" styleClass="p-datatable-sm p-datatable-striped">
                 <ng-template pTemplate="header"><tr><th>Date</th><th>Time</th><th>Venue</th><th>Duty</th></tr></ng-template>
                 <ng-template pTemplate="body" let-x>
-                  <tr><td>{{ x.date }}</td><td>{{ x.time }}</td><td>{{ x.room }}</td><td>{{ x.dutyType === 'CHIEF' ? 'Chief invigilator' : x.dutyType === 'RESERVE' ? 'Reserve' : 'Invigilator' }}</td></tr>
+                  <tr><td>{{ x.date | displayDate }}</td><td>{{ x.time }}</td><td>{{ x.room }}</td><td>{{ x.dutyType === 'CHIEF' ? 'Chief invigilator' : x.dutyType === 'RESERVE' ? 'Reserve' : 'Invigilator' }}</td></tr>
                 </ng-template>
                 <ng-template pTemplate="emptymessage"><tr><td colspan="4">You have no duties.</td></tr></ng-template>
               </p-table>

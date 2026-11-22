@@ -130,7 +130,7 @@
       </ng-template>
       <ng-template pTemplate="body" let-e>
         <tr>
-          <td>{{ e.executionDate }}</td>
+          <td>{{ e.executionDate | displayDate }}</td>
           <td>{{ dayName(e.dayOfWeek) }}</td>
           <td>{{ slotTime(e.slot) }}</td>
           <td>

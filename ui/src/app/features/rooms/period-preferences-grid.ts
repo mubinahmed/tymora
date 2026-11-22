@@ -68,7 +68,7 @@ export class PeriodPreferencesGrid {
     if (isNaN(base.getTime())) return `Day ${day}`;
     const d = new Date(base.getTime());
     d.setDate(d.getDate() + day);
-    return `${DOW[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()}`;
+    return `${DOW[d.getDay()]} ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
   }
 
   private prefById(id: number | null | undefined): PreferenceInterface | undefined {

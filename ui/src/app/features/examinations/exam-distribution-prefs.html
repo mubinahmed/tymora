@@ -91,7 +91,7 @@
         <p-select
           inputId="edp-type"
           [options]="typeOptions()"
-          [(ngModel)]="editTypeId"
+          [ngModel]="editTypeId()" (ngModelChange)="editTypeId.set($event)"
           (onChange)="onTypeChange()"
           placeholder="Select type"
           appendTo="body"

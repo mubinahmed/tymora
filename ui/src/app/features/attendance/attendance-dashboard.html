@@ -2,7 +2,7 @@
   <!-- filters: one row above the charts -->
   <div class="db-bar">
     <p-button icon="pi pi-chevron-left" [text]="true" (onClick)="shiftDay(-1)" pTooltip="Previous day" ariaLabel="Previous day" />
-    <label><span>Day</span><input pInputText type="date" [(ngModel)]="date" (change)="load()" [min]="termStart()" [max]="termEnd()" /></label>
+    <label><span>Day</span><app-date-input [(ngModel)]="date" (changed)="load()" [min]="termStart()" [max]="termEnd()" /></label>
     <p-button icon="pi pi-chevron-right" [text]="true" (onClick)="shiftDay(1)" pTooltip="Next day" ariaLabel="Next day" />
     <label><span>Group by</span><p-select [options]="groupOptions" [(ngModel)]="groupBy" optionLabel="label" optionValue="value" (onChange)="load()" /></label>
     <label><span>Over</span><p-selectButton [options]="periodOptions" [(ngModel)]="period" optionLabel="label" optionValue="value" [allowEmpty]="false" (onChange)="load()" /></label>
@@ -15,7 +15,7 @@
     <section class="db-card db-day">
       <div class="db-head">
         <div>
-          <h3>{{ weekday(d.date) }} {{ d.date | date: 'd MMMM y' }}</h3>
+          <h3>{{ weekday(d.date) }} {{ d.date | date: 'dd/MM/yyyy' }}</h3>
           <div class="muted">{{ d.sessionsFinalised }} of {{ d.sessionsScheduled }} timetabled sessions finalised
             @if (d.sessionsOpen) { · {{ d.sessionsOpen }} in progress } @if (d.sessionsNotTaken) { · {{ d.sessionsNotTaken }} not taken }</div>
         </div>
@@ -67,7 +67,7 @@
         <div class="db-head">
           <div>
             <h3>Attendance by {{ groupLabel().toLowerCase() }}</h3>
-            <div class="muted">{{ d.periodFrom === d.periodTo ? (d.periodTo | date: 'd MMM y') : (d.periodFrom | date: 'd MMM') + ' – ' + (d.periodTo | date: 'd MMM y') }} · finalised sessions</div>
+            <div class="muted">{{ d.periodFrom === d.periodTo ? (d.periodTo | date: 'dd/MM/yyyy') : (d.periodFrom | date: 'dd/MM') + ' – ' + (d.periodTo | date: 'dd/MM/yyyy') }} · finalised sessions</div>
           </div>
           <p-button [label]="groupTable() ? 'Chart' : 'Table'" [icon]="groupTable() ? 'pi pi-chart-bar' : 'pi pi-table'" size="small" [text]="true" (onClick)="groupTable.set(!groupTable())" />
         </div>
@@ -142,7 +142,7 @@
         <div class="scroll">
           <table class="db-table">
             <thead><tr><th>Date</th><th class="r">Records</th><th class="r">Attendance</th></tr></thead>
-            <tbody>@for (p of d.trend; track p.date) { <tr><td>{{ p.date | date: 'EEE d MMM y' }}</td><td class="r">{{ p.records | number }}</td><td class="r">{{ p.ratePct | number: '1.1-1' }}%</td></tr> }</tbody>
+            <tbody>@for (p of d.trend; track p.date) { <tr><td>{{ p.date | date: 'EEE dd/MM/yyyy' }}</td><td class="r">{{ p.records | number }}</td><td class="r">{{ p.ratePct | number: '1.1-1' }}%</td></tr> }</tbody>
           </table>
         </div>
       }
@@ -170,7 +170,7 @@
           }
         </svg>
         @if (hoverPoint(); as p) {
-          <div class="tip trend-tip" [style.left.px]="tooltipLeft()" [style.top.px]="tooltipTop()"><b>{{ p.ratePct | number: '1.1-1' }}%</b><br />{{ p.date | date: 'EEE d MMM y' }}<br /><span class="muted">{{ p.records | number }} records</span></div>
+          <div class="tip trend-tip" [style.left.px]="tooltipLeft()" [style.top.px]="tooltipTop()"><b>{{ p.ratePct | number: '1.1-1' }}%</b><br />{{ p.date | date: 'EEE dd/MM/yyyy' }}<br /><span class="muted">{{ p.records | number }} records</span></div>
         }
       </div>
     </section>

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
-import { DatePickerModule } from 'primeng/datepicker';
+import { DateInput } from '../../shared/date-input';
 import { TextareaModule } from 'primeng/textarea';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
@@ -15,6 +15,7 @@ import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 import { RpcService } from '../../core/rpc.service';
 import { HandoverNotes, HandoverNoteInfo } from './handover-notes';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 /**
  * Teacher self-service "My Leave" (StaffAbsenceRequest with mineOnly). A teacher
@@ -44,8 +45,8 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; }
 
 @Component({
   selector: 'app-my-leave',
-  imports: [
-    FormsModule, TableModule, ButtonModule, SelectModule, DatePickerModule, TextareaModule,
+  imports: [DisplayDatePipe, 
+    FormsModule, TableModule, ButtonModule, SelectModule, DateInput, TextareaModule,
     DialogModule, TagModule, MessageModule, ProgressSpinnerModule, ConfirmDialogModule, HandoverNotes,
   ],
   providers: [ConfirmationService],
@@ -68,8 +69,8 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; }
           <ng-template pTemplate="body" let-a>
             <tr>
               <td>{{ a.reasonLabel }}</td>
-              <td>{{ a.startDate }}</td>
-              <td>{{ a.endDate }}</td>
+              <td>{{ a.startDate | displayDate }}</td>
+              <td>{{ a.endDate | displayDate }}</td>
               <td>{{ a.note }}</td>
               <td><p-tag [value]="a.statusLabel" [severity]="statusSeverity(a.status)" /></td>
               <td class="actions">
@@ -95,8 +96,8 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; }
           <p-select [(ngModel)]="editing.reasonId" [options]="reasons()" optionLabel="label" optionValue="id"
             appendTo="body" [showClear]="true" placeholder="Select reason" styleClass="w-full" />
           <div class="row">
-            <div><label>From *</label><p-datepicker [(ngModel)]="editing.startDate" dataType="string" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" styleClass="w-full" /></div>
-            <div><label>To *</label><p-datepicker [(ngModel)]="editing.endDate" dataType="string" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" styleClass="w-full" /></div>
+            <div><label>From *</label><app-date-input [(ngModel)]="editing.startDate" styleClass="w-full" /></div>
+            <div><label>To *</label><app-date-input [(ngModel)]="editing.endDate" styleClass="w-full" /></div>
           </div>
           <label>Note</label>
           <textarea pTextarea [(ngModel)]="editing.note" rows="2" class="w-full"></textarea>
@@ -109,7 +110,7 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; }
 
       <p-dialog [(visible)]="handoverVisible" [modal]="true" [style]="{ width: '34rem' }" header="Relief handover instructions">
         @if (handoverTarget) {
-          <p class="hint">Shared with whoever covers your lessons on {{ handoverTarget.startDate }} – {{ handoverTarget.endDate }}.</p>
+          <p class="hint">Shared with whoever covers your lessons on {{ handoverTarget.startDate | displayDate }} – {{ handoverTarget.endDate | displayDate }}.</p>
           <app-handover-notes [absenceId]="handoverTarget.id!" [notes]="handoverTarget.notes ?? []"
             [canAdd]="!!handoverTarget.canShareHandover" [mineOnly]="true" (notesChange)="onNotesChange(handoverTarget, $event)" />
         }

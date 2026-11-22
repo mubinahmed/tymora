@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
-import { DatePickerModule } from 'primeng/datepicker';
+import { DateInput } from '../../shared/date-input';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { TooltipModule } from 'primeng/tooltip';
@@ -17,6 +17,7 @@ import { PageService } from '../../core/page.service';
 import { ApiError } from '../../core/models';
 import { RpcService } from '../../core/rpc.service';
 import { HandoverNotes, HandoverNoteInfo } from './handover-notes';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 /**
  * Relief Planning "Staff Absences" (admin). Lists every staff absence over a date
@@ -48,8 +49,8 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; s
 
 @Component({
   selector: 'app-staff-absences',
-  imports: [
-    FormsModule, TableModule, ButtonModule, SelectModule, DatePickerModule, InputTextModule,
+  imports: [DisplayDatePipe, 
+    FormsModule, TableModule, ButtonModule, SelectModule, DateInput, InputTextModule,
     TextareaModule, TooltipModule, DialogModule, TagModule, MessageModule, ProgressSpinnerModule, ConfirmDialogModule, HandoverNotes,
   ],
   providers: [ConfirmationService],
@@ -57,8 +58,8 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; s
     <div class="page">
       <div class="toolbar">
         <div class="left">
-          <div><label>From</label><p-datepicker [(ngModel)]="from" dataType="string" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" (onSelect)="load()" /></div>
-          <div><label>To</label><p-datepicker [(ngModel)]="to" dataType="string" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" (onSelect)="load()" /></div>
+          <div><label>From</label><app-date-input [(ngModel)]="from" (changed)="load()" /></div>
+          <div><label>To</label><app-date-input [(ngModel)]="to" (changed)="load()" /></div>
           <p-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true" (onClick)="load()" />
         </div>
         @if (canManage()) { <p-button label="Add absence" icon="pi pi-plus" (onClick)="add()" /> }
@@ -77,8 +78,8 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; s
             <tr>
               <td>{{ a.name }}</td>
               <td>{{ a.reasonLabel }}</td>
-              <td>{{ a.startDate }}</td>
-              <td>{{ a.endDate }}</td>
+              <td>{{ a.startDate | displayDate }}</td>
+              <td>{{ a.endDate | displayDate }}</td>
               <td>{{ a.note }}</td>
               <td><p-tag [value]="a.statusLabel" [severity]="statusSeverity(a.status)" /></td>
               <td class="actions">
@@ -111,8 +112,8 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; s
           <p-select [(ngModel)]="editing.reasonId" [options]="reasons()" optionLabel="label" optionValue="id"
             appendTo="body" [showClear]="true" placeholder="Select reason" styleClass="w-full" />
           <div class="row">
-            <div><label>From *</label><p-datepicker [(ngModel)]="editing.startDate" dataType="string" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" styleClass="w-full" /></div>
-            <div><label>To *</label><p-datepicker [(ngModel)]="editing.endDate" dataType="string" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" styleClass="w-full" /></div>
+            <div><label>From *</label><app-date-input [(ngModel)]="editing.startDate" styleClass="w-full" /></div>
+            <div><label>To *</label><app-date-input [(ngModel)]="editing.endDate" styleClass="w-full" /></div>
           </div>
           <label>Note</label>
           <textarea pTextarea [(ngModel)]="editing.note" rows="2" class="w-full"></textarea>
@@ -125,7 +126,7 @@ interface StaffAbsenceResponse { absences?: AbsenceInfo[]; reasons?: Option[]; s
 
       <p-dialog [(visible)]="handoverVisible" [modal]="true" [style]="{ width: '34rem' }" header="Relief handover instructions">
         @if (handoverTarget) {
-          <p class="hint">Shared for whoever covers {{ handoverTarget.name }}'s lessons on {{ handoverTarget.startDate }} – {{ handoverTarget.endDate }}.</p>
+          <p class="hint">Shared for whoever covers {{ handoverTarget.name }}'s lessons on {{ handoverTarget.startDate | displayDate }} – {{ handoverTarget.endDate | displayDate }}.</p>
           <app-handover-notes [absenceId]="handoverTarget.id!" [notes]="handoverTarget.notes ?? []"
             [canAdd]="!!handoverTarget.canShareHandover" [mineOnly]="false" (notesChange)="onNotesChange(handoverTarget, $event)" />
         }

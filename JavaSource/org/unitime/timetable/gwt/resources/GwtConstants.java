@@ -41,34 +41,34 @@ public interface GwtConstants extends Constants {
 	@DefaultStringArrayValue({"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"})
 	String[] days();
 
-	@DefaultStringValue("MM/dd/yyyy")
+	@DefaultStringValue("dd/MM/yyyy")
 	String eventDateFormat();
 	
-	@DefaultStringValue("MM/dd")
+	@DefaultStringValue("dd/MM")
 	String eventDateFormatShort();
 
-	@DefaultStringValue("MM/dd, yyyy")
+	@DefaultStringValue("dd/MM/yyyy")
 	String eventDateFormatLong();
 
-	@DefaultStringValue("EEE MM/dd, yyyy")
+	@DefaultStringValue("EEE dd/MM/yyyy")
 	String meetingDateFormat();
 	
-	@DefaultStringValue("EEE MM/dd")
+	@DefaultStringValue("EEE dd/MM")
 	String examPeriodDateFormat();
 	
-	@DefaultStringValue("EEE MM/dd")
+	@DefaultStringValue("EEE dd/MM")
 	String timetableGridDateFormat();
 	
-	@DefaultStringArrayValue({ "EEE", "MM/dd" })
+	@DefaultStringArrayValue({ "EEE", "dd/MM" })
 	String[] examPeriodPreferenceDateFormat();
 	
-	@DefaultStringValue("MM/dd/yyyy hh:mmaa")
+	@DefaultStringValue("dd/MM/yyyy hh:mmaa")
 	String timeStampFormat();
 	
-	@DefaultStringValue("MM/dd hh:mmaa")
+	@DefaultStringValue("dd/MM hh:mmaa")
 	String timeStampFormatShort();
 	
-	@DefaultStringValue("MM/dd/yyyy HH:mm:ss.SSS")
+	@DefaultStringValue("dd/MM/yyyy HH:mm:ss.SSS")
 	String timeStampFormatSolverLog();
 	
 	@DefaultIntValue(3)
@@ -193,25 +193,25 @@ public interface GwtConstants extends Constants {
 	})
 	String[] roomSharingModes();
 	
-	@DefaultStringValue("MMMM d")
+	@DefaultStringValue("dd/MM")
 	String weekSelectionDateFormat();
 	
-	@DefaultStringValue("EEEE MMMM d")
+	@DefaultStringValue("EEEE dd/MM")
 	String dateSelectionDateFormat();
 	
-	@DefaultStringValue("EEEE MMMM d yyyy")
+	@DefaultStringValue("EEEE dd/MM/yyyy")
 	String singleDateSelectionFormat();
 	
-	@DefaultStringValue("M/d")
+	@DefaultStringValue("dd/MM")
 	String dateFormatShort();
 	
 	@DefaultStringValue("h:mma")
 	String timeFormatShort();
 	
-	@DefaultStringValue("MMM d, yyyy")
+	@DefaultStringValue("dd/MM/yyyy")
 	String sessionDateFormat();
 	
-	@DefaultStringValue("MM/dd/yyyy")
+	@DefaultStringValue("dd/MM/yyyy")
 	String dateEntryFormat();
 	
 	@DefaultStringArrayValue({
@@ -312,7 +312,7 @@ public interface GwtConstants extends Constants {
 	@DoNotTranslate
 	boolean searchWhenPageIsLoaded();
 	
-	@DefaultStringValue("MM/dd/yyyy")
+	@DefaultStringValue("dd/MM/yyyy")
 	String filterDateFormat();
 	
 	@DefaultStringArrayValue({

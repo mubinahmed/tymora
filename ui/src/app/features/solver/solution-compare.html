@@ -29,8 +29,8 @@
             <div>
               <div class="sc-head-title">{{ s.ownerName }} <span class="muted">({{ s.owner }})</span></div>
               <div class="muted">
-                Saved {{ s.created | date: 'd MMM y, HH:mm' }}{{ s.creator ? ' by ' + s.creator : '' }} · {{ s.nrAssignments }} classes placed
-                @if (s.committed) { · <b>committed</b>{{ s.commitDate ? ' ' + (s.commitDate | date: 'd MMM y') : '' }} }
+                Saved {{ s.created | date: 'dd/MM/yyyy, HH:mm' }}{{ s.creator ? ' by ' + s.creator : '' }} · {{ s.nrAssignments }} classes placed
+                @if (s.committed) { · <b>committed</b>{{ s.commitDate ? ' ' + (s.commitDate | date: 'dd/MM/yyyy') : '' }} }
               </div>
               @if (s.note) { <div class="sc-note">{{ s.note }}</div> }
             </div>
@@ -85,8 +85,8 @@
             <tr>
               <th rowspan="2">Class</th>
               <th rowspan="2">Difference</th>
-              <th colspan="4" class="sc-col-a"><span class="sc-badge a">A</span> {{ d.a!.owner }} · {{ d.a!.created | date: 'd MMM y, HH:mm' }}</th>
-              <th colspan="4" class="sc-col-b"><span class="sc-badge b">B</span> {{ d.b!.owner }} · {{ d.b!.created | date: 'd MMM y, HH:mm' }}</th>
+              <th colspan="4" class="sc-col-a"><span class="sc-badge a">A</span> {{ d.a!.owner }} · {{ d.a!.created | date: 'dd/MM/yyyy, HH:mm' }}</th>
+              <th colspan="4" class="sc-col-b"><span class="sc-badge b">B</span> {{ d.b!.owner }} · {{ d.b!.created | date: 'dd/MM/yyyy, HH:mm' }}</th>
             </tr>
             <tr>
               <th class="sc-col-a">Time</th><th class="sc-col-a">Room</th><th class="sc-col-a">Instructor</th><th class="sc-col-a r" pTooltip="Student conflicts of the placement">Conf.</th>
@@ -103,7 +103,7 @@
               @if (r.change === 'ONLY_B') {
                 <td colspan="4" class="sc-col-a muted">not placed</td>
               } @else {
-                <td class="sc-col-a" [class.sc-hl]="r.change === 'TIME' || r.change === 'TIME_AND_ROOM'">{{ r.timeA }}@if (r.dateA) { <div class="muted">{{ r.dateA }}</div> }</td>
+                <td class="sc-col-a" [class.sc-hl]="r.change === 'TIME' || r.change === 'TIME_AND_ROOM'">{{ r.timeA }}@if (r.dateA) { <div class="muted">{{ r.dateA | displayDate }}</div> }</td>
                 <td class="sc-col-a" [class.sc-hl]="r.change === 'ROOM' || r.change === 'TIME_AND_ROOM'">{{ r.roomA }}</td>
                 <td class="sc-col-a">{{ r.instructorA }}</td>
                 <td class="sc-col-a r">{{ r.studentConflictsA ?? '' }}</td>
@@ -111,7 +111,7 @@
               @if (r.change === 'ONLY_A') {
                 <td colspan="4" class="sc-col-b muted">not placed</td>
               } @else {
-                <td class="sc-col-b" [class.sc-hl]="r.change === 'TIME' || r.change === 'TIME_AND_ROOM'">{{ r.timeB }}@if (r.dateB) { <div class="muted">{{ r.dateB }}</div> }</td>
+                <td class="sc-col-b" [class.sc-hl]="r.change === 'TIME' || r.change === 'TIME_AND_ROOM'">{{ r.timeB }}@if (r.dateB) { <div class="muted">{{ r.dateB | displayDate }}</div> }</td>
                 <td class="sc-col-b" [class.sc-hl]="r.change === 'ROOM' || r.change === 'TIME_AND_ROOM'">{{ r.roomB }}</td>
                 <td class="sc-col-b">{{ r.instructorB }}</td>
                 <td class="sc-col-b r" [class]="conflictDelta(r)">{{ r.studentConflictsB ?? '' }}</td>

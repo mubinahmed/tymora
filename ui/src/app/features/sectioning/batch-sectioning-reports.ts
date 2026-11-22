@@ -75,7 +75,8 @@ export class BatchSectioningReports implements OnInit {
   protected readonly report = signal<string[][] | null>(null);
 
   /** reference of the currently selected report type (bound to the select) */
-  protected reference: string | null = null;
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly reference = signal<string | null>(null);
   /** optional free-text student filter (replaces SectioningStatusFilterBox) */
   protected filter = '';
 
@@ -84,7 +85,7 @@ export class BatchSectioningReports implements OnInit {
   );
 
   protected readonly selectedType = computed<ReportTypeInterface | null>(
-    () => this.reportTypes().find((t) => t.reference === this.reference) ?? null,
+    () => this.reportTypes().find((t) => t.reference === this.reference()) ?? null,
   );
 
   protected readonly showFilter = computed<boolean>(() => this.selectedType()?.filter === true);

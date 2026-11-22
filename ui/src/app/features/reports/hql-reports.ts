@@ -96,7 +96,8 @@ export class HqlReports implements OnInit {
   protected readonly table = signal<SavedHQLInterface_Table | null>(null);
 
   /** id of the currently selected report (bound to the select) */
-  protected reportId: number | null = null;
+  /** Bound to the template's ngModel; a signal so computeds re-run when it changes (zoneless). */
+  protected readonly reportId = signal<number | null>(null);
 
   /** page offset of the currently displayed result window */
   protected fromRow = 0;
@@ -111,7 +112,7 @@ export class HqlReports implements OnInit {
   );
 
   protected readonly selectedQuery = computed<Query | null>(
-    () => this.queries().find((q) => q.id === this.reportId) ?? null,
+    () => this.queries().find((q) => q.id === this.reportId()) ?? null,
   );
 
   /** Option filters whose %TYPE% placeholder appears in the selected query. */
@@ -161,7 +162,7 @@ export class HqlReports implements OnInit {
   private loadQueries(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.reportId = null;
+    this.reportId.set(null);
     this.table.set(null);
     this.resultsMessage.set(null);
     const request: HQLQueriesRpcRequest = { appearance: this.appearance };

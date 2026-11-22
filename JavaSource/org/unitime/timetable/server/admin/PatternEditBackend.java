@@ -537,6 +537,8 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 				newTimes = buildTimes(record.getStartSlots(), slotsPerMtg);
 			}
 
+			if (create && !exact && (newDays == null || newDays.isEmpty() || newTimes == null || newTimes.isEmpty()))
+				throw new GwtRpcException("A time pattern needs at least one day and one start time.");
 			if (create) {
 				// Mirrors TimePatternEditForm.create: persist days / times, then the pattern.
 				tp.setDays(newDays == null ? new HashSet<TimePatternDays>() : new HashSet<TimePatternDays>(newDays));

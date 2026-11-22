@@ -41,7 +41,8 @@ import {
   SaveOrApproveEventRpcResponse,
   SessionMonth,
   SponsoringOrganizationInterface,
-} from '../../core/models';
+} from '../../core/models';
+import { DateInput } from '../../shared/date-input';
 
 /** A room usable by the meeting builder — enriched from the events room enumeration. */
 interface RoomPick {
@@ -96,7 +97,7 @@ const MS_PER_DAY = 86400000;
  */
 @Component({
   selector: 'app-event-add',
-  imports: [
+  imports: [DateInput, 
     ReactiveFormsModule,
     FormsModule,
     CardModule,

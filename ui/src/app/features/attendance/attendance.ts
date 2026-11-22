@@ -35,6 +35,8 @@ import {
   RosterEntry,
   SessionInfo,
 } from './attendance.models';
+import { DateInput } from '../../shared/date-input';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 const RPC = 'AttendanceRequest';
 
@@ -47,7 +49,7 @@ const RPC = 'AttendanceRequest';
  */
 @Component({
   selector: 'app-attendance',
-  imports: [
+  imports: [DisplayDatePipe, DateInput, 
     DatePipe,
     FormsModule,
     ButtonModule,

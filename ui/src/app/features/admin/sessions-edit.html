@@ -43,34 +43,34 @@
         <span class="section-icon"><i class="pi pi-calendar"></i></span>
         <div>
           <h2>Dates</h2>
-          <p>Enter dates in <code>{{ dateFormat() || 'MM/dd/yyyy' }}</code> format.</p>
+          <p>Enter dates in <code>{{ dateFormat() || 'dd/MM/yyyy' }}</code> format.</p>
         </div>
       </div>
 
       <div class="form-grid">
         <div class="field">
           <label for="e-begin">Session Start *</label>
-          <p-datepicker inputId="e-begin" [disabled]="!canEdit()" [(ngModel)]="model.sessionBeginDateTime" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="e-begin" [disabled]="!canEdit()" [(ngModel)]="model.sessionBeginDateTime" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="e-cend">Classes End *</label>
-          <p-datepicker inputId="e-cend" [disabled]="!canEdit()" [(ngModel)]="model.classesEndDateTime" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="e-cend" [disabled]="!canEdit()" [(ngModel)]="model.classesEndDateTime" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="e-exam">Examination Start *</label>
-          <p-datepicker inputId="e-exam" [disabled]="!canEdit()" [(ngModel)]="model.examBeginDate" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="e-exam" [disabled]="!canEdit()" [(ngModel)]="model.examBeginDate" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="e-send">Session End *</label>
-          <p-datepicker inputId="e-send" [disabled]="!canEdit()" [(ngModel)]="model.sessionEndDateTime" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="e-send" [disabled]="!canEdit()" [(ngModel)]="model.sessionEndDateTime" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="e-evb">Event Start *</label>
-          <p-datepicker inputId="e-evb" [disabled]="!canEdit()" [(ngModel)]="model.eventBeginDate" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="e-evb" [disabled]="!canEdit()" [(ngModel)]="model.eventBeginDate" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="e-eve">Event End *</label>
-          <p-datepicker inputId="e-eve" [disabled]="!canEdit()" [(ngModel)]="model.eventEndDate" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="e-eve" [disabled]="!canEdit()" [(ngModel)]="model.eventEndDate" (ngModelChange)="onBoundaryDateChange()" dataType="string" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
       </div>
     </fieldset>
@@ -132,11 +132,11 @@
         </div>
         <div class="field">
           <label for="e-nb">Notifications Start</label>
-          <p-datepicker inputId="e-nb" [disabled]="!canEdit()" [(ngModel)]="model.notificationsBegin" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="e-nb" [disabled]="!canEdit()" [(ngModel)]="model.notificationsBegin" dataType="string" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
         <div class="field">
           <label for="e-ne">Notifications End</label>
-          <p-datepicker inputId="e-ne" [disabled]="!canEdit()" [(ngModel)]="model.notificationsEnd" dataType="string" dateFormat="mm/dd/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
+          <p-datepicker inputId="e-ne" [disabled]="!canEdit()" [(ngModel)]="model.notificationsEnd" dataType="string" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full" [placeholder]="dateFormat()" />
         </div>
       </div>
     </fieldset>

@@ -33,7 +33,7 @@
           [options]="visibleScripts()"
           optionLabel="name"
           optionValue="id"
-          [(ngModel)]="selectedId"
+          [ngModel]="selectedId()" (ngModelChange)="selectedId.set($event)"
           (onChange)="onScriptChange()"
           placeholder="Select a script"
           [filter]="true"

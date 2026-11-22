@@ -20,7 +20,8 @@ import {
   TaskExecutionLogInterface,
   TaskInterface,
   TaskOptionsInterface,
-} from '../../core/models';
+} from '../../core/models';
+import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 /**
  * Task Scheduler admin page (legacy GWT TasksPage, command pattern). Lists the
@@ -40,7 +41,7 @@ import {
  */
 @Component({
   selector: 'app-task-scheduler',
-  imports: [
+  imports: [DisplayDatePipe, 
     FormsModule,
     TableModule,
     ButtonModule,

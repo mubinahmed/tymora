@@ -53,7 +53,7 @@
         <span>
           @for (r of pendingRequests(); track r.id) {
             <div>
-              <b>Change request pending approval</b> from {{ r.requestedName }} ({{ r.requestedTs | date: 'd MMM, HH:mm' }}): {{ r.reason }}
+              <b>Change request pending approval</b> from {{ r.requestedName }} ({{ r.requestedTs | date: 'dd/MM, HH:mm' }}): {{ r.reason }}
             </div>
           }
           <a class="link" routerLink="/change-requests" (click)="close()">Open Change Requests</a>

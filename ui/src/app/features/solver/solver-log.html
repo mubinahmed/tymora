@@ -50,7 +50,7 @@
             </ng-template>
             <ng-template pTemplate="body" let-m>
               <tr>
-                <td class="mono">{{ m.date }}</td>
+                <td class="mono">{{ m.date | displayDate }}</td>
                 <td><p-tag [value]="m.level" [severity]="severity(m.level)" /></td>
                 <td>
                   <div>{{ m.message }}</div>
