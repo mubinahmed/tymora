@@ -56,20 +56,33 @@
         @for (col of columns(); track $index) {
           <th>{{ col }}</th>
         }
+        <th class="col-actions"></th>
       </tr>
     </ng-template>
 
     <ng-template pTemplate="body" let-row>
       <tr>
         @for (col of columns(); track $index) {
-          <td>{{ row.cells?.[$index] ?? '' }}</td>
+          <td>
+            @if ($index === 0 && row.id != null) {
+              <a class="link" [routerLink]="['/class-detail', row.id]" title="Class detail">{{ row.cells?.[$index] ?? '' }}</a>
+            } @else {
+              {{ row.cells?.[$index] ?? '' }}
+            }
+          </td>
         }
+        <td class="row-actions">
+          @if (row.id != null) {
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" size="small" title="Edit class"
+              [routerLink]="['/class-edit', row.id]" />
+          }
+        </td>
       </tr>
     </ng-template>
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td [attr.colspan]="columns().length || 1">No classes found.</td>
+        <td [attr.colspan]="columns().length + 1">No classes found.</td>
       </tr>
     </ng-template>
   </p-table>

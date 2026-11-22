@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -42,6 +42,7 @@ export class ClassInstructorAssignment implements OnInit {
   private rpc = inject(RpcService);
   private page = inject(PageService);
   private messages = inject(MessageService);
+  private router = inject(Router);
 
   /** InstrOfferingConfig id from the route. */
   readonly id = input<string>();
@@ -171,6 +172,9 @@ export class ClassInstructorAssignment implements OnInit {
         } else {
           this.apply(res);
           this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Instructor assignments updated.' });
+          // Back to the course detail page, which shows the assigned instructors.
+          const oid = this.offeringId();
+          this.router.navigate(oid ? ['/offering-detail', oid] : ['/offerings']);
         }
       },
       error: (e: ApiError) => {

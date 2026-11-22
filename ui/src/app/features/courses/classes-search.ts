@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -40,6 +41,7 @@ interface SubjectOption {
 @Component({
   selector: 'app-classes-search',
   imports: [
+    RouterLink,
     FormsModule,
     TableModule,
     ButtonModule,

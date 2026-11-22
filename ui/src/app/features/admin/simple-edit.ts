@@ -89,9 +89,20 @@ export class SimpleEdit {
   protected readonly editable = computed(() => this.data()?.editable !== false);
   protected readonly addable = computed(() => this.data()?.addable !== false);
 
+  /** Search box text: rows are kept when any visible text column contains it (case-insensitive). */
+  protected readonly query = signal('');
+  protected readonly filteredRecords = computed<SimpleEditInterface_Record[]>(() => {
+    const records = this.data()?.records ?? [];
+    const q = this.query().trim().toLowerCase();
+    if (!q) return records;
+    const cols = this.columns().filter((c) => !this.isToggle(c.field));
+    return records.filter((r) => cols.some((c) => this.display(r, c).toLowerCase().includes(q)));
+  });
+
   constructor() {
     effect(() => {
       const type = this.type();
+      this.query.set(''); // a different admin table: start with an empty search
       if (type) this.load(type);
     });
   }

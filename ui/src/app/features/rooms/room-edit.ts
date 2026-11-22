@@ -149,6 +149,8 @@ export class RoomEdit {
   protected readonly futureRows = signal<FutureRow[]>([]);
   /** Mirrors the event-department select so visibility computeds stay reactive. */
   private readonly eventDeptId = signal<number | null>(null);
+  /** Mirrors the room-type select: a form control's value is not a signal, so computeds reading it never re-run. */
+  private readonly roomTypeId = signal<number | null>(null);
   /** Marks a sub-model as dirtied so its save flag is enabled. */
   private sharingDirty = false;
   private eventAvailDirty = false;
@@ -237,7 +239,7 @@ export class RoomEdit {
   protected readonly eventStatusOptions: Option[] = EVENT_STATUS_NAMES.map((label, value) => ({ label, value }));
 
   private readonly selectedType = computed(() =>
-    (this.props()?.roomTypes ?? []).find((t) => t.id === this.form.controls.roomTypeId.value),
+    (this.props()?.roomTypes ?? []).find((t) => t.id === this.roomTypeId()),
   );
   /** A "room" type lives in a building and uses a room number; others are locations. */
   protected readonly isRoomType = computed(() => !!this.selectedType()?.room);
@@ -300,6 +302,7 @@ export class RoomEdit {
     });
     this.form.controls.buildingId.valueChanges.subscribe((id) => this.buildingChanged(id));
     this.form.controls.eventDepartmentId.valueChanges.subscribe((id) => this.eventDeptId.set(id));
+    this.form.controls.roomTypeId.valueChanges.subscribe((id) => this.roomTypeId.set(id));
   }
 
   private deptLabel(d: RoomInterface_DepartmentInterface, event: boolean): string {
@@ -450,6 +453,7 @@ export class RoomEdit {
     this.examSel.set({});
     this.serviceSel = {};
     this.eventDeptId.set(null);
+    this.roomTypeId.set(null);
     const depts = this.props()?.departments ?? [];
     this.form.reset(
       {
@@ -505,6 +509,7 @@ export class RoomEdit {
       { emitEvent: false },
     );
     this.eventDeptId.set(r.eventDepartment?.id ?? null);
+    this.roomTypeId.set(r.roomType?.id ?? null);
     this.groupSel = {};
     for (const g of r.groups ?? []) if (g.id != null) this.groupSel[g.id] = true;
     this.featureSel = {};

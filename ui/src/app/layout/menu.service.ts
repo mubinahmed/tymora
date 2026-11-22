@@ -147,13 +147,15 @@ export class MenuService {
 
   private toItem(m: MenuInterface): MenuItem {
     const children = (m.subMenus ?? []).map((s) => this.toItem(s));
-    const item: MenuItem = { label: m.title || m.name };
+    // Label with the menu's name ("Courses", "Input Data"), as the legacy menu bar does and as the guides refer to it;
+    // the longer title ("Course Timetabling Input Data") becomes the tooltip.
+    const item: MenuItem = { label: m.name || m.title, title: m.title || undefined };
     const nav = this.navFor(m);
     if (children.length) {
       // Dual-purpose node (own page + children, e.g. "Rooms"): PanelMenu parents
       // only toggle their submenu, so surface the node's own page as a leaf child
       // — otherwise that page (the Rooms list) would be unreachable from the menu.
-      if (nav) children.unshift({ label: m.title || m.name, command: nav });
+      if (nav) children.unshift({ label: m.name || m.title, title: m.title || undefined, command: nav });
       item.items = children;
       return item;
     }

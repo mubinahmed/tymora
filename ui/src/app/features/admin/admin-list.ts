@@ -39,6 +39,8 @@ export class AdminList {
   /** Per-page editors. Only pages listed here expose Add / row-edit. */
   private static readonly EDITORS: Record<string, Editor> = {
     sessions: { createLabel: 'Add Session', createLink: ['/session-create'], editBase: '/sessions-edit' },
+    // Courses > Input Data > Instructors: rows open the instructor detail (which has Edit); Add opens the add screen.
+    instructors: { createLabel: 'Add Instructor', createLink: ['/instructor-add'], editBase: '/instructor-detail' },
   };
 
   /** entity key from the route (/list/:page) */

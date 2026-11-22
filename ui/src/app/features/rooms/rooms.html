@@ -36,7 +36,7 @@
         <th pSortableColumn="roomType.label">Type <p-sortIcon field="roomType.label" /></th>
         <th class="num" pSortableColumn="capacity">Capacity <p-sortIcon field="capacity" /></th>
         <th class="num">Exam Cap.</th>
-        <th>Department</th>
+        <th>Departments</th>
         <th class="col-actions"></th>
       </tr>
     </ng-template>
@@ -47,7 +47,17 @@
         <td>{{ r.roomType?.label }}</td>
         <td class="num">{{ r.capacity }}</td>
         <td class="num">{{ r.examCapacity ?? '—' }}</td>
-        <td>{{ r.controlDepartment?.label ?? '—' }}</td>
+        <td>
+          @for (d of r.departments ?? []; track d.id; let last = $last) {
+            <span
+              [style.font-weight]="d.id === r.controlDepartment?.id ? 600 : null"
+              [attr.title]="(d.title || d.label) + (d.id === r.controlDepartment?.id ? ' (controlling department)' : '')"
+              >{{ d.abbv || d.label }}</span
+            >{{ last ? '' : ', ' }}
+          } @empty {
+            —
+          }
+        </td>
         <td class="row-actions" (click)="$event.stopPropagation()">
           @if (r.canChange) {
             <p-button icon="pi pi-pencil" severity="secondary" [text]="true" title="Edit" (onClick)="edit(r)" />
