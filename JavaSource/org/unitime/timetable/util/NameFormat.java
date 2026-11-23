@@ -303,6 +303,20 @@ public enum NameFormat {
 	
 	public String reference() { return iRefernence; }
 	public static NameFormat defaultFormat() { return LAST_FIRST_MIDDLE; }
+
+	/**
+	 * The full-name equivalent of a name format reference, for drop-downs and pickers: an abbreviated format
+	 * (the default "last-initial" gives "Tan, W") is widened so that people with the same surname and initial are
+	 * told apart ("Tan, Wei Ling"). Full formats are returned unchanged; null gives "last-first-middle".
+	 */
+	public static String toFull(String reference) {
+		if (reference == null) return LAST_FIRST_MIDDLE.reference();
+		if (reference.equals(LAST_INITIAL.reference()) || reference.equals(SHORT.reference())) return LAST_FIRST_MIDDLE.reference();
+		if (reference.equals(INITIAL_LAST.reference())) return FIRST_MIDDLE_LAST.reference();
+		if (reference.equals(TITLE_LAST_INITIAL.reference())) return LAST_FIRST_MIDDLE_TITLE.reference();
+		if (reference.equals(TITLE_INITIAL_LAST.reference())) return TITLE_FIRST_MIDDLE_LAST.reference();
+		return reference;
+	}
 	
 	public static NameFormat fromReference(String reference) {
 		for (NameFormat f: values())

@@ -1,23 +1,26 @@
-import { Component, ElementRef, effect, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, effect, inject, signal, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { DrawerModule } from 'primeng/drawer';
 import { TextareaModule } from 'primeng/textarea';
 import { TooltipModule } from 'primeng/tooltip';
 import { AssistantService } from '../../core/assistant.service';
 import { renderMarkdown } from './markdown';
 
 /**
- * The AI assistant chat panel (right-hand drawer, opened from the header). Shows Claude's replies, the tools it
- * ran, page buttons it suggests, and changes awaiting the user's confirmation.
+ * The AI assistant chat panel: a floating window opened from the header. It can be dragged by its title bar
+ * (kept inside the browser window; the position is remembered per browser) and minimised to the title bar.
+ * Shows Claude's replies, the tools it ran, page buttons it suggests, and changes awaiting the user's confirmation.
  */
 @Component({
   selector: 'app-assistant-panel',
-  imports: [FormsModule, ButtonModule, DrawerModule, TextareaModule, TooltipModule],
+  imports: [FormsModule, ButtonModule, TextareaModule, TooltipModule],
   template: `
-    <p-drawer [visible]="ai.open()" (visibleChange)="ai.open.set($event)" position="right" [modal]="false" styleClass="as-drawer" [showCloseIcon]="true">
-      <ng-template pTemplate="header">
+    @if (ai.open()) {
+    <section class="as-panel" [class.min]="ai.minimized()" [class.dragging]="dragging()" role="dialog" aria-label="Assistant"
+      [style.left.px]="pos().x" [style.top.px]="pos().y">
+      <header class="as-bar" (pointerdown)="dragStart($event)" (pointermove)="dragMove($event)" (pointerup)="dragEnd($event)" (pointercancel)="dragEnd($event)"
+        (dblclick)="barDblClick($event)" title="Drag to move · double-click to minimise or restore">
         <div class="as-head">
           <i class="pi pi-sparkles"></i>
           <div>
@@ -25,8 +28,13 @@ import { renderMarkdown } from './markdown';
             <div class="as-sub">@if (ai.status()?.enabled) { Claude · {{ ai.servedBy() ?? ai.status()?.model }}{{ ai.status()?.backend === 'claude-cli' ? ' · Claude Code' : '' }} } @else { not available }</div>
           </div>
         </div>
-      </ng-template>
-      <div class="as-body">
+        <span class="as-spacer"></span>
+        @if (ai.minimized() && ai.busy()) { <span class="as-busy-dot" title="Working…"></span> }
+        <p-button [icon]="ai.minimized() ? 'pi pi-window-maximize' : 'pi pi-window-minimize'" [text]="true" [rounded]="true" size="small" severity="secondary"
+          (onClick)="toggleMin()" [pTooltip]="ai.minimized() ? 'Restore' : 'Minimise'" [ariaLabel]="ai.minimized() ? 'Restore the assistant' : 'Minimise the assistant'" />
+        <p-button icon="pi pi-times" [text]="true" [rounded]="true" size="small" severity="secondary" (onClick)="close()" pTooltip="Close" ariaLabel="Close the assistant" />
+      </header>
+      <div class="as-body" [hidden]="ai.minimized()">
         <div class="as-log" #log (click)="onClick($event)">
           @if (ai.status() && !ai.status()!.enabled) {
             <div class="as-notice">{{ ai.status()!.unavailableReason }}</div>
@@ -71,14 +79,25 @@ import { renderMarkdown } from './markdown';
           <div class="as-foot">Answers come from Claude and can be wrong; check important figures on the page.</div>
         </div>
       </div>
-    </p-drawer>
+    </section>
+    }
   `,
   styles: `
-    :host ::ng-deep .as-drawer { width: min(30rem, 100vw); }
-    :host ::ng-deep .as-drawer .p-drawer-content { padding: 0; display: flex; flex-direction: column; }
+    .as-panel { position: fixed; z-index: 1100; width: min(30rem, calc(100vw - 16px)); height: min(70vh, 44rem);
+      display: flex; flex-direction: column; background: var(--ut-card); color: var(--ut-text);
+      border: 1px solid var(--ut-border-strong, var(--ut-border)); border-radius: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); overflow: hidden; }
+    .as-panel.min { height: auto; }
+    .as-panel.dragging { user-select: none; opacity: 0.95; }
+    .as-bar { display: flex; align-items: center; gap: 0.25rem; padding: 0.5rem 0.4rem 0.5rem 0.9rem; cursor: grab; touch-action: none;
+      background: var(--ut-surface); border-bottom: 1px solid var(--ut-border); }
+    .as-panel.min .as-bar { border-bottom: 0; }
+    .as-panel.dragging .as-bar { cursor: grabbing; }
+    .as-spacer { flex: 1; }
+    .as-busy-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ut-blue); animation: blink 1.2s infinite; margin-right: 0.3rem; }
+    .as-body[hidden] { display: none !important; }
     .as-head { display: flex; align-items: center; gap: 0.6rem; i { font-size: 1.2rem; color: var(--ut-blue); } }
     .as-title { font-weight: 600; color: var(--ut-ink); } .as-sub { font-size: 0.75rem; color: var(--ut-muted); }
-    .as-body { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+    .as-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
     .as-log { flex: 1; overflow-y: auto; padding: 0.8rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
     .as-msg { padding: 0.55rem 0.8rem; border-radius: 12px; font-size: 0.88rem; line-height: 1.45; max-width: 92%; overflow-wrap: anywhere; }
     .as-msg.user { align-self: flex-end; background: var(--ut-blue); color: #fff; white-space: pre-wrap; border-bottom-right-radius: 4px; }
@@ -119,11 +138,88 @@ export class AssistantPanel {
   private log = viewChild<ElementRef<HTMLDivElement>>('log');
   protected draft = '';
 
+  /** Top-left corner of the panel in viewport pixels; null until first opened (then placed top-right). */
+  protected readonly pos = signal<{ x: number; y: number }>({ x: 0, y: 0 });
+  protected readonly dragging = signal(false);
+  private placed = false;
+  private grab: { dx: number; dy: number; id: number } | null = null;
+  private static readonly KEY = 'ut.assistant.pos';
+
   constructor() {
+    // Place the panel the first time it opens: the remembered position, or the top-right corner.
+    effect(() => {
+      if (!this.ai.open() || this.placed) return;
+      this.placed = true;
+      let p: { x: number; y: number } | null = null;
+      try { p = JSON.parse(localStorage.getItem(AssistantPanel.KEY) ?? 'null'); } catch { p = null; }
+      const w = this.panelWidth();
+      this.pos.set(this.clamp(p && typeof p.x === 'number' && typeof p.y === 'number' ? p : { x: window.innerWidth - w - 16, y: 72 }));
+    });
     effect(() => {
       this.ai.entries(); this.ai.busy(); this.ai.pending();
       setTimeout(() => { const el = this.log()?.nativeElement; if (el) el.scrollTop = el.scrollHeight; });
     });
+  }
+
+  protected toggleMin(): void {
+    this.ai.minimized.update((m) => !m);
+    // the panel grows again when restored: keep it on screen
+    setTimeout(() => this.pos.set(this.clamp(this.pos())));
+  }
+
+  protected barDblClick(ev: MouseEvent): void {
+    if ((ev.target as HTMLElement).closest('button')) return;
+    this.toggleMin();
+  }
+
+  protected close(): void {
+    this.ai.open.set(false);
+    this.ai.minimized.set(false);
+  }
+
+  // ---- dragging by the title bar (pointer events: mouse, touch and pen) ----
+
+  protected dragStart(ev: PointerEvent): void {
+    if (ev.button !== 0 || (ev.target as HTMLElement).closest('button, a, input, textarea')) return;
+    const bar = ev.currentTarget as HTMLElement;
+    bar.setPointerCapture(ev.pointerId);
+    this.grab = { dx: ev.clientX - this.pos().x, dy: ev.clientY - this.pos().y, id: ev.pointerId };
+    this.dragging.set(true);
+    ev.preventDefault();
+  }
+
+  protected dragMove(ev: PointerEvent): void {
+    if (!this.grab || ev.pointerId !== this.grab.id) return;
+    this.pos.set(this.clamp({ x: ev.clientX - this.grab.dx, y: ev.clientY - this.grab.dy }));
+  }
+
+  protected dragEnd(ev: PointerEvent): void {
+    if (!this.grab || ev.pointerId !== this.grab.id) return;
+    (ev.currentTarget as HTMLElement).releasePointerCapture?.(ev.pointerId);
+    this.grab = null;
+    this.dragging.set(false);
+    try { localStorage.setItem(AssistantPanel.KEY, JSON.stringify(this.pos())); } catch { /* storage unavailable: position is just not remembered */ }
+  }
+
+  /** Keep the panel inside the window when the browser is resized. */
+  @HostListener('window:resize')
+  protected onResize(): void {
+    if (this.ai.open()) this.pos.set(this.clamp(this.pos()));
+  }
+
+  private panelWidth(): number {
+    const el = document.querySelector('app-assistant-panel .as-panel') as HTMLElement | null;
+    return el?.offsetWidth || Math.min(480, window.innerWidth - 16);
+  }
+
+  /** Keeps at least the title bar fully reachable: inside the window horizontally, and below the top edge. */
+  private clamp(p: { x: number; y: number }): { x: number; y: number } {
+    const el = document.querySelector('app-assistant-panel .as-panel') as HTMLElement | null;
+    const w = el?.offsetWidth || this.panelWidth();
+    const h = el?.offsetHeight || 48;
+    const maxX = Math.max(8, window.innerWidth - w - 8);
+    const maxY = Math.max(8, window.innerHeight - Math.min(h, 56) - 8);
+    return { x: Math.min(Math.max(8, Math.round(p.x)), maxX), y: Math.min(Math.max(8, Math.round(p.y)), maxY) };
   }
 
   protected md(text?: string): string {

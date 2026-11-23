@@ -709,7 +709,7 @@ public class InstructorSchedulingBackendHelper {
 		
 		Context(SessionContext cx, InstructorSchedulingProxy solver) {
 			iSessionContext = cx;
-			iNameFormat = (cx == null ? solver.getProperties().getProperty("General.InstructorFormat", NameFormat.LAST_FIRST.reference()) : UserProperty.NameFormat.get(cx.getUser()));
+			iNameFormat = (cx == null ? solver.getProperties().getProperty("General.InstructorFormat", NameFormat.LAST_FIRST.reference()) : NameFormat.toFull(UserProperty.NameFormat.get(cx.getUser()))); // pickers: full names
 			iAttributeTypes =  InstructorAttributeTypeDAO.getInstance().getSession().createQuery("from InstructorAttributeType", InstructorAttributeType.class).setCacheable(true).list();
 			iSolver = solver;
 		}

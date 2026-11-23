@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.hibernate.Transaction;
+import org.unitime.timetable.util.NameFormat;
 import org.unitime.timetable.defaults.ApplicationProperty;
 import org.unitime.timetable.defaults.UserProperty;
 import org.unitime.timetable.gwt.command.client.GwtRpcException;
@@ -161,7 +162,7 @@ public class ExamAddBackend implements GwtRpcImplementation<ExamAddRequest, Exam
 					.setParameter("sessionId", sessionId)
 					.setParameterList("deptIds", deptIds)
 					.setCacheable(true).list();
-			String nameFormat = UserProperty.NameFormat.get(context.getUser());
+			String nameFormat = NameFormat.toFull(UserProperty.NameFormat.get(context.getUser())); // drop-down: full names
 			List<DepartmentalInstructor> sorted = new ArrayList<DepartmentalInstructor>(instructors);
 			if (ApplicationProperty.InstructorsDropdownFollowNameFormatting.isTrue())
 				Collections.sort(sorted, new DepartmentalInstructorComparator(nameFormat));
@@ -216,6 +217,21 @@ public class ExamAddBackend implements GwtRpcImplementation<ExamAddRequest, Exam
 			exam.setMaxNbrRooms(request.getMaxNbrRooms() == null ? 0 : request.getMaxNbrRooms());
 
 			exam.setInstructors(new HashSet<DepartmentalInstructor>());
+			exam.setOwners(new HashSet<ExamOwner>());
+			exam.getOwners().add(owner);
+			owner.setExam(exam);
+
+			if (request.getName() == null || request.getName().trim().isEmpty())
+				exam.setName(exam.generateName());
+			else
+				exam.setName(request.getName().trim());
+
+			// Save the examination (and its owner) BEFORE anything persistent points at it: linking it into an
+			// instructor's exam set, or running a query (generateDefaultPreferences does), triggers an auto-flush,
+			// and Hibernate refuses to flush a saved instructor that references an unsaved examination
+			// (TransientObjectException).
+			hibSession.persist(exam);
+
 			if (request.getInstructorIds() != null)
 				for (Long instructorId : new LinkedHashSet<Long>(request.getInstructorIds())) {
 					if (instructorId == null) continue;
@@ -226,18 +242,8 @@ public class ExamAddBackend implements GwtRpcImplementation<ExamAddRequest, Exam
 					}
 				}
 
-			exam.setOwners(new HashSet<ExamOwner>());
-			exam.getOwners().add(owner);
-			owner.setExam(exam);
-
-			if (request.getName() == null || request.getName().trim().isEmpty())
-				exam.setName(exam.generateName());
-			else
-				exam.setName(request.getName().trim());
-
 			exam.generateDefaultPreferences(false);
-
-			hibSession.persist(exam);
+			hibSession.flush();
 
 			ChangeLog.addChange(
 					hibSession,

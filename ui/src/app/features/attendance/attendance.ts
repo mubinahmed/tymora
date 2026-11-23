@@ -35,7 +35,7 @@ import {
   RosterEntry,
   SessionInfo,
 } from './attendance.models';
-import { DateInput } from '../../shared/date-input';
+import { DateInput, fromIso, toIso } from '../../shared/date-input';
 import { DisplayDatePipe } from '../../shared/display-date.pipe';
 
 const RPC = 'AttendanceRequest';
@@ -180,6 +180,8 @@ export class Attendance implements OnInit, OnDestroy {
         after?.(r);
       },
       error: (e: ApiError) => {
+        this.tabLoading.set(0);
+        this.sessionsLoading.set(false);
         this.loading.set(false);
         this.busy.set(false);
         if (!this.info()) this.error.set(e.message);
@@ -188,24 +190,39 @@ export class Attendance implements OnInit, OnDestroy {
     });
   }
 
+  /** Tab loads in progress: the tab shows a spinner instead of its (still empty) content until they finish. */
+  protected readonly tabLoading = signal(0);
+
+  private loadTab(req: AttendanceRequest): void {
+    this.tabLoading.update((n) => n + 1);
+    this.call(req, false, () => this.tabLoading.update((n) => Math.max(0, n - 1)));
+  }
+
   protected onTab(t: string | number | undefined): void {
     this.tab = String(t);
-    if (this.tab === 'excuses') this.call({ operation: 'EXCUSES' });
-    if (this.tab === 'followup') this.call({ operation: 'FOLLOWUPS' });
-    if (this.tab === 'history') this.call({ operation: 'LOG' });
+    if (this.tab === 'excuses') this.loadTab({ operation: 'EXCUSES' });
+    if (this.tab === 'followup') this.loadTab({ operation: 'FOLLOWUPS' });
+    if (this.tab === 'history') this.loadTab({ operation: 'LOG' });
     if (this.tab === 'settings') this.editConfig(this.info()?.config);
   }
 
   // ------------------------------------------------------------------ take attendance
 
+  /** A day's class meetings are loading (date arrows, date picker, My / All classes): the list shows a spinner. */
+  protected readonly sessionsLoading = signal(false);
+
   protected loadSessions(): void {
-    this.call({ operation: 'SESSIONS', date: this.date, scope: this.scope });
+    this.sessionsLoading.set(true);
+    this.call({ operation: 'SESSIONS', date: this.date, scope: this.scope }, false, () => this.sessionsLoading.set(false));
   }
 
   protected shiftDay(days: number): void {
-    const d = new Date(this.date + 'T00:00:00');
+    if (this.sessionsLoading()) return;
+    const d = fromIso(this.date) ?? new Date();
     d.setDate(d.getDate() + days);
-    this.date = d.toISOString().substring(0, 10);
+    // Local date, not toISOString(): that is UTC, which in Singapore (UTC+8) is still the previous day at local
+    // midnight, so the right arrow stayed on the same day and the left arrow skipped one.
+    this.date = toIso(d) ?? this.date;
     this.loadSessions();
   }
 

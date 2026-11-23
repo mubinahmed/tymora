@@ -20,6 +20,8 @@ export class AssistantService {
   readonly available = signal<boolean | null>(null);
   readonly status = signal<AssistantResponse | null>(null);
   readonly open = signal(false);
+  /** Panel collapsed to its title bar (the conversation and draft are kept). */
+  readonly minimized = signal(false);
   readonly busy = signal(false);
   readonly entries = signal<AssistantEntry[]>([]);
   readonly pending = signal<AssistantPendingAction[]>([]);
@@ -34,7 +36,10 @@ export class AssistantService {
   }
 
   toggle(): void {
+    // A minimised panel is restored rather than closed, so the header button always brings the chat back.
+    if (this.open() && this.minimized()) { this.minimized.set(false); return; }
     this.open.update((o) => !o);
+    if (this.open()) this.minimized.set(false);
     if (this.open() && !this.status()) this.refresh();
   }
 

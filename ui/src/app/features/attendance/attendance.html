@@ -29,15 +29,18 @@
         <p-tabpanel value="take">
           @if (!current()) {
             <div class="at-bar">
-              <p-button icon="pi pi-chevron-left" [text]="true" (onClick)="shiftDay(-1)" pTooltip="Previous day" />
-              <label><span>Date</span><app-date-input [(ngModel)]="date" (changed)="loadSessions()" /></label>
-              <p-button icon="pi pi-chevron-right" [text]="true" (onClick)="shiftDay(1)" pTooltip="Next day" />
+              <p-button icon="pi pi-chevron-left" [text]="true" (onClick)="shiftDay(-1)" pTooltip="Previous day" [disabled]="sessionsLoading()" ariaLabel="Previous day" />
+              <label><span>Date</span><app-date-input [(ngModel)]="date" (changed)="loadSessions()" [disabled]="sessionsLoading()" /></label>
+              <p-button icon="pi pi-chevron-right" [text]="true" (onClick)="shiftDay(1)" pTooltip="Next day" [disabled]="sessionsLoading()" ariaLabel="Next day" />
               @if (canManage()) {
                 <p-selectButton [options]="[{ label: 'My classes', value: 'MINE' }, { label: 'All classes', value: 'ALL' }]" [(ngModel)]="scope" optionLabel="label" optionValue="value" [allowEmpty]="false" (onChange)="loadSessions()" />
               }
               <span class="spacer"></span>
               <span class="muted">Term {{ init()?.termStart | displayDate }} – {{ init()?.termEnd | displayDate }}</span>
             </div>
+            @if (sessionsLoading()) {
+              <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+            } @else {
             <p-table [value]="sessions()" styleClass="p-datatable-sm p-datatable-striped" [rowHover]="true">
               <ng-template pTemplate="header"><tr><th>Time</th><th>Class</th><th>Room</th><th>Lecturer</th><th class="r">Enrolled</th><th>Attendance</th><th>Status</th></tr></ng-template>
               <ng-template pTemplate="body" let-s>
@@ -54,6 +57,7 @@
               </ng-template>
               <ng-template pTemplate="emptymessage"><tr><td colspan="7">No class meetings{{ scope === 'MINE' ? ' of yours' : '' }} on this day.</td></tr></ng-template>
             </p-table>
+            }
           } @else {
             @if (current(); as s) {
               <div class="at-roll-head">
@@ -125,6 +129,9 @@
 
         <!-- ===== excuses ===== -->
         <p-tabpanel value="excuses">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <div class="muted at-hint">Submitted by students under My Attendance. Approval: {{ d.config?.excuseApprover === 'LECTURER' ? 'any lecturer of the student' : 'the school office (attendance managers)' }} (Settings). Approving changes absences in the period to excused.</div>
           <p-table [value]="excuses()" styleClass="p-datatable-sm p-datatable-striped" [paginator]="excuses().length > 25" [rows]="25">
             <ng-template pTemplate="header"><tr><th>Submitted</th><th>Student</th><th>Type</th><th>Period</th><th>Note</th><th>Document</th><th>Status</th><th></th></tr></ng-template>
@@ -142,10 +149,14 @@
             </ng-template>
             <ng-template pTemplate="emptymessage"><tr><td colspan="8">No medical certificates or leave submitted.</td></tr></ng-template>
           </p-table>
+          }
         </p-tabpanel>
 
         <!-- ===== follow-up ===== -->
         <p-tabpanel value="followup">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <div class="at-bar">
             <p-selectButton [options]="[{ label: 'Open', value: 'OPEN' }, { label: 'In progress', value: 'IN_PROGRESS' }, { label: 'Closed', value: 'CLOSED' }, { label: 'All', value: 'ALL' }]" [ngModel]="caseFilter()" (ngModelChange)="caseFilter.set($event)" optionLabel="label" optionValue="value" [allowEmpty]="false" />
             <span class="spacer"></span>
@@ -167,6 +178,7 @@
             </ng-template>
             <ng-template pTemplate="emptymessage"><tr><td colspan="8">No cases.</td></tr></ng-template>
           </p-table>
+          }
         </p-tabpanel>
 
         @if (canManage()) {
@@ -226,10 +238,14 @@
 
           <!-- ===== history ===== -->
           <p-tabpanel value="history">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
             <p-table [value]="log()" styleClass="p-datatable-sm" [paginator]="log().length > 25" [rows]="25">
               <ng-template pTemplate="header"><tr><th style="width:10rem">When</th><th style="width:10rem">Who</th><th style="width:9rem">Action</th><th>Detail</th></tr></ng-template>
               <ng-template pTemplate="body" let-l><tr><td>{{ l.timeStamp | date: 'dd/MM, HH:mm:ss' }}</td><td>{{ l.userName }}</td><td>{{ l.action }}</td><td class="wrap">{{ l.detail }}</td></tr></ng-template>
             </p-table>
+          }
           </p-tabpanel>
         }
       </p-tabpanels>

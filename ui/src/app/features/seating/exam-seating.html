@@ -110,6 +110,9 @@
 
         <!-- ===== layouts ===== -->
         <p-tabpanel value="layouts">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <div class="xs-bar"><span class="muted">Seat grids of the examination venues. Without a saved layout, a grid of 10 seats per row is generated from the venue capacity, with the last-row aisle seat accessible. Alternate (exam) seating uses every other seat.</span>
             <span class="spacer"></span>@if (canEdit()) { <p-button label="Add layout" icon="pi pi-plus" size="small" (onClick)="editLayout()" /> }</div>
           <p-table [value]="layouts()" styleClass="p-datatable-sm p-datatable-striped">
@@ -127,10 +130,14 @@
               </tr>
             </ng-template>
           </p-table>
+          }
         </p-tabpanel>
 
         <!-- ===== special arrangements ===== -->
         <p-tabpanel value="arrangements">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <div class="xs-bar"><span class="muted">Approved special arrangements: a separate venue, an accessible or front seat, extra time. The allocation places these students first.</span>
             <span class="spacer"></span>@if (canEdit()) { <p-button label="Add arrangement" icon="pi pi-plus" size="small" (onClick)="editArrangement()" /> }</div>
           <p-table [value]="arrangements()" styleClass="p-datatable-sm p-datatable-striped">
@@ -141,10 +148,14 @@
             </ng-template>
             <ng-template pTemplate="emptymessage"><tr><td colspan="6">No special arrangements.</td></tr></ng-template>
           </p-table>
+          }
         </p-tabpanel>
 
         <!-- ===== problems ===== -->
         <p-tabpanel value="problems">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <p-table [value]="issues()" styleClass="p-datatable-sm" [paginator]="issues().length > 50" [rows]="50" [rowHover]="true">
             <ng-template pTemplate="header"><tr><th style="width:6rem"></th><th>Period</th><th>Venue</th><th>Problem</th><th>What to do</th></tr></ng-template>
             <ng-template pTemplate="body" let-i>
@@ -155,10 +166,14 @@
             </ng-template>
             <ng-template pTemplate="emptymessage"><tr><td colspan="5">No problems: every student has a valid seat.</td></tr></ng-template>
           </p-table>
+          }
         </p-tabpanel>
 
         <!-- ===== lists ===== -->
         <p-tabpanel value="lists">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <div class="xs-bar">
             <label><span>Period</span><p-select [options]="periodOptions()" [(ngModel)]="listPeriod" [showClear]="true" placeholder="All periods" [style]="{ minWidth: '18rem' }" /></label>
             <label><span>Venue</span><p-select [options]="listRoomOptions()" [(ngModel)]="listRoom" [showClear]="true" placeholder="All venues" /></label>
@@ -176,11 +191,16 @@
             </ng-template>
             <ng-template pTemplate="emptymessage"><tr><td colspan="8">No seats allocated yet.</td></tr></ng-template>
           </p-table>
+          }
         </p-tabpanel>
 
         <!-- ===== publication ===== -->
         <p-tabpanel value="publication">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <app-publication-panel [status]="d.status" [nrErrors]="d.nrErrors ?? 0" [log]="log()" [busy]="busy()" (action)="decide($event)" (loadLog)="loadLog()" />
+          }
         </p-tabpanel>
       </p-tabpanels>
     </p-tabs>

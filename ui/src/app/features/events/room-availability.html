@@ -12,7 +12,7 @@
         <p-select
           inputId="ra-session"
           [options]="sessions()"
-          optionLabel="label"
+          optionLabel="name"
           optionValue="uniqueId"
           [(ngModel)]="sessionId"
           (onChange)="onSessionChange()"
@@ -45,6 +45,17 @@
           [maxSelectedLabels]="3"
           appendTo="body"
         />
+      </div>
+
+      <div class="field ra-evt-field">
+        <label>Rooms shown</label>
+        <div class="ra-evt">
+          <p-checkbox inputId="ra-evt" [binary]="true" [ngModel]="eventRoomsOnly()" (ngModelChange)="onEventRoomsToggle($event)" />
+          <label for="ra-evt">Event rooms only</label>
+        </div>
+        @if (noEventRooms()) {
+          <small class="ra-evt-note">No event rooms in this session: all rooms are listed.</small>
+        }
       </div>
 
       <div class="field ra-rooms ra-dates">

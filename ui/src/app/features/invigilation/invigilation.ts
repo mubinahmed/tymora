@@ -90,6 +90,12 @@ export class Invigilation implements OnInit {
   protected readonly candidates = signal<Candidate[] | null>(null);
   protected readonly slot = signal<SlotPick | null>(null);
   protected readonly editInv = signal<InvigilatorInfo | null>(null);
+  /**
+   * Duty types of the invigilator being edited, as a STABLE array. Binding [ngModel] to a method that builds a new
+   * array on every check (split(',')) makes ngModel see a "change" each time, write it back, re-check, and loop
+   * forever, which froze the page when the dialog opened.
+   */
+  protected readonly editDutyTypes = signal<string[]>([]);
   protected readonly importOpen = signal(false);
   protected tab = 'board';
   protected examTypeId: number | null = null;
@@ -145,6 +151,7 @@ export class Invigilation implements OnInit {
         after?.(r);
       },
       error: (e: ApiError) => {
+        this.tabLoading.set(0);
         this.loading.set(false);
         this.busy.set(false);
         if (!this.data()) this.error.set(e.message);
@@ -158,13 +165,21 @@ export class Invigilation implements OnInit {
     this.call({ operation: 'INIT' });
   }
 
+  /** Tab loads in progress: the tab shows a spinner instead of its (still empty) content until they finish. */
+  protected readonly tabLoading = signal(0);
+
+  private loadTab(req: InvigilationRequest): void {
+    this.tabLoading.update((n) => n + 1);
+    this.call(req, false, () => this.tabLoading.update((n) => Math.max(0, n - 1)));
+  }
+
   protected onTab(t: string | number | undefined): void {
     this.tab = String(t);
-    if (this.tab === 'board' || this.tab === 'problems') this.call({ operation: 'BOARD' });
-    if (this.tab === 'invigilators') this.call({ operation: 'INVIGILATORS' });
-    if (this.tab === 'reports') { this.call({ operation: 'DUTIES' }); this.call({ operation: 'BOARD' }); this.call({ operation: 'INVIGILATORS' }); }
-    if (this.tab === 'publication') this.call({ operation: 'LOG' });
-    if (this.tab === 'rules') this.call({ operation: 'CONFIG' });
+    if (this.tab === 'board' || this.tab === 'problems') this.loadTab({ operation: 'BOARD' });
+    if (this.tab === 'invigilators') this.loadTab({ operation: 'INVIGILATORS' });
+    if (this.tab === 'reports') { this.loadTab({ operation: 'DUTIES' }); this.loadTab({ operation: 'BOARD' }); this.loadTab({ operation: 'INVIGILATORS' }); }
+    if (this.tab === 'publication') this.loadTab({ operation: 'LOG' });
+    if (this.tab === 'rules') this.loadTab({ operation: 'CONFIG' });
   }
 
   protected allocate(): void {
@@ -220,19 +235,18 @@ export class Invigilation implements OnInit {
   // ------------------------------------------------------------------ invigilators
 
   protected edit(i?: InvigilatorInfo): void {
-    this.editInv.set(i ? { ...i } : { active: true, dutyTypes: 'INVIGILATOR' });
+    const inv: InvigilatorInfo = i ? { ...i } : { active: true, dutyTypes: 'INVIGILATOR' };
+    this.editDutyTypes.set(this.dutyTypes(inv));
+    this.editInv.set(inv);
   }
 
   protected dutyTypes(i: InvigilatorInfo): string[] {
     return (i.dutyTypes ?? '').split(',').filter((x) => x);
   }
 
-  protected setDutyTypes(i: InvigilatorInfo, v: string[]): void {
-    i.dutyTypes = v.join(',');
-  }
-
   protected save(): void {
     const i = this.editInv();
+    if (i) i.dutyTypes = this.editDutyTypes().join(',');
     if (!i) return;
     this.call({ operation: 'SAVE_INVIGILATOR', invigilator: i }, false, () => this.editInv.set(null));
   }
@@ -249,12 +263,17 @@ export class Invigilation implements OnInit {
     return i.availability?.find((a) => a.id === periodId)?.name ?? '';
   }
 
+  /** Cell text: no stored entry means the default, available (the server keeps only exceptions). */
+  protected availabilityLabel(i: InvigilatorInfo, periodId?: number): string {
+    return (this.availabilityOf(i, periodId) || 'AVAILABLE').toLowerCase();
+  }
+
   /** Cycle available -> unavailable -> preferred -> available (approved absences are fixed). */
   protected cycleAvailability(i: InvigilatorInfo, periodId?: number): void {
     if (!this.canEdit() || periodId == null) return;
     const cur = this.availabilityOf(i, periodId);
     if (cur === 'ABSENT') return;
-    const next = cur === '' ? 'UNAVAILABLE' : cur === 'UNAVAILABLE' ? 'PREFERRED' : 'AVAILABLE';
+    const next = cur === '' || cur === 'AVAILABLE' ? 'UNAVAILABLE' : cur === 'UNAVAILABLE' ? 'PREFERRED' : 'AVAILABLE';
     this.call({ operation: 'SET_AVAILABILITY', invigilatorId: i.id, periodId, availability: next });
   }
 
@@ -290,7 +309,7 @@ export class Invigilation implements OnInit {
       case 'availability':
         return {
           columns: ['Invigilator', ...periods.map((p) => p.name ?? '')],
-          rows: this.invigilators().map((i) => [i.name ?? '', ...periods.map((p) => this.availabilityOf(i, p.id).toLowerCase())]),
+          rows: this.invigilators().map((i) => [i.name ?? '', ...periods.map((p) => this.availabilityLabel(i, p.id))]),
         };
       case 'unfilled':
         return {

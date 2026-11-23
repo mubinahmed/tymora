@@ -28,6 +28,9 @@
       <p-tabpanels>
         <!-- ===== board ===== -->
         <p-tabpanel value="board">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <div class="iv-bar">
             <p-select [options]="[{ label: 'All venues', value: 'all' }, { label: 'Only short-staffed or with problems', value: 'problems' }]" [(ngModel)]="boardFilter" optionLabel="label" optionValue="value" />
             <span class="spacer"></span>
@@ -75,10 +78,14 @@
               </section>
             }
           }
+          }
         </p-tabpanel>
 
         <!-- ===== invigilators ===== -->
         <p-tabpanel value="invigilators">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <div class="iv-bar">
             <span class="muted">Click an availability cell to cycle available → unavailable → preferred. "absent" comes from approved staff absences (Relief Planning).</span>
             <span class="spacer"></span>
@@ -102,7 +109,7 @@
                     <td>{{ i.dutyTypes }}</td>
                     <td class="r">{{ i.nrDuties }}</td>
                     @for (p of d.periods ?? []; track p.id) {
-                      <td class="av" [class]="'av-' + (availabilityOf(i, p.id) || 'none').toLowerCase()" (click)="cycleAvailability(i, p.id)">{{ availabilityOf(i, p.id).toLowerCase() }}</td>
+                      <td class="av" [class]="'av-' + availabilityLabel(i, p.id)" [title]="canEdit() ? 'Click to change: available → unavailable → preferred' : ''" (click)="cycleAvailability(i, p.id)">{{ availabilityLabel(i, p.id) }}</td>
                     }
                     <td class="act">@if (canEdit()) { <p-button icon="pi pi-pencil" size="small" [text]="true" (onClick)="edit(i)" /><p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" (onClick)="remove(i)" /> }</td>
                   </tr>
@@ -110,10 +117,14 @@
               </tbody>
             </table>
           </div>
+          }
         </p-tabpanel>
 
         <!-- ===== rules ===== -->
         <p-tabpanel value="rules">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           @if (config; as c) {
             <div class="iv-rules">
               <label><span>Students per invigilator</span><p-inputNumber [(ngModel)]="c.studentsPerInvigilator" [min]="1" [disabled]="!canEdit()" /></label>
@@ -128,10 +139,14 @@
               <div class="muted">Requirement of a venue = max(minimum, students ÷ students per invigilator, rounded up), plus the extra for separate venues. Invigilators' own limits override the defaults.</div>
             </div>
           }
+          }
         </p-tabpanel>
 
         <!-- ===== conflicts ===== -->
         <p-tabpanel value="problems">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <p-table [value]="issues()" styleClass="p-datatable-sm" [paginator]="issues().length > 50" [rows]="50">
             <ng-template pTemplate="header"><tr><th style="width:6rem"></th><th>Period</th><th>Venue</th><th>Problem</th><th>What to do</th></tr></ng-template>
             <ng-template pTemplate="body" let-i>
@@ -140,10 +155,14 @@
             </ng-template>
             <ng-template pTemplate="emptymessage"><tr><td colspan="5">No conflicts: every venue is staffed within the rules.</td></tr></ng-template>
           </p-table>
+          }
         </p-tabpanel>
 
         <!-- ===== reports ===== -->
         <p-tabpanel value="reports">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <div class="iv-bar">
             <p-select [options]="reportOptions" [(ngModel)]="reportKind" optionLabel="label" optionValue="value" [style]="{ minWidth: '18rem' }" />
             <span class="spacer"></span>
@@ -160,11 +179,16 @@
               </table>
             </div>
           }
+          }
         </p-tabpanel>
 
         <!-- ===== publication ===== -->
         <p-tabpanel value="publication">
+          @if (tabLoading()) {
+            <div class="center tab-loading"><p-progressSpinner strokeWidth="4" styleClass="tab-spinner" /></div>
+          } @else {
           <app-publication-panel [status]="d.status" [nrErrors]="d.nrErrors ?? 0" [log]="log()" [busy]="busy()" (action)="decide($event)" (loadLog)="loadLog()" />
+          }
         </p-tabpanel>
       </p-tabpanels>
     </p-tabs>
@@ -202,7 +226,7 @@
         <label><span>Email</span><input pInputText [(ngModel)]="i.email" /></label>
         <label><span>Staff id (links absences and own papers)</span><input pInputText [(ngModel)]="i.externalId" /></label>
         <label><span>Department</span><p-select [options]="deptOptions()" [(ngModel)]="i.departmentId" [showClear]="true" [filter]="true" filterBy="label" placeholder="None" /></label>
-        <label><span>Duty types</span><p-multiSelect [options]="dutyTypeOptions" [ngModel]="dutyTypes(i)" (ngModelChange)="setDutyTypes(i, $event)" optionLabel="label" optionValue="value" display="chip" /></label>
+        <label><span>Duty types</span><p-multiSelect [options]="dutyTypeOptions" [ngModel]="editDutyTypes()" (ngModelChange)="editDutyTypes.set($event)" optionLabel="label" optionValue="value" display="chip" /></label>
         <label><span>Max duties per day (empty = default)</span><p-inputNumber [(ngModel)]="i.maxPerDay" [min]="1" /></label>
         <label><span>Max duties in total (empty = default)</span><p-inputNumber [(ngModel)]="i.maxTotal" [min]="1" /></label>
         <label class="chk"><p-checkbox [(ngModel)]="i.active" [binary]="true" /> Active</label>

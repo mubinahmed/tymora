@@ -170,7 +170,7 @@ public class PeopleLookupBackend implements GwtRpcImplementation<PersonInterface
 			}
 			
 			GwtRpcResponseList<PersonInterface> people =  cx.response(displayWithoutId);
-			NameFormat nameFormat = NameFormat.fromReference(context != null ? context.getUser().getProperty(UserProperty.NameFormat) : NameFormat.LAST_FIRST_MIDDLE.reference());
+			NameFormat nameFormat = NameFormat.fromReference(context != null ? NameFormat.toFull(context.getUser().getProperty(UserProperty.NameFormat)) : NameFormat.LAST_FIRST_MIDDLE.reference()); // picker: full names
 			boolean showEmail = ApplicationProperty.PeopleLookupShowEmail.isTrue(
 					context == null || context.getUser() == null || context.getUser().getCurrentAuthority() == null ? Roles.ROLE_NONE : context.getUser().getCurrentAuthority().getRole());
 			for (final PersonInterface person: people) {

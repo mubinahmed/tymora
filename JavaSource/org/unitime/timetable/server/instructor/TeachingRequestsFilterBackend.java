@@ -151,7 +151,7 @@ public class TeachingRequestsFilterBackend extends FilterBoxBackend<TeachingRequ
 		fixAttributeTypes(request);
 		
 		if (!request.getText().isEmpty()) {
-			NameFormat nf = NameFormat.fromReference(UserProperty.NameFormat.get(context.getUser()));
+			NameFormat nf = NameFormat.fromReference(NameFormat.toFull(UserProperty.NameFormat.get(context.getUser()))); // suggestions: full names
 			InstructorQuery.QueryInstance instance = getQuery(request, context.getUser()).select("distinct i").exclude("instructor").order("i.lastName, i.firstName, i.middleName");
 			int id = 0;
 			String where = "";

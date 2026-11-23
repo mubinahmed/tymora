@@ -148,6 +148,12 @@ public class EventLookupBackend extends EventAction<EventLookupRpcRequest, GwtRp
 			eventFilter.setSessionId(request.getSessionId());
 			request.setEventFilter(eventFilter);
 		}
+		// The event query is scoped by the FILTER's session (EventFilterBackend.getQuery). Callers that send the
+		// session only on the request (the Angular lookup pages) would otherwise query a null session and get nothing.
+		if (request.getEventFilter().getSessionId() == null)
+			request.getEventFilter().setSessionId(request.getSessionId());
+		if (request.getRoomFilter() != null && request.getRoomFilter().getSessionId() == null)
+			request.getRoomFilter().setSessionId(request.getSessionId());
 		
 		return findEvents(request, context);
 	}

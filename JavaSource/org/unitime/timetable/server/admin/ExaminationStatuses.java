@@ -71,7 +71,7 @@ public class ExaminationStatuses implements AdminTable {
 	public SimpleEditInterface load(SessionContext context, Session hibSession) {
 		Long sessionId = context.getUser().getCurrentAcademicSessionId();
 		List<ListItem> managers = new ArrayList<ListItem>();
-		NameFormat nf = NameFormat.fromReference(context.getUser().getProperty(UserProperty.NameFormat));
+		NameFormat nf = NameFormat.fromReference(NameFormat.toFull(context.getUser().getProperty(UserProperty.NameFormat))); // drop-down: full names
 		for (TimetableManager m: ExamStatusDAO.getInstance().getSession().createQuery(
 				"select distinct m from TimetableManager m inner join m.departments d inner join m.managerRoles mr " +
 				"where d.session.uniqueId = :sessionId and mr.role.enabled = true "+

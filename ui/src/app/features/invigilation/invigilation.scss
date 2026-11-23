@@ -28,6 +28,7 @@ td.act { white-space: nowrap; text-align: right; }
   th.per { max-width: 7rem; white-space: normal; font-weight: 500; }
   tr.inactive td { opacity: 0.55; } }
 td.av { cursor: pointer; text-align: center; font-size: 0.72rem; min-width: 5rem; user-select: none;
+  &.av-available { color: var(--ut-muted); }
   &.av-unavailable { background: rgba(200, 30, 20, 0.12); color: #c81e14; }
   &.av-preferred { background: rgba(22, 163, 74, 0.12); color: #15803d; }
   &.av-absent { background: rgba(100, 116, 139, 0.18); color: #475569; cursor: not-allowed; } }

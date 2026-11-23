@@ -105,6 +105,10 @@ const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       .ra-dates-row { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
       .ra-dates { flex: 1 1 260px; min-width: 220px; }
       .ra-past { display: flex; align-items: center; gap: 0.4rem; padding-bottom: 0.4rem; }
+      .ra-evt-field { flex: 0 0 auto; max-width: 16rem; }
+      .ra-evt { display: flex; align-items: center; gap: 0.4rem; min-height: 2.5rem; }
+      .ra-evt label { margin: 0; font-weight: normal; }
+      .ra-evt-note { display: block; font-size: 0.75rem; color: var(--ut-muted); }
       .ra-date-caption { margin: 0 0 0.5rem; font-size: 0.85rem; color: var(--ut-muted); }
       table.ra-date-table { border-collapse: collapse; font-size: 0.85rem; width: 100%; margin-bottom: 0.75rem; }
       table.ra-date-table th, table.ra-date-table td { border: 1px solid var(--ut-border); padding: 4px 8px; text-align: left; vertical-align: top; }
@@ -130,6 +134,14 @@ export class RoomAvailability implements OnInit {
   protected readonly searched = signal(false);
 
   protected readonly sessions = signal<AcademicSession[]>([]);
+  /**
+   * List only event rooms (rooms with an event department that allows events), as the legacy page does by default.
+   * When the session has no event rooms the page falls back to all rooms, so it is never empty for a set-up
+   * without event management.
+   */
+  protected readonly eventRoomsOnly = signal(true);
+  /** Set when the event-room list came back empty and the page switched to all rooms by itself. */
+  protected readonly noEventRooms = signal(false);
   protected sessionId: number | null = null;
 
   protected readonly rooms = signal<RoomPick[]>([]);
@@ -269,7 +281,17 @@ export class RoomAvailability implements OnInit {
     });
   }
 
+  /** Toggle between event rooms only and all rooms. */
+  onEventRoomsToggle(value: boolean): void {
+    this.eventRoomsOnly.set(value);
+    this.noEventRooms.set(false);
+    this.selectedRoomIds = [];
+    this.loadRooms();
+  }
+
   onSessionChange(): void {
+    this.eventRoomsOnly.set(true);
+    this.noEventRooms.set(false);
     this.selectedRoomIds = [];
     this.selectedDateDoys.set([]);
     this.sessionMonths = [];
@@ -283,15 +305,24 @@ export class RoomAvailability implements OnInit {
   private loadRooms(): void {
     this.loadingRooms.set(true);
     this.error.set(null);
-    // Default to the session's event rooms (matches the legacy "flag:Event" default).
+    // Event rooms by default (the legacy "flag:Event" default); all rooms when switched off or when there are none.
+    const eventOnly = this.eventRoomsOnly();
     const request: RoomFilterRpcRequest = {
       command: 'ENUMERATE',
-      options: { flag: ['Event'] },
+      options: eventOnly ? { flag: ['Event'] } : {},
       sessionId: this.sessionId ?? undefined,
     };
     this.rpc.execute<FilterRpcResponse>(RPC_ROOM_FILTER, request).subscribe({
       next: (res) => {
-        this.rooms.set((res.entities?.['results'] ?? []).map((e: Entity) => ({ id: e.uniqueId!, label: e.name ?? '' })));
+        const list = (res.entities?.['results'] ?? []).map((e: Entity) => ({ id: e.uniqueId!, label: e.name ?? '' }));
+        if (eventOnly && !list.length) {
+          // No event rooms in this session: show all rooms instead of an empty list.
+          this.noEventRooms.set(true);
+          this.eventRoomsOnly.set(false);
+          this.loadRooms();
+          return;
+        }
+        this.rooms.set(list);
         this.loadingRooms.set(false);
       },
       error: (e: ApiError) => {

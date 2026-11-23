@@ -180,6 +180,7 @@ export class ExamSeating implements OnInit {
         after?.(r);
       },
       error: (e: ApiError) => {
+        this.tabLoading.set(0);
         this.loading.set(false);
         this.busy.set(false);
         if (!this.data()) this.error.set(e.message);
@@ -221,13 +222,21 @@ export class ExamSeating implements OnInit {
     this.call({ operation: 'ROOM' });
   }
 
+  /** Tab loads in progress: the tab shows a spinner instead of its (still empty) content until they finish. */
+  protected readonly tabLoading = signal(0);
+
+  private loadTab(req: ExamSeatingRequest): void {
+    this.tabLoading.update((n) => n + 1);
+    this.call(req, false, () => this.tabLoading.update((n) => Math.max(0, n - 1)));
+  }
+
   protected onTab(t: string | number | undefined): void {
     this.tab = String(t);
-    if (this.tab === 'layouts') this.call({ operation: 'LAYOUTS' });
-    if (this.tab === 'arrangements') this.call({ operation: 'ARRANGEMENTS' });
-    if (this.tab === 'problems') this.call({ operation: 'VALIDATE' });
-    if (this.tab === 'lists') this.call({ operation: 'LIST' });
-    if (this.tab === 'publication') this.call({ operation: 'LOG' });
+    if (this.tab === 'layouts') this.loadTab({ operation: 'LAYOUTS' });
+    if (this.tab === 'arrangements') this.loadTab({ operation: 'ARRANGEMENTS' });
+    if (this.tab === 'problems') this.loadTab({ operation: 'VALIDATE' });
+    if (this.tab === 'lists') this.loadTab({ operation: 'LIST' });
+    if (this.tab === 'publication') this.loadTab({ operation: 'LOG' });
   }
 
   protected allocate(): void {

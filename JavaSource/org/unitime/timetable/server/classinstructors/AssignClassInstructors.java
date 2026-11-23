@@ -31,6 +31,7 @@ import java.util.Set;
 import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.unitime.timetable.util.NameFormat;
 import org.unitime.commons.Debug;
 import org.unitime.localization.impl.Localization;
 import org.unitime.timetable.defaults.ApplicationProperty;
@@ -109,7 +110,7 @@ public class AssignClassInstructors implements AssignClassInstructorsTable {
 			case ADD : return new Field(MESSAGES.fieldAdd(), FieldType.add, 40, Flag.HIDE_LABEL);
 			case DELETE : return new Field(MESSAGES.fieldDelete(), FieldType.delete, 40, Flag.HIDE_LABEL);
 			case INSTR_NAME :
-					String nf = fullNameFormat(UserProperty.NameFormat.get(context.getUser()));
+					String nf = NameFormat.toFull(UserProperty.NameFormat.get(context.getUser())); // drop-down: full names
 			        ArrayList<DepartmentalInstructor> instructorList = new ArrayList<DepartmentalInstructor>(ioc.getDepartment().getInstructors());
 			        if (ApplicationProperty.InstructorsDropdownFollowNameFormatting.isTrue())
 			        	Collections.sort(instructorList, new DepartmentalInstructorComparator(nf));
@@ -690,28 +691,6 @@ public class AssignClassInstructors implements AssignClassInstructorsTable {
 					assignAction.performExternalInstrOfferingConfigAssignInstructorsAction(ioc, InstrOfferingConfigDAO.getInstance().getSession());
 				}
 	    	}
-		}
-	}
-
-	/**
-	 * The instructor dropdown shows full names so that people with the same surname and initial are told apart:
-	 * an abbreviated name format (the default "last-initial" gives "Tan, W") is widened to its full equivalent
-	 * ("Tan, Wei Ling"). Full formats are kept as they are.
-	 */
-	protected static String fullNameFormat(String nf) {
-		if (nf == null) return "last-first-middle";
-		switch (nf) {
-		case "last-initial":
-		case "short":
-			return "last-first-middle";
-		case "initial-last":
-			return "first-middle-last";
-		case "title-last-initial":
-			return "last-first-middle-title";
-		case "title-initial-last":
-			return "title-first-middle-last";
-		default:
-			return nf;
 		}
 	}
 }

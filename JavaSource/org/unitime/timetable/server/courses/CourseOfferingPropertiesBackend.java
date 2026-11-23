@@ -29,6 +29,7 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import org.hibernate.query.Query;
+import org.unitime.timetable.util.NameFormat;
 import org.unitime.localization.impl.Localization;
 import org.unitime.localization.messages.CourseMessages;
 import org.unitime.timetable.defaults.ApplicationProperty;
@@ -191,7 +192,7 @@ public class CourseOfferingPropertiesBackend implements GwtRpcImplementation<Cou
 				queryClause.append(" and i.department.uniqueId = " + subjectArea.getDepartment().getUniqueId());
 			}
 			
-			String instructorNameFormat = UserProperty.NameFormat.get(context.getUser());
+			String instructorNameFormat = NameFormat.toFull(UserProperty.NameFormat.get(context.getUser())); // drop-down: full names
 	        
 	        Long acadSessionId = context.getUser().getCurrentAcademicSessionId();
 

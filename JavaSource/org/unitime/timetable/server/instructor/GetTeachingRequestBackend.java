@@ -124,7 +124,7 @@ public class GetTeachingRequestBackend implements GwtRpcImplementation<GetReques
 			response.addAttribute(a);
 		}
 		
-		NameFormat instructorNameFormat = NameFormat.fromReference(UserProperty.NameFormat.get(context.getUser()));
+		NameFormat instructorNameFormat = NameFormat.fromReference(NameFormat.toFull(UserProperty.NameFormat.get(context.getUser()))); // drop-down: full names
 		boolean sortByLastName = CommonValues.SortByLastName.eq(UserProperty.SortNames.get(context.getUser()));
 		for (DepartmentalInstructor instructor: DepartmentalInstructorDAO.getInstance().getSession().createQuery(
 				"from DepartmentalInstructor i where i.department.uniqueId = :departmentId", DepartmentalInstructor.class).setParameter("departmentId", offering.getDepartment().getUniqueId()).setCacheable(true).list()) {

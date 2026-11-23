@@ -310,7 +310,7 @@ public class AttendanceBackend implements GwtRpcImplementation<AttendanceRequest
 		if ("EXCUSE_FILE".equals(op)) {
 			AttendanceExcuse e = hib.get(AttendanceExcuse.class, request.id);
 			if (e == null || !e.getSessionId().equals(sessionId)) throw new GwtRpcException("Unknown excuse.");
-			if (!manage && !canDecide(hib, context, cfg, e, sessionId)) throw new GwtRpcException("You cannot see this document.");
+			if (!manage && !teachesStudent(hib, context, e, sessionId, AttendanceService.myClasses(hib, context, sessionId))) throw new GwtRpcException("You cannot see this document."); // same rule as the list: lecturers of the student
 			Excuse x = new Excuse();
 			x.id = e.getUniqueId(); x.fileName = e.getFileName(); x.fileType = e.getFileType();
 			x.fileBase64 = (e.getFileContent() == null ? null : Base64.getEncoder().encodeToString(e.getFileContent()));
@@ -476,19 +476,31 @@ public class AttendanceBackend implements GwtRpcImplementation<AttendanceRequest
 
 	static boolean canDecide(org.hibernate.Session hib, SessionContext context, Config cfg, AttendanceExcuse e, Long sessionId) {
 		if (context.hasPermission(Right.AttendanceManage)) return true;
-		if (!"LECTURER".equalsIgnoreCase(cfg.excuseApprover) || !context.hasPermission(Right.AttendanceTake)) return false;
-		Set<Long> mine = AttendanceService.myClasses(hib, context, sessionId);
-		if (mine.isEmpty()) return false;
+		if (!"LECTURER".equalsIgnoreCase(cfg.excuseApprover)) return false;
+		return teachesStudent(hib, context, e, sessionId, AttendanceService.myClasses(hib, context, sessionId));
+	}
+
+	/** True when the user takes attendance and the excuse's student is enrolled in one of the user's classes. */
+	private static boolean teachesStudent(org.hibernate.Session hib, SessionContext context, AttendanceExcuse e, Long sessionId, Set<Long> mine) {
+		if (!context.hasPermission(Right.AttendanceTake) || mine == null || mine.isEmpty()) return false;
 		Long n = hib.createQuery("select count(x) from StudentClassEnrollment x where x.student.uniqueId = :s and x.clazz.uniqueId in :c", Long.class)
 				.setParameter("s", e.getStudentId()).setParameterList("c", mine).uniqueResult();
 		return n != null && n > 0;
 	}
 
+	/**
+	 * Certificates and leave listed on the Take Attendance page. Attendance managers see all of them. A lecturer sees
+	 * those of students enrolled in their classes, whoever approves them (Settings): the lecturer can then take the
+	 * excuse into account, but only gets Approve / Reject when lecturers are the approvers.
+	 */
 	private static List<Excuse> excuses(org.hibernate.Session hib, SessionContext context, Config cfg, Long sessionId) {
 		List<Excuse> ret = new ArrayList<Excuse>();
+		boolean manage = context.hasPermission(Right.AttendanceManage);
+		Set<Long> mine = (manage ? null : AttendanceService.myClasses(hib, context, sessionId));
 		for (AttendanceExcuse e: hib.createQuery("from AttendanceExcuse where sessionId = :s order by submittedTs desc", AttendanceExcuse.class).setParameter("s", sessionId).list()) {
-			boolean decide = canDecide(hib, context, cfg, e, sessionId);
-			if (!decide && !context.hasPermission(Right.AttendanceManage)) continue;
+			boolean visible = manage || teachesStudent(hib, context, e, sessionId, mine);
+			if (!visible) continue;
+			boolean decide = manage || ("LECTURER".equalsIgnoreCase(cfg.excuseApprover) && visible);
 			ret.add(toExcuse(hib, e, decide && "PENDING".equals(e.getStatus())));
 		}
 		return ret;
