@@ -131,10 +131,16 @@ export class Solver implements OnInit, OnDestroy {
    */
   operation(op: SolverOperation, label: string, confirmText?: string): void {
     if (confirmText) {
+      const danger = op === 'UNLOAD';
       this.confirm.confirm({
         header: label,
         message: confirmText,
-        icon: 'pi pi-exclamation-triangle',
+        icon: danger ? 'pi pi-exclamation-triangle' : 'pi pi-question-circle',
+        acceptLabel: label,
+        rejectLabel: 'Cancel',
+        acceptButtonStyleClass: danger ? 'p-button-danger' : undefined,
+        rejectButtonStyleClass: 'p-button-text p-button-secondary',
+        defaultFocus: 'reject',
         accept: () => this.runAsync(op, label),
       });
     } else {

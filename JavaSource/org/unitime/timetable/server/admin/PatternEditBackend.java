@@ -213,12 +213,12 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 
 	protected void saveDate(PatternRecord record, Long sessionId, SessionContext context) {
 		if (record == null)
-			throw new GwtRpcException("No date pattern provided.");
+			throw new GwtRpcException("No teaching-week pattern provided.");
 		boolean create = (record.getId() == null || record.getId() < 0);
 		if (record.getName() == null || record.getName().trim().isEmpty())
 			throw new GwtRpcException("Name is required.");
 		if (record.getType() != null && (record.getType() < 0 || record.getType() >= DatePatternType.values().length))
-			throw new GwtRpcException("Invalid date pattern type.");
+			throw new GwtRpcException("Invalid teaching-week pattern type.");
 		if (create && record.getType() == null)
 			throw new GwtRpcException("Type is required.");
 		String name = record.getName().trim();
@@ -234,7 +234,7 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 			DatePattern dp;
 			if (create) {
 				if (sameName != null)
-					throw new GwtRpcException("A date pattern named " + name + " already exists.");
+					throw new GwtRpcException("A teaching-week pattern named " + name + " already exists.");
 				// Mirrors DatePatternEditForm.create (no departments / parents / children).
 				dp = new DatePattern();
 				dp.setSession(SessionDAO.getInstance().get(sessionId, hibSession));
@@ -245,14 +245,14 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 			} else {
 				dp = DatePatternDAO.getInstance().get(record.getId(), hibSession);
 				if (dp == null)
-					throw new GwtRpcException("The date pattern no longer exists.");
+					throw new GwtRpcException("The teaching-week pattern no longer exists.");
 				if (dp.getSession() == null || !sessionId.equals(dp.getSession().getUniqueId()))
-					throw new GwtRpcException("The date pattern does not belong to the current academic session.");
+					throw new GwtRpcException("The teaching-week pattern does not belong to the current academic session.");
 				if (sameName != null && !sameName.getUniqueId().equals(dp.getUniqueId()))
-					throw new GwtRpcException("A date pattern named " + name + " already exists.");
+					throw new GwtRpcException("A teaching-week pattern named " + name + " already exists.");
 			}
 			if (dp.getSession() == null)
-				throw new GwtRpcException("The date pattern has no academic session.");
+				throw new GwtRpcException("The teaching-week pattern has no academic session.");
 
 			// Merge-on-update: descriptive fields plus (optionally) the day bitmap.
 			// numberOfWeeks and the department / parent / child collections are
@@ -281,7 +281,7 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 			if (!patternSet && nrDays == 0)
 				throw new GwtRpcException("Please select at least one date.");
 			if (dp.getPattern() != null && dp.getPattern().length() > 366)
-				throw new GwtRpcException("The date pattern is too long (more than 366 days between the first and the last selected date).");
+				throw new GwtRpcException("The teaching-week pattern is too long (more than 366 days between the first and the last selected date).");
 
 			if (create)
 				hibSession.persist(dp);
@@ -343,7 +343,7 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 
 	protected void deleteDate(PatternRecord record, Long sessionId, SessionContext context) {
 		if (record == null || record.getId() == null || record.getId() < 0)
-			throw new GwtRpcException("No date pattern provided.");
+			throw new GwtRpcException("No teaching-week pattern provided.");
 
 		Transaction tx = null;
 		org.hibernate.Session hibSession = DatePatternDAO.getInstance().getSession();
@@ -352,16 +352,16 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 
 			DatePattern dp = DatePatternDAO.getInstance().get(record.getId(), hibSession);
 			if (dp == null)
-				throw new GwtRpcException("The date pattern no longer exists.");
+				throw new GwtRpcException("The teaching-week pattern no longer exists.");
 			if (dp.getSession() == null || !sessionId.equals(dp.getSession().getUniqueId()))
-				throw new GwtRpcException("The date pattern does not belong to the current academic session.");
+				throw new GwtRpcException("The teaching-week pattern does not belong to the current academic session.");
 			if (dp.equals(dp.getSession().getDefaultDatePattern()))
-				throw new GwtRpcException("The default date pattern cannot be deleted.");
+				throw new GwtRpcException("The default teaching weeks cannot be deleted.");
 			if (DatePattern.findAllUsed(sessionId).contains(dp))
-				throw new GwtRpcException("The date pattern is in use and cannot be deleted.");
+				throw new GwtRpcException("The teaching-week pattern is in use and cannot be deleted.");
 			if ((dp.getParents() != null && !dp.getParents().isEmpty())
 					|| (dp.getChildren() != null && !dp.getChildren().isEmpty()))
-				throw new GwtRpcException("The date pattern is part of an alternate pattern set; manage it on the legacy page.");
+				throw new GwtRpcException("The teaching-week pattern is part of an alternate pattern set; manage it on the legacy page.");
 
 			// Clear the (owning-side) department links before removing the pattern.
 			if (dp.getDepartments() != null) {
@@ -447,12 +447,12 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 
 	protected void saveTime(PatternRecord record, Long sessionId, SessionContext context) {
 		if (record == null)
-			throw new GwtRpcException("No time pattern provided.");
+			throw new GwtRpcException("No meeting-time pattern provided.");
 		boolean create = (record.getId() == null || record.getId() < 0);
 		if (record.getName() == null || record.getName().trim().isEmpty())
 			throw new GwtRpcException("Name is required.");
 		if (record.getType() != null && (record.getType() < 0 || record.getType() >= TimePatternType.values().length))
-			throw new GwtRpcException("Invalid time pattern type.");
+			throw new GwtRpcException("Invalid meeting-time pattern type.");
 		if (create && record.getType() == null)
 			throw new GwtRpcException("Type is required.");
 		String name = record.getName().trim();
@@ -468,18 +468,18 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 			TimePattern tp;
 			if (create) {
 				if (sameName != null)
-					throw new GwtRpcException("A time pattern named " + name + " already exists.");
+					throw new GwtRpcException("A meeting-time pattern named " + name + " already exists.");
 				tp = new TimePattern();
 				tp.setSession(SessionDAO.getInstance().get(sessionId, hibSession));
 				tp.setDepartments(new HashSet<Department>());
 			} else {
 				tp = TimePatternDAO.getInstance().get(record.getId(), hibSession);
 				if (tp == null)
-					throw new GwtRpcException("The time pattern no longer exists.");
+					throw new GwtRpcException("The meeting-time pattern no longer exists.");
 				if (tp.getSession() == null || !sessionId.equals(tp.getSession().getUniqueId()))
-					throw new GwtRpcException("The time pattern does not belong to the current academic session.");
+					throw new GwtRpcException("The meeting-time pattern does not belong to the current academic session.");
 				if (sameName != null && !sameName.getUniqueId().equals(tp.getUniqueId()))
-					throw new GwtRpcException("A time pattern named " + name + " already exists.");
+					throw new GwtRpcException("A meeting-time pattern named " + name + " already exists.");
 			}
 
 			// Merge-on-update: descriptive fields plus (optionally) the day/time grid.
@@ -538,7 +538,7 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 			}
 
 			if (create && !exact && (newDays == null || newDays.isEmpty() || newTimes == null || newTimes.isEmpty()))
-				throw new GwtRpcException("A time pattern needs at least one day and one start time.");
+				throw new GwtRpcException("A meeting-time pattern needs at least one day and one start time.");
 			if (create) {
 				// Mirrors TimePatternEditForm.create: persist days / times, then the pattern.
 				tp.setDays(newDays == null ? new HashSet<TimePatternDays>() : new HashSet<TimePatternDays>(newDays));
@@ -644,7 +644,7 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 
 	protected void deleteTime(PatternRecord record, Long sessionId, SessionContext context) {
 		if (record == null || record.getId() == null || record.getId() < 0)
-			throw new GwtRpcException("No time pattern provided.");
+			throw new GwtRpcException("No meeting-time pattern provided.");
 
 		Transaction tx = null;
 		org.hibernate.Session hibSession = TimePatternDAO.getInstance().getSession();
@@ -653,11 +653,11 @@ public class PatternEditBackend implements GwtRpcImplementation<PatternEditReque
 
 			TimePattern tp = TimePatternDAO.getInstance().get(record.getId(), hibSession);
 			if (tp == null)
-				throw new GwtRpcException("The time pattern no longer exists.");
+				throw new GwtRpcException("The meeting-time pattern no longer exists.");
 			if (tp.getSession() == null || !sessionId.equals(tp.getSession().getUniqueId()))
-				throw new GwtRpcException("The time pattern does not belong to the current academic session.");
+				throw new GwtRpcException("The meeting-time pattern does not belong to the current academic session.");
 			if (TimePattern.findAllUsed(sessionId).contains(tp))
-				throw new GwtRpcException("The time pattern is in use and cannot be deleted.");
+				throw new GwtRpcException("The meeting-time pattern is in use and cannot be deleted.");
 
 			// Clear the (owning-side) department links before removing the pattern.
 			if (tp.getDepartments() != null) {

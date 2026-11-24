@@ -48,10 +48,12 @@ import org.unitime.timetable.gwt.shared.TableInterface.TableRowInterface;
 import org.unitime.timetable.model.Assignment;
 import org.unitime.timetable.model.Class_;
 import org.unitime.timetable.model.CourseOffering;
+import org.unitime.timetable.model.DepartmentalInstructor;
 import org.unitime.timetable.model.PreferenceLevel;
 import org.unitime.timetable.model.Solution;
 import org.unitime.timetable.model.SolverGroup;
 import org.unitime.timetable.model.dao.Class_DAO;
+import org.unitime.timetable.model.dao.DepartmentalInstructorDAO;
 import org.unitime.timetable.model.dao.SolutionDAO;
 import org.unitime.timetable.security.SessionContext;
 import org.unitime.timetable.security.rights.Right;
@@ -62,6 +64,7 @@ import org.unitime.timetable.solver.service.SolverService;
 import org.unitime.timetable.solver.ui.AssignmentPreferenceInfo;
 import org.unitime.timetable.util.Constants;
 import org.unitime.timetable.webutil.BackTracker;
+import org.unitime.timetable.util.NameFormat;
 
 /**
  * @author Tomas Muller
@@ -102,6 +105,9 @@ public class AssignedClassesBackend implements GwtRpcImplementation<AssignedClas
 		String subjects = request.getFilter().getParameterValue("subjectArea");
 		context.setAttribute(SessionAttribute.OfferingsSubjectArea, isAllSubjects(subjects) ? Constants.ALL_OPTION_VALUE : request.getFilter().getParameterValue("subjectArea"));
 		String instructorNameFormat = UserProperty.NameFormat.get(context.getUser());
+		// The Instructor column shows full names ("Tan, Wei Ling", not "Tan, W"), also when the names come from a loaded solver.
+		String fullNameFormat = NameFormat.toFull(instructorNameFormat);
+		Map<Long, String> fullNames = new HashMap<Long, String>();
 
 		String solutionIdsStr = (String)context.getAttribute(SessionAttribute.SelectedSolution);
 		if (solver == null) {
@@ -209,7 +215,7 @@ public class AssignedClassesBackend implements GwtRpcImplementation<AssignedClas
     	    TableInterface.TableCellItems instructors = new TableInterface.TableCellItems();
     	    if (ca.getInstructor() != null)
     	    	for (int i = 0; i < ca.getInstructor().length; i++) {
-    	    		instructors.add(ca.getInstructor()[i].getName(), ca.getInstructor()[i].getColor(), ca.getInstructor()[i].getId());
+    	    		instructors.add(fullName(ca.getInstructor()[i], fullNameFormat, fullNames), ca.getInstructor()[i].getColor(), ca.getInstructor()[i].getId());
     	    	}
     	    TimeInfo time = (ca.getAssignedTime() != null ? ca.getAssignedTime() : ca.getTime());
     	    
@@ -254,29 +260,29 @@ public class AssignedClassesBackend implements GwtRpcImplementation<AssignedClas
 		
 		if (simple)
 			response.setHeader(
-					new TableHeaderIterface(MESSAGES.colClass()),
-					new TableHeaderIterface(MESSAGES.colDate()),
-					new TableHeaderIterface(MESSAGES.colTime()),
-					new TableHeaderIterface(MESSAGES.colRoom()),
-					new TableHeaderIterface(MESSAGES.colInstructor()),
-					new TableHeaderIterface(MESSAGES.colNrStudentConflicts()));
+					new TableHeaderIterface(MESSAGES.colClass()).setDescription(DESC_CLASS),
+					new TableHeaderIterface(MESSAGES.colDate()).setDescription(DESC_DATE),
+					new TableHeaderIterface(MESSAGES.colTime()).setDescription(DESC_TIME),
+					new TableHeaderIterface(MESSAGES.colRoom()).setDescription(DESC_ROOM),
+					new TableHeaderIterface(MESSAGES.colInstructor()).setDescription(DESC_INSTRUCTOR),
+					new TableHeaderIterface(MESSAGES.colNrStudentConflicts()).setDescription(DESC_STUDENTS));
 		else
 			response.setHeader(
-					new TableHeaderIterface(MESSAGES.colClass()),
-					new TableHeaderIterface(MESSAGES.colDate()),
-					new TableHeaderIterface(MESSAGES.colTime()),
-					new TableHeaderIterface(MESSAGES.colRoom()),
-					new TableHeaderIterface(MESSAGES.colInstructor()),
-					new TableHeaderIterface(MESSAGES.colShortStudentConflicts()),
-					new TableHeaderIterface(MESSAGES.colShortTimePref()),
-					new TableHeaderIterface(MESSAGES.colShortRoomPref()),
-					new TableHeaderIterface(MESSAGES.colShortDistPref()),
-					new TableHeaderIterface(MESSAGES.colShortInstructorBtbPref()),
-					new TableHeaderIterface(MESSAGES.colShortUselessHalfHours()),
-					new TableHeaderIterface(MESSAGES.colShortTooBigRooms()),
-					new TableHeaderIterface(MESSAGES.colShortDepartmentBalance()),
-					new TableHeaderIterface(MESSAGES.colShortSameSubpartBalance()),
-					new TableHeaderIterface(MESSAGES.colShortPerturbations()));
+					new TableHeaderIterface(MESSAGES.colClass()).setDescription(DESC_CLASS),
+					new TableHeaderIterface(MESSAGES.colDate()).setDescription(DESC_DATE),
+					new TableHeaderIterface(MESSAGES.colTime()).setDescription(DESC_TIME),
+					new TableHeaderIterface(MESSAGES.colRoom()).setDescription(DESC_ROOM),
+					new TableHeaderIterface(MESSAGES.colInstructor()).setDescription(DESC_INSTRUCTOR),
+					new TableHeaderIterface(MESSAGES.colShortStudentConflicts()).setDescription(DESC_STUDENTS),
+					new TableHeaderIterface(MESSAGES.colShortTimePref()).setDescription("Time preference: the sum of the preferences for the assigned time. " + DESC_PENALTY),
+					new TableHeaderIterface(MESSAGES.colShortRoomPref()).setDescription("Room preference: the sum of the preferences for the assigned room(s). " + DESC_PENALTY),
+					new TableHeaderIterface(MESSAGES.colShortDistPref()).setDescription("Distribution preferences: the penalty of the distribution rules this class is part of (for example Precedence or Back-To-Back) that this placement satisfies or breaks. " + DESC_PENALTY),
+					new TableHeaderIterface(MESSAGES.colShortInstructorBtbPref()).setDescription("Instructor back-to-back: penalty when a lecturer of this class has a class right before or after it in a room too far away. " + DESC_PENALTY),
+					new TableHeaderIterface(MESSAGES.colShortUselessHalfHours()).setDescription("Useless half-hours: half-hour gaps this placement leaves in the room's day that are too short for any other class. 0 is best."),
+					new TableHeaderIterface(MESSAGES.colShortTooBigRooms()).setDescription("Too big rooms: penalty for a room much larger than the class needs. 0 is best."),
+					new TableHeaderIterface(MESSAGES.colShortDepartmentBalance()).setDescription("Department balancing: penalty when the school's classes take more than their fair share of a time slot. 0 is best."),
+					new TableHeaderIterface(MESSAGES.colShortSameSubpartBalance()).setDescription("Same subpart balancing: penalty when classes of the same subpart (for example the laboratories of one course) are bunched at the same times instead of spread over the week. 0 is best."),
+					new TableHeaderIterface(MESSAGES.colShortPerturbations()).setDescription("Perturbations: penalty for differences from the previous timetable, so that a re-solve moves as few classes as possible. 0 means unchanged."));
 		
 		SolverPageBackend.fillSolverWarnings(context, solver, SolverType.COURSE, response);
 		BackTracker.markForBack(context, "gwt.jsp?page=assignedClasses", MESSAGES.pageAssignedClasses(), true, true);
@@ -287,6 +293,26 @@ public class AssignedClassesBackend implements GwtRpcImplementation<AssignedClas
 		return response;
 	}
 	
+	private static final String DESC_PENALTY = "Negative values (green) are preferred, positive values (red) are discouraged, 0 is neutral.";
+	private static final String DESC_CLASS = "The class: course, subpart and class number. Click a row to see why the class is placed here, its alternatives and the impact of moving it.";
+	private static final String DESC_DATE = "Teaching Weeks: the weeks of the term the class meets in. The colour shows the preference for this pattern.";
+	private static final String DESC_TIME = "Meeting Time: the days and the start and end time assigned by the solver. The colour shows the preference for this time (green preferred, red discouraged).";
+	private static final String DESC_ROOM = "The room(s) assigned by the solver. The colour shows the preference for this room.";
+	private static final String DESC_INSTRUCTOR = "The lecturer(s) teaching the class.";
+	private static final String DESC_STUDENTS = "Student conflicts: the number of students who also have another class at an overlapping time. "
+			+ "In brackets: c = conflicts with committed timetables of other schools, d = distance conflicts (back-to-back classes in rooms too far apart), "
+			+ "h = hard conflicts that student sectioning cannot remove (both classes have a single section). 0 is best.";
+
+	/** Full name of a class instructor; special instructor constraints (negative ids) keep the solver's label. */
+	private static String fullName(ClassAssignmentDetails.InstructorInfo instructor, String nameFormat, Map<Long, String> cache) {
+		Long id = instructor.getId();
+		if (id == null || id < 0) return instructor.getName();
+		return cache.computeIfAbsent(id, k -> {
+			DepartmentalInstructor di = DepartmentalInstructorDAO.getInstance().get(k);
+			return (di == null ? instructor.getName() : di.getName(nameFormat));
+		});
+	}
+
 	public TableCellInterface dispNumber(int value) {
 		return new TableCellInterface<Integer>(value).setColor(value < 0 ? "green" : value > 0 ? "red" : null);
 	}

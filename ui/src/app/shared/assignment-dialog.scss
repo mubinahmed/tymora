@@ -253,3 +253,8 @@ th.r, td.r { text-align: right; font-variant-numeric: tabular-nums; }
   .pi { color: var(--ut-blue); }
   &.muted { color: var(--ut-muted); .pi { color: var(--asg-better); } }
 }
+
+// Preview in the suggestions list scrolls the impact section into view and flashes it briefly.
+.asg-flash { animation: asg-flash 1.5s ease-out; }
+@keyframes asg-flash { 0%, 20% { box-shadow: 0 0 0 3px var(--ut-blue); } 100% { box-shadow: 0 0 0 3px transparent; } }
+@media (prefers-reduced-motion: reduce) { .asg-flash { animation: none; outline: 3px solid var(--ut-blue); } }

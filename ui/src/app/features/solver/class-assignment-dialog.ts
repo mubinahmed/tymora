@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -106,6 +106,9 @@ export class ClassAssignmentDialog {
 
   protected readonly previewing = signal(false);
   protected readonly preview = signal<Suggestion | null>(null);
+  /** Section 3 ("Impact of the change") sits above the suggestions list; Preview scrolls it into view and flashes it. */
+  private readonly impactSection = viewChild<ElementRef<HTMLElement>>('impactSection');
+  protected readonly flashImpact = signal(false);
   protected readonly previewError = signal<string | null>(null);
 
   protected readonly computing = signal(false);
@@ -377,7 +380,7 @@ export class ClassAssignmentDialog {
   }
 
   /** Adopt a suggestion: it becomes the pending change (preview = the suggestion itself). */
-  protected pickSuggestion(s: Suggestion): void {
+  protected pickSuggestion(s: Suggestion, reveal = false): void {
     const classId = this.details()?.class?.classId;
     const mine = (s.differentAssignments ?? []).find((d) => d.class?.classId === classId);
     if (mine?.assignedTime) {
@@ -390,6 +393,20 @@ export class ClassAssignmentDialog {
     this.preview.set(s);
     this.previewError.set(null);
     this.confirming.set(false);
+    if (reveal) this.revealImpact();
+  }
+
+  /** Scroll the impact section into view (it is above the suggestions) and flash it so the change is noticed. */
+  private revealImpact(): void {
+    setTimeout(() => {
+      const el = this.impactSection()?.nativeElement;
+      if (!el) return;
+      const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      this.flashImpact.set(false);
+      setTimeout(() => this.flashImpact.set(true));
+      setTimeout(() => this.flashImpact.set(false), 1600);
+    });
   }
 
   protected loadPlacements(): void {

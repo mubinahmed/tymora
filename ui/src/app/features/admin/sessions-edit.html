@@ -12,7 +12,7 @@
         <span class="section-icon"><i class="pi pi-calendar"></i></span>
         <div>
           <h2>{{ label() || 'Edit Academic Session' }}</h2>
-          <p>The date &amp; time pattern editors and roll-forward are managed on the classic page and left unchanged.</p>
+          <p>The teaching weeks and meeting times editors and roll-forward are managed on the classic page and left unchanged.</p>
         </div>
       </div>
 
@@ -86,7 +86,7 @@
 
       <div class="form-grid">
         <div class="field">
-          <label for="e-dp">Default Date Pattern</label>
+          <label for="e-dp">Default Teaching Weeks</label>
           <p-select inputId="e-dp" [options]="datePatternOptions()" [(ngModel)]="model.defaultDatePatternId"
             optionLabel="label" optionValue="value" [disabled]="!canEdit()" appendTo="body" styleClass="w-full" />
         </div>

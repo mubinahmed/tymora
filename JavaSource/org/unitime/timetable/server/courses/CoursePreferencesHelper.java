@@ -239,7 +239,7 @@ public class CoursePreferencesHelper {
 				if (g == null) continue;
 				TimePattern timePattern = (g.getTimePatternId() == null || g.getTimePatternId() < 0 ? null : TimePatternDAO.getInstance().get(g.getTimePatternId()));
 				if (g.getTimePatternId() != null && g.getTimePatternId() >= 0 && timePattern == null)
-					throw new GwtRpcException("Time pattern " + g.getTimePatternId() + " does not exist.");
+					throw new GwtRpcException("Meeting-time pattern " + g.getTimePatternId() + " does not exist.");
 				if (timePattern != null && !seenPatterns.add(timePattern.getUniqueId())) continue;
 
 				String preference;

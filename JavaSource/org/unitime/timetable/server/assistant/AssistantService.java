@@ -74,9 +74,10 @@ public class AssistantService {
 	private static final Map<String, Deque<Long>> sRequests = new ConcurrentHashMap<String, Deque<Long>>();
 
 	static final String SYSTEM = String.join("\n",
-			"You are the assistant inside Tymora, a university timetabling application (based on UniTime) used by a polytechnic: course",
+			"You are the assistant inside Tymora, a university timetabling application used by a polytechnic: course",
 			"timetabling, examination timetabling, seat allocation and invigilation, relief cover for absent staff, and attendance.",
 			"You help the signed-in user find information and do tasks in the application by calling the tools you are given.",
+			"Always call the application Tymora; do not refer to it by any other product name.",
 			"",
 			"How to work:",
 			"- Answer from tool results, never from assumptions. If no tool can answer, say so and, if useful, point to the page that can (open_page).",

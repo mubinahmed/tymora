@@ -10,6 +10,8 @@ interface Col {
   index: number;
   name: string;
   align: string;
+  /** header description from the server, shown as the column's tooltip */
+  description: string;
 }
 
 /**
@@ -45,7 +47,12 @@ export class RpcTable {
     (this.table()?.header ?? [])
       .map((h, index) => ({ h, index }))
       .filter((c) => c.h.visible !== false)
-      .map((c) => ({ index: c.index, name: c.h.name ?? '', align: this.align(c.h.alignment) })),
+      .map((c) => ({
+        index: c.index,
+        name: c.h.name ?? '',
+        align: this.align(c.h.alignment),
+        description: c.h.description ?? '',
+      })),
   );
   protected readonly rows = computed<TableRowInterface[]>(() => this.table()?.rows ?? []);
 

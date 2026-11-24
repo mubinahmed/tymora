@@ -10,7 +10,7 @@
         <span class="section-icon"><i class="pi pi-calendar-plus"></i></span>
         <div>
           <h2>Add Academic Session</h2>
-          <p>Create a new term. The holidays calendar, date &amp; time patterns and roll-forward are set up afterwards on the classic page.</p>
+          <p>Create a new term. The holidays calendar, teaching weeks, meeting times and roll-forward are set up afterwards on the classic page.</p>
         </div>
       </div>
 
@@ -85,13 +85,13 @@
         <span class="section-icon"><i class="pi pi-cog"></i></span>
         <div>
           <h2>Defaults</h2>
-          <p>Optional. Session-scoped date patterns become available after the session is created.</p>
+          <p>Optional. Session teaching weeks become available after the session is created.</p>
         </div>
       </div>
 
       <div class="form-grid">
         <div class="field">
-          <label for="s-dp">Default Date Pattern</label>
+          <label for="s-dp">Default Teaching Weeks</label>
           <p-select inputId="s-dp" [options]="datePatternOptions()" [(ngModel)]="model.defaultDatePatternId"
             optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full" [disabled]="!datePatterns().length" />
         </div>
@@ -147,7 +147,7 @@
     </fieldset>
 
     <p-message severity="info"
-      text="The interactive holidays calendar, the date & time pattern editors and roll-forward remain on the classic page." />
+      text="The interactive holidays calendar, the teaching weeks and meeting times editors and roll-forward remain on the classic page." />
 
     <div class="form-actions">
       <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="back()" [disabled]="saving()" />

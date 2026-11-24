@@ -25,10 +25,10 @@
             optionLabel="name" optionValue="id" [filter]="true" filterBy="name" appendTo="body" />
         </div>
         <div class="field">
-          <label for="se-dp">Date Pattern</label>
+          <label for="se-dp">Teaching Weeks</label>
           <p-select inputId="se-dp" formControlName="datePatternId" [options]="datePatternOptions()"
             optionLabel="name" optionValue="id" appendTo="body" />
-          @if (!d.datePatternEditable) { <small class="hint">Date pattern is locked (configuration has enrollment).</small> }
+          @if (!d.datePatternEditable) { <small class="hint">Teaching weeks are locked (the configuration has enrolments).</small> }
         </div>
       </div>
 

@@ -47,13 +47,13 @@ export class DatePatternDisplay implements OnInit {
   protected readonly DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   ngOnInit(): void {
-    this.page.set('Date Pattern');
+    this.page.set('Teaching Weeks');
     const dpId = this.id() == null ? NaN : Number(this.id());
     const request: DispDatePatternRequest = Number.isFinite(dpId) ? { datePatternId: dpId } : {};
     this.rpc.execute<DispDatePatternResponse>('DispDatePatternRequest', request).subscribe({
       next: (d) => {
         this.data.set(d);
-        if (d.name) this.page.set('Date Pattern — ' + d.name);
+        if (d.name) this.page.set('Teaching Weeks — ' + d.name);
         this.months.set(this.buildMonths(d));
         this.loading.set(false);
       },

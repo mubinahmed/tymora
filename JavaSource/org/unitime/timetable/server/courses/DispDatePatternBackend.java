@@ -53,7 +53,7 @@ public class DispDatePatternBackend implements GwtRpcImplementation<DispDatePatt
 	public DispDatePatternResponse execute(DispDatePatternRequest request, SessionContext context) {
 		DatePattern dp = resolve(request, context);
 		if (dp == null)
-			throw new GwtRpcException("No date pattern could be resolved.");
+			throw new GwtRpcException("No teaching-week pattern could be resolved.");
 
 		DispDatePatternResponse response = new DispDatePatternResponse();
 		response.setId(dp.getUniqueId());

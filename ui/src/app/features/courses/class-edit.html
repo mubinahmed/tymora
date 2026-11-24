@@ -39,10 +39,10 @@
           <p-inputNumber inputId="ce-nbr" formControlName="nbrRooms" [useGrouping]="false" [min]="0" />
         </div>
         <div class="field">
-          <label for="ce-dp">Date Pattern</label>
+          <label for="ce-dp">Teaching Weeks</label>
           <p-select inputId="ce-dp" formControlName="datePatternId" [options]="datePatternOptions()"
             optionLabel="name" optionValue="id" appendTo="body" />
-          @if (!d.datePatternEditable) { <small class="hint">Date pattern is locked (class has enrollment).</small> }
+          @if (!d.datePatternEditable) { <small class="hint">Teaching weeks are locked (the class has enrolments).</small> }
         </div>
         <div class="field field-check" style="align-self:end; padding-bottom:0.5rem;">
           <p-checkbox inputId="ce-split" formControlName="splitAttendance" [binary]="true" />

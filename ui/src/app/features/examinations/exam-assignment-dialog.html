@@ -164,7 +164,7 @@
     }
 
     <!-- 4. impact -->
-    <section class="asg-section">
+    <section class="asg-section" #impactSection [class.asg-flash]="flashImpact()">
       <h3><span class="num">{{ d.maxRooms ? 4 : 3 }}</span> Impact of the change <span class="h-note">shown before anything is saved</span></h3>
       @if (d.change; as ch) {
         <p-table [value]="ch.lines ?? []" styleClass="p-datatable-sm asg-click" [rowHover]="true">

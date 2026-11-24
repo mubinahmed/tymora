@@ -8,6 +8,9 @@ import { PageNameInterface } from './models';
  * (the endpoint the Wave 0 proof exercised) and exposes it as a signal the
  * shell renders. Each feature calls set('Raw Name') on init.
  */
+/** Browser tab title, the same on every page (the page name is shown in the page header). */
+export const APP_TITLE = 'Upskill - Tymora';
+
 @Injectable({ providedIn: 'root' })
 export class PageService {
   private rpc = inject(RpcService);
@@ -18,14 +21,13 @@ export class PageService {
   set(rawName: string): void {
     this.title.set(rawName);
     this.helpUrl.set(undefined);
-    document.title = `${rawName} - UniTime`;
+    document.title = APP_TITLE;
     this.rpc
       .execute<PageNameInterface>('PageNameRpcRequest', { name: rawName })
       .pipe(catchError(() => of<PageNameInterface>({ name: rawName })))
       .subscribe((p) => {
         this.title.set(p.name ?? rawName);
         this.helpUrl.set(p.helpUrl);
-        document.title = `${p.name ?? rawName} - UniTime`;
       });
   }
 }

@@ -25,7 +25,9 @@ import {
   ScriptInterface,
   ScriptOptionsInterface,
   ScriptParameterInterface,
-} from '../../core/models';
+} from '../../core/models';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 /**
  * Scripts admin page (command pattern). Lists custom scripts, runs a selected one
@@ -46,7 +48,7 @@ import {
  */
 @Component({
   selector: 'app-scripts',
-  imports: [
+  imports: [ConfirmDialogModule, 
     FormsModule,
     TableModule,
     ButtonModule,
@@ -61,11 +63,13 @@ import {
     InputNumberModule,
     DialogModule,
     TagModule,
-  ],
+  ],
+  providers: [ConfirmationService],
   templateUrl: './scripts.html',
 })
 export class Scripts implements OnInit, OnDestroy {
   private rpc = inject(RpcService);
+  private confirmation = inject(ConfirmationService);
   private page = inject(PageService);
 
   protected readonly loading = signal(false);
@@ -359,11 +363,22 @@ export class Scripts implements OnInit, OnDestroy {
   deleteScript(): void {
     const s = this.selectedScript();
     if (!s?.id) return;
-    if (!confirm(`Delete script "${s.name}"?`)) return;
-    const request: DeleteScriptRpcRequest = { id: s.id, name: s.name };
-    this.rpc.execute<ScriptInterface>('DeleteScriptRpcRequest', request).subscribe({
-      next: () => this.reload(null),
-      error: (e: ApiError) => this.error.set(e.message),
+    this.confirmation.confirm({
+      header: 'Delete the script',
+      message: `Delete script "${s.name}"?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      defaultFocus: 'reject',
+      accept: () => {
+        const request: DeleteScriptRpcRequest = { id: s.id, name: s.name };
+        this.rpc.execute<ScriptInterface>('DeleteScriptRpcRequest', request).subscribe({
+          next: () => this.reload(null),
+          error: (e: ApiError) => this.error.set(e.message),
+        });
+      },
     });
   }
 

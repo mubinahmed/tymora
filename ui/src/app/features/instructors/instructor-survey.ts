@@ -16,7 +16,9 @@ import {
   InstructorSurveyData,
   Preferences,
   Selection,
-} from '../../core/models';
+} from '../../core/models';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 /** One editable preference selection line (item + level + optional note). */
 interface PrefRow {
@@ -59,7 +61,7 @@ interface CourseRow {
  */
 @Component({
   selector: 'app-instructor-survey',
-  imports: [
+  imports: [ConfirmDialogModule, 
     FormsModule,
     ButtonModule,
     InputTextModule,
@@ -67,7 +69,8 @@ interface CourseRow {
     SelectModule,
     MessageModule,
     ProgressSpinnerModule,
-  ],
+  ],
+  providers: [ConfirmationService],
   templateUrl: './instructor-survey.html',
   styles: [
     `
@@ -90,6 +93,7 @@ interface CourseRow {
 })
 export class InstructorSurvey implements OnInit {
   private rpc = inject(RpcService);
+  private confirmation = inject(ConfirmationService);
   private page = inject(PageService);
 
   protected readonly loading = signal(false);
@@ -245,13 +249,30 @@ export class InstructorSurvey implements OnInit {
   }
 
   submit(): void {
-    if (!window.confirm('Submit your instructor survey? You may no longer be able to edit it afterwards.')) return;
-    this.run({ data: this.buildData(), submit: true });
+    this.confirmation.confirm({
+      header: 'Submit the survey',
+      message: 'Submit your instructor survey? You may no longer be able to edit it afterwards.',
+      icon: 'pi pi-question-circle',
+      acceptLabel: 'Submit',
+      rejectLabel: 'Cancel',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      defaultFocus: 'reject',
+      accept: () => this.run({ data: this.buildData(), submit: true }),
+    });
   }
 
   unsubmit(): void {
-    if (!window.confirm('Unsubmit this instructor survey?')) return;
-    this.run({ data: this.buildData(), submit: false, unsubmit: true });
+    this.confirmation.confirm({
+      header: 'Unsubmit the survey',
+      message: 'Unsubmit this instructor survey?',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Unsubmit',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      defaultFocus: 'reject',
+      accept: () => this.run({ data: this.buildData(), submit: false, unsubmit: true }),
+    });
   }
 
   private run(request: { data: InstructorSurveyData; submit: boolean; unsubmit?: boolean }): void {

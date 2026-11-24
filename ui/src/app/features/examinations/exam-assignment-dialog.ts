@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -246,9 +246,25 @@ export class ExamAssignmentDialog {
     this.call({ operation: 'SUGGESTIONS', depth: this.depth, timeout: Math.round(this.timeoutSec * 1000) });
   }
 
+  /** The impact section sits above the suggestions list: once the suggestion is selected, scroll it into view and flash it. */
+  private readonly impactSection = viewChild<ElementRef<HTMLElement>>('impactSection');
+  protected readonly flashImpact = signal(false);
+
   protected pickSuggestion(index: number): void {
     this.confirming.set(false);
-    this.call({ operation: 'SELECT_SUGGESTION', suggestionIndex: index });
+    this.call({ operation: 'SELECT_SUGGESTION', suggestionIndex: index }, () => this.revealImpact());
+  }
+
+  private revealImpact(): void {
+    setTimeout(() => {
+      const el = this.impactSection()?.nativeElement;
+      if (!el) return;
+      const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      this.flashImpact.set(false);
+      setTimeout(() => this.flashImpact.set(true));
+      setTimeout(() => this.flashImpact.set(false), 1600);
+    });
   }
 
   protected reasonValid(): boolean {

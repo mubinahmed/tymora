@@ -22,6 +22,8 @@ import {
   TaskOptionsInterface,
 } from '../../core/models';
 import { DisplayDatePipe } from '../../shared/display-date.pipe';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 /**
  * Task Scheduler admin page (legacy GWT TasksPage, command pattern). Lists the
@@ -41,7 +43,7 @@ import { DisplayDatePipe } from '../../shared/display-date.pipe';
  */
 @Component({
   selector: 'app-task-scheduler',
-  imports: [DisplayDatePipe, 
+  imports: [ConfirmDialogModule, DisplayDatePipe, 
     FormsModule,
     TableModule,
     ButtonModule,
@@ -51,11 +53,13 @@ import { DisplayDatePipe } from '../../shared/display-date.pipe';
     CardModule,
     TagModule,
     DialogModule,
-  ],
+  ],
+  providers: [ConfirmationService],
   templateUrl: './task-scheduler.html',
 })
 export class TaskScheduler implements OnInit {
   private rpc = inject(RpcService);
+  private confirmation = inject(ConfirmationService);
   private page = inject(PageService);
 
   protected readonly loading = signal(false);
@@ -112,15 +116,26 @@ export class TaskScheduler implements OnInit {
 
   deleteTask(task: TaskInterface): void {
     if (!task.id || !task.canEdit) return;
-    if (!confirm(`Delete task "${task.name}"?`)) return;
-    const request: DeleteTaskDetailsRpcRequest = { taskId: task.id };
-    this.loading.set(true);
-    this.rpc.execute<TaskInterface>('DeleteTaskDetailsRpcRequest', request).subscribe({
-      next: () => {
-        this.selected.set(null);
-        this.reload();
+    this.confirmation.confirm({
+      header: 'Delete the task',
+      message: `Delete task "${task.name}"?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      defaultFocus: 'reject',
+      accept: () => {
+        const request: DeleteTaskDetailsRpcRequest = { taskId: task.id };
+        this.loading.set(true);
+        this.rpc.execute<TaskInterface>('DeleteTaskDetailsRpcRequest', request).subscribe({
+          next: () => {
+            this.selected.set(null);
+            this.reload();
+          },
+          error: (e: ApiError) => this.fail(e),
+        });
       },
-      error: (e: ApiError) => this.fail(e),
     });
   }
 

@@ -9,6 +9,8 @@ import { MessageModule } from 'primeng/message';
 import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { RpcService } from '../../core/rpc.service';
 import { PageService } from '../../core/page.service';
 import { ThemeService } from '../../core/theme.service';
@@ -57,11 +59,14 @@ interface Col {
     CardModule,
     TagModule,
     ProgressSpinnerModule,
+    ConfirmDialogModule,
   ],
+  providers: [ConfirmationService],
   templateUrl: './list-solutions.html',
 })
 export class ListSolutions implements OnInit {
   private readonly theme = inject(ThemeService);
+  private readonly confirmation = inject(ConfirmationService);
   /** Server-sent cell text colour, adjusted for readable contrast on the current theme. */
   /** Cell display HTML: formattedValue, or the value / rooms / items / chunks the server sent instead. */
   protected cellHtml(cell: unknown): string {
@@ -188,9 +193,42 @@ export class ListSolutions implements OnInit {
       return;
     }
 
+    // Destructive or committing operations are confirmed in an in-app dialog first (not the browser's confirm box).
     const confirmMsg = this.confirmationFor(operation);
-    if (confirmMsg && !window.confirm(confirmMsg)) return;
+    if (confirmMsg) {
+      const ui = this.confirmUi(operation);
+      this.confirmation.confirm({
+        header: ui.header,
+        message: confirmMsg,
+        icon: ui.danger ? 'pi pi-exclamation-triangle' : 'pi pi-question-circle',
+        acceptLabel: ui.accept,
+        rejectLabel: 'Cancel',
+        acceptButtonStyleClass: ui.danger ? 'p-button-danger' : undefined,
+        rejectButtonStyleClass: 'p-button-text p-button-secondary',
+        defaultFocus: 'reject',
+        accept: () => this.run(operation, opts),
+      });
+      return;
+    }
+    this.run(operation, opts);
+  }
 
+  /** Dialog heading and button text for each confirmed operation. */
+  private confirmUi(op: SolutionOperation): { header: string; accept: string; danger: boolean } {
+    switch (op) {
+      case 'UNLOAD': return { header: 'Unload the solution', accept: 'Unload', danger: true };
+      case 'SAVE': return { header: 'Save the solution', accept: 'Save', danger: false };
+      case 'SAVE_AS_NEW': return { header: 'Save as a new solution', accept: 'Save as new', danger: false };
+      case 'SAVE_COMMIT': return { header: 'Save and commit', accept: 'Save and commit', danger: false };
+      case 'SAVE_AS_NEW_COMMIT': return { header: 'Save as new and commit', accept: 'Save as new and commit', danger: false };
+      case 'COMMIT': return { header: 'Commit the solution', accept: 'Commit', danger: false };
+      case 'UNCOMMIT': return { header: 'Uncommit the solution', accept: 'Uncommit', danger: true };
+      case 'DELETE': return { header: 'Delete the solution', accept: 'Delete', danger: true };
+      default: return { header: 'Please confirm', accept: 'OK', danger: false };
+    }
+  }
+
+  private run(operation: SolutionOperation, opts: { solutionId?: number } = {}): void {
     const request: ListSolutionsRequest = { operation };
     switch (operation) {
       case 'SAVE':

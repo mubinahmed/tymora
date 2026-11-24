@@ -10,7 +10,7 @@
         <span class="section-icon"><i class="pi pi-table"></i></span>
         <div>
           <h2>{{ d.name }}</h2>
-          <p>Set the classes of each scheduling subpart — limits, rooms, date pattern and department.</p>
+          <p>Set the classes of each scheduling subpart — limits, rooms, teaching weeks and department.</p>
         </div>
         <span class="head-spacer"></span>
         <p-tag [value]="d.unlimited ? 'Unlimited' : ('Config limit ' + (d.limit ?? '—'))" severity="info" [rounded]="true" />
@@ -36,7 +36,7 @@
                   <th style="width:4rem;">Split</th>
                   @if (d.displayInstructors) { <th style="width:4.5rem;">Instr.</th> }
                   @if (d.displayEnabledForStudentScheduling) { <th style="width:4.5rem;">Sched.</th> }
-                  <th style="width:12rem;">Date pattern</th>
+                  <th style="width:12rem;">Teaching weeks</th>
                   <th style="width:12rem;">Department</th>
                   <th style="width:3rem;"></th>
                 </tr>

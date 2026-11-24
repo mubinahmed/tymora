@@ -22,7 +22,7 @@
     <ng-template pTemplate="header">
       <tr>
         @for (c of cols(); track c.index) {
-          <th [style.text-align]="c.align">{{ c.name }}</th>
+          <th [style.text-align]="c.align" [title]="c.description" [class.th-help]="!!c.description">{{ c.name }}</th>
         }
       </tr>
     </ng-template>

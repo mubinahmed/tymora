@@ -17,7 +17,7 @@
 } @else {
   <p-message
     severity="info"
-    text="Add, edit and delete {{ isTime() ? 'time' : 'date' }} patterns of the current academic session. Still managed on the legacy page: department / pattern-set associations{{ isTime() ? '' : ' and number-of-weeks' }}."
+    text="Add, edit and delete the {{ isTime() ? 'meeting times' : 'teaching weeks' }} of the current academic session. Still managed on the legacy page: department / pattern-set associations{{ isTime() ? '' : ' and number-of-weeks' }}."
   />
 
   <p-table
@@ -31,7 +31,7 @@
   >
     <ng-template pTemplate="caption">
       <div class="tbl-caption">
-        <span>{{ records().length }} {{ isTime() ? 'time' : 'date' }} pattern(s)</span>
+        <span>{{ records().length }} {{ isTime() ? 'meeting-time' : 'teaching-week' }} pattern(s)</span>
         <span class="spacer"></span>
         <input
           pInputText
@@ -40,7 +40,7 @@
           (input)="dt.filterGlobal($any($event.target).value, 'contains')"
         />
         @if (addable()) {
-          <p-button [label]="isTime() ? 'Add Time Pattern' : 'Add Date Pattern'" icon="pi pi-plus" (onClick)="add()" />
+          <p-button [label]="isTime() ? 'Add Meeting Times' : 'Add Teaching Weeks'" icon="pi pi-plus" (onClick)="add()" />
         }
       </div>
     </ng-template>
@@ -110,7 +110,7 @@
     (visibleChange)="dialogVisible.set($event)"
     [modal]="true"
     [style]="{ width: isTime() ? '40rem' : '52rem' }"
-    [header]="(editing.isNew ? 'Add ' : 'Edit ') + (isTime() ? 'Time Pattern' : 'Date Pattern')"
+    [header]="(editing.isNew ? 'Add ' : 'Edit ') + (isTime() ? 'Meeting Times' : 'Teaching Weeks')"
   >
     <div class="form-grid">
       <label for="p-name">Name</label>
@@ -149,7 +149,7 @@
         <span>
           <p-checkbox inputId="p-default" [(ngModel)]="editing.isDefault" [binary]="true" [disabled]="editing.wasDefault" />
           <small class="grid-hint">
-            {{ editing.wasDefault ? ' This is the default date pattern of the session.' : ' Make this the default date pattern of the session.' }}
+            {{ editing.wasDefault ? ' These are the default teaching weeks of the session.' : ' Make these the default teaching weeks of the session.' }}
           </small>
         </span>
       }

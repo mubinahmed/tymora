@@ -63,7 +63,7 @@ export class ExactTimeEdit {
   protected readonly editable = signal(false);
 
   constructor() {
-    this.page.set('Exact Time Pattern');
+    this.page.set('Exact Meeting Times');
     this.reload();
   }
 
@@ -101,7 +101,7 @@ export class ExactTimeEdit {
         this.records.set(res.records ?? []);
         this.editable.set(!!res.editable);
         this.saving.set(false);
-        this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Exact time pattern updated.' });
+        this.messages.add({ severity: 'success', summary: 'Saved', detail: 'Exact meeting times updated.' });
       },
       error: (e: ApiError) => {
         this.saving.set(false);

@@ -3,14 +3,14 @@
     <span class="section-icon"><i class="pi pi-clock"></i></span>
     <div>
       <h2>Time Preferences</h2>
-      <p>Select a time pattern, then pick a level and click cells, a day (row) or a start time (column).</p>
+      <p>Select meeting times, then pick a level and click cells, a day (row) or a start time (column).</p>
     </div>
   </div>
 
   @for (g of grids(); track $index; let gi = $index) {
     <div class="cpe-grid-card">
       <div class="cpe-grid-head">
-        <h3>Time Pattern: {{ g.name }}</h3>
+        <h3>Meeting Times: {{ g.name }}</h3>
         @if (g.inherited) {
           <p-tag severity="info" [value]="'Inherited from ' + inheritedFrom()" />
         }
@@ -29,16 +29,16 @@
       }
     </div>
   } @empty {
-    <p class="cpe-empty">No time pattern selected.</p>
+    <p class="cpe-empty">No meeting times selected.</p>
   }
 
   <div class="cpe-add">
     <div class="field">
-      <label for="cpe-tp">Time Pattern</label>
+      <label for="cpe-tp">Meeting Times</label>
       <p-select inputId="cpe-tp" [options]="availablePatterns()" optionLabel="name" optionValue="timePatternId"
         [ngModel]="selectedPatternId()" (ngModelChange)="selectedPatternId.set($event)" [ngModelOptions]="{ standalone: true }"
-        placeholder="Select time pattern" [filter]="true" filterBy="name" appendTo="body"
-        emptyMessage="No applicable time patterns" />
+        placeholder="Select meeting times" [filter]="true" filterBy="name" appendTo="body"
+        emptyMessage="No applicable meeting times" />
     </div>
     <p-button label="Add Time Preference" icon="pi pi-plus" severity="secondary" type="button"
       [disabled]="selectedPatternId() == null" (onClick)="addTimePattern()" />

@@ -24,7 +24,7 @@
         <div><div class="dt">Instructional type</div><div class="dd">{{ d.instructionalTypeLabel || '—' }}</div></div>
         <div><div class="dt">Minutes per week</div><div class="dd">{{ d.minutesPerWeek ?? '—' }}</div></div>
         <div>
-          <div class="dt">Date pattern</div>
+          <div class="dt">Teaching weeks</div>
           <div class="dd">
             @if (d.datePatternId) {
               <a class="link" [routerLink]="['/date-pattern', d.datePatternId]">{{ d.datePattern || '—' }}</a>

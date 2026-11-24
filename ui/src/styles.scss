@@ -918,6 +918,8 @@ a.link:hover { text-decoration: underline; }
 
 /* clickable rows in the generic RPC table (e.g. class reports opening the assignment dialog) */
 .rpc-click { cursor: pointer; }
+/* a column header with a tooltip (server-sent description) */
+th.th-help { cursor: help; text-decoration: underline dotted; text-underline-offset: 3px; }
 .report-hint {
   display: flex;
   gap: 0.45rem;

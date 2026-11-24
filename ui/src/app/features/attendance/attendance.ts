@@ -37,6 +37,8 @@ import {
 } from './attendance.models';
 import { DateInput, fromIso, toIso } from '../../shared/date-input';
 import { DisplayDatePipe } from '../../shared/display-date.pipe';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 const RPC = 'AttendanceRequest';
 
@@ -49,7 +51,7 @@ const RPC = 'AttendanceRequest';
  */
 @Component({
   selector: 'app-attendance',
-  imports: [DisplayDatePipe, DateInput, 
+  imports: [ConfirmDialogModule, DisplayDatePipe, DateInput, 
     DatePipe,
     FormsModule,
     ButtonModule,
@@ -70,11 +72,13 @@ const RPC = 'AttendanceRequest';
     AttendanceDashboard,
     AttendanceReports,
   ],
+  providers: [ConfirmationService],
   templateUrl: './attendance.html',
   styleUrl: './attendance.scss',
 })
 export class Attendance implements OnInit, OnDestroy {
   private rpc = inject(RpcService);
+  private confirmation = inject(ConfirmationService);
   private page = inject(PageService);
   private messages = inject(MessageService);
 
@@ -227,7 +231,7 @@ export class Attendance implements OnInit, OnDestroy {
   }
 
   protected open(s: SessionInfo): void {
-    if (this.dirty && !confirm('Discard unsaved marks?')) return;
+    if (this.dirty) { this.confirmDiscard(() => { this.dirty = false; this.open(s); }); return; }
     this.dirty = false;
     this.qrOpen.set(false);
     this.stopTimer();
@@ -235,12 +239,27 @@ export class Attendance implements OnInit, OnDestroy {
   }
 
   protected back(): void {
-    if (this.dirty && !confirm('Discard unsaved marks?')) return;
+    if (this.dirty) { this.confirmDiscard(() => { this.dirty = false; this.back(); }); return; }
     this.dirty = false;
     this.current.set(null);
     this.qrOpen.set(false);
     this.stopTimer();
     this.loadSessions();
+  }
+
+  /** Unsaved marks on the open roll: ask before throwing them away. */
+  private confirmDiscard(then: () => void): void {
+    this.confirmation.confirm({
+      header: 'Discard unsaved marks',
+      message: 'The marks on this roll have not been saved. Discard them?',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Discard',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      defaultFocus: 'reject',
+      accept: () => then(),
+    });
   }
 
   protected statusOf(r: RosterEntry): AttStatus | undefined {

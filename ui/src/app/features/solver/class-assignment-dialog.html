@@ -155,7 +155,7 @@
       </section>
 
       <!-- 3. impact before confirmation -->
-      <section class="asg-section">
+      <section class="asg-section" #impactSection [class.asg-flash]="flashImpact()">
         <h3><span class="num">3</span> Impact of the change <span class="h-note">shown before anything is changed</span></h3>
         @if (previewing()) {
           <div class="center small"><p-progressSpinner strokeWidth="4" /></div>
@@ -266,12 +266,12 @@
                 <tr><th style="width:7rem">Value</th><th>Changes</th><th style="width:7rem">Unassigned</th><th style="width:8rem">Student conf.</th><th style="width:6rem"></th></tr>
               </ng-template>
               <ng-template pTemplate="body" let-x>
-                <tr (click)="pickSuggestion(x)" [class.sel-row]="preview() === x">
+                <tr (click)="pickSuggestion(x, true)" [class.sel-row]="preview() === x">
                   <td [class]="deltaClass(x.value, x.baseValue)">{{ delta(x.value ?? 0, x.baseValue ?? 0) }}</td>
                   <td class="wrap">{{ suggestionSummary(x) }}</td>
                   <td>{{ x.unresolvedConflicts?.length || 0 }}</td>
                   <td>{{ studentConflictCount(x) }}</td>
-                  <td><p-button label="Preview" size="small" [text]="true" (onClick)="pickSuggestion(x); $event.stopPropagation()" /></td>
+                  <td><p-button label="Preview" size="small" [text]="true" (onClick)="pickSuggestion(x, true); $event.stopPropagation()" /></td>
                 </tr>
               </ng-template>
             </p-table>

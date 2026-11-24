@@ -211,8 +211,8 @@ export class PatternEdit {
   private messages = inject(MessageService);
 
   protected readonly kindOptions = [
-    { label: 'Date Patterns', value: 'DATE' as Kind },
-    { label: 'Time Patterns', value: 'TIME' as Kind },
+    { label: 'Teaching Weeks', value: 'DATE' as Kind },
+    { label: 'Meeting Times', value: 'TIME' as Kind },
   ];
   protected readonly kind = signal<Kind>('DATE');
   protected readonly isTime = computed(() => this.kind() === 'TIME');
@@ -286,7 +286,7 @@ export class PatternEdit {
   });
 
   constructor() {
-    this.page.set('Date & Time Patterns');
+    this.page.set('Teaching Weeks & Meeting Times');
     this.reload();
   }
 
@@ -325,7 +325,7 @@ export class PatternEdit {
   switchKind(kind: Kind): void {
     if (kind === this.kind()) return;
     this.kind.set(kind);
-    this.page.set(kind === 'TIME' ? 'Time Patterns' : 'Date Patterns');
+    this.page.set(kind === 'TIME' ? 'Meeting Times' : 'Teaching Weeks');
     this.reload();
   }
 
@@ -520,7 +520,7 @@ export class PatternEdit {
         this.messages.add({
           severity: 'error',
           summary: 'Validation',
-          detail: 'Type at least one day (Days) and one start time (Start Times). A time pattern without them has no times to schedule.',
+          detail: 'Type at least one day (Days) and one start time (Start Times). Meeting times without them have no times to schedule.',
         });
         return;
       }

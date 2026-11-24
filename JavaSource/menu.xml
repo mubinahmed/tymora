@@ -794,12 +794,12 @@
 				</condition>
 			</item>
 			<separator/>
-			<item name="Date Patterns" page="datePatternEdit.action">
+			<item name="Teaching Weeks" page="datePatternEdit.action">
 				<condition>
 					<hasPermission name="DatePatterns"/>
 				</condition>
 			</item>
-			<item name="Time Patterns" page="timePatternEdit.action">
+			<item name="Meeting Times" page="timePatternEdit.action">
 				<condition>
 					<hasPermission name="TimePatterns"/>
 				</condition>
